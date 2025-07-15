@@ -2,6 +2,7 @@
 
 
 
+
 export interface TimetableEntry {
   id: string;
   date: string;
@@ -59,10 +60,14 @@ export interface Course {
   course_code: string;
   course_name: string;
   credit_unit: number;
-  level: number;
-  programName?: string;
+  levelId: string; // Storing the ID of the level document
   exam_type: 'CBT' | 'Written';
+  // Denormalized fields for easier display
+  levelNumber?: number;
+  programId?: string;
+  programName?: string;
 }
+
 
 export interface Staff {
   id: string;
