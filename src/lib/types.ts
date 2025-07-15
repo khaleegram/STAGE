@@ -62,3 +62,12 @@ export interface Venue {
   capacity: number;
   venue_type: 'CBT' | 'Written';
 }
+
+export interface Level {
+    id: string;
+    programId: string;
+    programName?: string;
+    level: number;
+    students_count: number;
+    promotion_rate: number;
+}
