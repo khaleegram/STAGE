@@ -24,8 +24,8 @@ const CoursesPage: React.FC = () => {
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
 
   // Filter state
-  const [selectedProgram, setSelectedProgram] = useState('');
-  const [selectedLevel, setSelectedLevel] = useState('');
+  const [selectedProgram, setSelectedProgram] = useState('all');
+  const [selectedLevel, setSelectedLevel] = useState('all');
   
   const { toast } = useToast();
 
@@ -41,7 +41,7 @@ const CoursesPage: React.FC = () => {
 
     // Fetch Levels based on selected program
     let unsubscribeLevels = () => {};
-    if (selectedProgram) {
+    if (selectedProgram && selectedProgram !== 'all') {
         const levelsQuery = query(collection(db, 'levels'), where('programId', '==', selectedProgram), orderBy('level'));
         unsubscribeLevels = onSnapshot(levelsQuery, (snapshot) => {
             setLevels(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Level)));
@@ -107,7 +107,7 @@ const CoursesPage: React.FC = () => {
   
   const handleProgramFilterChange = (programId: string) => {
     setSelectedProgram(programId);
-    setSelectedLevel(''); // Reset level filter when program changes
+    setSelectedLevel('all'); // Reset level filter when program changes
   };
 
   const handleAddNew = () => {
@@ -122,10 +122,10 @@ const CoursesPage: React.FC = () => {
 
   const filteredCourses = useMemo(() => {
     let filtered = courses;
-    if (selectedProgram) {
+    if (selectedProgram && selectedProgram !== 'all') {
         filtered = filtered.filter(c => c.programId === selectedProgram);
     }
-    if (selectedLevel) {
+    if (selectedLevel && selectedLevel !== 'all') {
         filtered = filtered.filter(c => c.levelId === selectedLevel);
     }
     return filtered.sort((a,b) => (a.levelNumber || 0) - (b.levelNumber || 0) || a.course_code.localeCompare(b.course_code));
@@ -155,16 +155,16 @@ const CoursesPage: React.FC = () => {
                         <SelectValue placeholder="Filter by Program" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="">All Programs</SelectItem>
+                        <SelectItem value="all">All Programs</SelectItem>
                         {programs.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
-                 <Select onValueChange={setSelectedLevel} value={selectedLevel} disabled={!selectedProgram}>
+                 <Select onValueChange={setSelectedLevel} value={selectedLevel} disabled={!selectedProgram || selectedProgram === 'all'}>
                     <SelectTrigger className="w-full sm:w-[200px]">
                         <SelectValue placeholder="Filter by Level" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="">All Levels</SelectItem>
+                        <SelectItem value="all">All Levels</SelectItem>
                         {levels.map(l => <SelectItem key={l.id} value={l.id}>{l.level}00 Level</SelectItem>)}
                     </SelectContent>
                 </Select>
