@@ -1,5 +1,6 @@
 
 
+
 export interface TimetableEntry {
   id: string;
   date: string;
@@ -97,6 +98,9 @@ export interface Venue {
   code: string;
   capacity: number;
   venue_type: 'CBT' | 'Written';
+  latitude?: string;
+  longitude?: string;
+  radius?: number;
 }
 
 export interface Semester {
