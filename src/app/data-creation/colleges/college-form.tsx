@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { College } from '@/lib/types';
 import { addCollege, updateCollege, deleteCollege } from './actions';
 import { Button } from '@/components/ui/button';
@@ -54,7 +55,7 @@ export function CollegeForm({ college, onClose }: CollegeFormProps) {
   };
 
   const action = college ? updateCollege.bind(null, college.id) : addCollege;
-  const [state, formAction] = useFormState(action, { success: false, message: '' });
+  const [state, formAction] = useActionState(action, { success: false, message: '' });
 
   useEffect(() => {
     if (state.message) {

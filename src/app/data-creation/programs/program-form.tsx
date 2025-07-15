@@ -2,7 +2,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { Program, Department } from '@/lib/types';
 import { addProgram, updateProgram, deleteProgram } from './actions';
 import { Button } from '@/components/ui/button';
@@ -40,7 +41,7 @@ export function ProgramForm({ program, departments, onClose }: ProgramFormProps)
   }, [program]);
 
   const action = program ? updateProgram.bind(null, program.id) : addProgram;
-  const [state, formAction] = useFormState(action, { success: false, message: '' });
+  const [state, formAction] = useActionState(action, { success: false, message: '' });
 
   useEffect(() => {
     if (state.message) {

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { Course, Program, Level } from '@/lib/types';
 import { addCourse, updateCourse, deleteCourse } from './actions';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ChevronsUpDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 interface CourseFormProps {
@@ -102,7 +103,7 @@ export function CourseForm({ course, programs, onClose }: CourseFormProps) {
 
   // Server action setup
   const action = course ? updateCourse.bind(null, course.id) : addCourse;
-  const [state, formAction] = useFormState(action, { success: false, message: '' });
+  const [state, formAction] = useActionState(action, { success: false, message: '' });
 
   useEffect(() => {
     if (state.message) {

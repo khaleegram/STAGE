@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { Semester } from '@/lib/types';
 import { addSemester, updateSemester } from './actions';
 import { Button } from '@/components/ui/button';
@@ -44,7 +45,7 @@ export function SemesterForm({ semester, sessionId, onClose }: SemesterFormProps
   }, [semester]);
   
   const action = semester ? updateSemester.bind(null, semester.id, sessionId) : addSemester.bind(null, sessionId);
-  const [state, formAction] = useFormState(action, { success: false, message: '' });
+  const [state, formAction] = useActionState(action, { success: false, message: '' });
 
   useEffect(() => {
     if (state.message) {

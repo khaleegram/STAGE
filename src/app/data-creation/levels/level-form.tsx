@@ -2,7 +2,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { Level, Program } from '@/lib/types';
 import { addLevel, updateLevel, deleteLevel } from './actions';
 import { Button } from '@/components/ui/button';
@@ -43,7 +44,7 @@ export function LevelForm({ level, programs, onClose }: LevelFormProps) {
   }, [level]);
 
   const action = level ? updateLevel.bind(null, level.id) : addLevel;
-  const [state, formAction] = useFormState(action, { success: false, message: '' });
+  const [state, formAction] = useActionState(action, { success: false, message: '' });
 
   useEffect(() => {
     if (state.message) {

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { AcademicSession } from '@/lib/types';
 import { addSession, updateSession } from './actions';
 import { Button } from '@/components/ui/button';
@@ -28,7 +29,7 @@ export function SessionForm({ session, onClose }: SessionFormProps) {
   }, [session]);
   
   const action = session ? updateSession.bind(null, session.id) : addSession;
-  const [state, formAction] = useFormState(action, { success: false, message: '' });
+  const [state, formAction] = useActionState(action, { success: false, message: '' });
 
   useEffect(() => {
     if (state.message) {

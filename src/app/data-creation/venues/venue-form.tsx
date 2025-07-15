@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { Venue } from '@/lib/types';
 import { addVenue, updateVenue, deleteVenue } from './actions';
 import { Button } from '@/components/ui/button';
@@ -50,7 +51,7 @@ export function VenueForm({ venue, onClose }: VenueFormProps) {
 
   // Server action setup
   const action = venue ? updateVenue.bind(null, venue.id) : addVenue;
-  const [state, formAction] = useFormState(action, { success: false, message: '' });
+  const [state, formAction] = useActionState(action, { success: false, message: '' });
 
   useEffect(() => {
     if (state.message) {
