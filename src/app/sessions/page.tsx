@@ -186,20 +186,20 @@ function SessionsView({ sessions, isLoading }: { sessions: AcademicSession[], is
             <Accordion type="single" collapsible className="w-full" defaultValue={sessions[0]?.id}>
                 {sessions.map((session) => (
                     <AccordionItem value={session.id} key={session.id}>
-                        <AccordionTrigger className="hover:no-underline">
-                           <div className="flex items-center justify-between w-full pr-4">
-                                <div className="flex items-center gap-4">
-                                    <span className="font-bold text-lg">{session.session_name}</span>
-                                    <Badge className={`${statusColors[session.status]} hover:${statusColors[session.status]}`}>
-                                        {statusIcons[session.status]}
-                                        <span className="ml-1 capitalize">{session.status}</span>
-                                    </Badge>
-                                </div>
-                                <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
-                                    <MoreHorizontal />
-                                </Button>
-                           </div>
-                        </AccordionTrigger>
+                        <div className="flex items-center justify-between w-full pr-4 hover:bg-muted/50 rounded-md">
+                            <AccordionTrigger className="flex-1 hover:no-underline px-4 py-0">
+                               <div className="flex items-center gap-4">
+                                   <span className="font-bold text-lg">{session.session_name}</span>
+                                   <Badge className={`${statusColors[session.status]} hover:${statusColors[session.status]}`}>
+                                       {statusIcons[session.status]}
+                                       <span className="ml-1 capitalize">{session.status}</span>
+                                   </Badge>
+                               </div>
+                            </AccordionTrigger>
+                            <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
+                                <MoreHorizontal />
+                            </Button>
+                        </div>
                         <AccordionContent>
                            <div className="p-4 bg-muted/50 rounded-md">
                                 <h4 className="font-semibold mb-2">Semesters</h4>
