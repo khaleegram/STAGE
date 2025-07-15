@@ -32,8 +32,8 @@ export function AppSidebar() {
     { href: '/departments', icon: Library, label: 'Departments' },
     { href: '/programs', icon: GraduationCap, label: 'Programs' },
     { href: '/courses', icon: BookOpen, label: 'Courses' },
+    { href: '/staff', icon: BookUser, label: 'Staff' },
     { href: '#', icon: CalendarDays, label: 'Timetables' },
-    { href: '#', icon: BookUser, label: 'Faculty' },
     { href: '#', icon: Users, label: 'Students' },
     { href: '#', icon: Settings, label: 'Settings' },
   ];
