@@ -12,7 +12,7 @@ const collegeSchema = z.object({
   short_name: z.string().min(2, 'Short name must be at least 2 characters long.').max(10, 'Short name cannot exceed 10 characters.'),
 });
 
-export async function addCollege(values: z.infer<typeof collegeSchema>) {
+export async function addCollege(values: z.infer<typeof collegeSchema>): Promise<{ success: boolean; message: string; }> {
   try {
     const validatedData = collegeSchema.parse(values);
     await addDoc(collection(db, 'colleges'), {
@@ -24,9 +24,13 @@ export async function addCollege(values: z.infer<typeof collegeSchema>) {
   } catch (error) {
     console.error('Error adding college:', error);
     if (error instanceof z.ZodError) {
-      return { success: false, message: 'Invalid data provided.' };
+      return { success: false, message: 'Invalid data provided. Please check your inputs.' };
     }
-    return { success: false, message: 'An unexpected error occurred.' };
+    // Return a more specific error message
+    if (error instanceof Error) {
+        return { success: false, message: `An unexpected error occurred: ${error.message}` };
+    }
+    return { success: false, message: 'An unexpected error occurred. Please try again.' };
   }
 }
 
