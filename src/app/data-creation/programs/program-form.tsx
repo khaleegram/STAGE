@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Program, Department } from '@/lib/types';
@@ -70,7 +70,9 @@ export function ProgramForm({ program, departments, onClose }: ProgramFormProps)
       }
   };
 
-  const selectedDepartmentName = departments.find(d => d.id === selectedDepartmentId)?.name || 'Select a department';
+  const selectedDepartmentName = useMemo(() => {
+    return departments.find(d => d.id === selectedDepartmentId)?.name || 'Select a department';
+  }, [selectedDepartmentId, departments]);
 
   return (
     <>
