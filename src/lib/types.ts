@@ -8,3 +8,10 @@ export interface TimetableEntry {
   courseCode?: string;
   instructor?: string;
 }
+
+export interface College {
+  id: string;
+  name: string;
+  code: string;
+  short_name: string;
+}

@@ -14,10 +14,23 @@ import {
   Users,
   BookUser,
   Settings,
+  Building,
 } from 'lucide-react';
 import { Logo } from '@/components/icons/logo';
+import { usePathname } from 'next/navigation';
 
 export function AppSidebar() {
+  const pathname = usePathname();
+
+  const menuItems = [
+    { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
+    { href: '/colleges', icon: Building, label: 'Colleges' },
+    { href: '#', icon: CalendarDays, label: 'Timetables' },
+    { href: '#', icon: BookUser, label: 'Faculty' },
+    { href: '#', icon: Users, label: 'Students' },
+    { href: '#', icon: Settings, label: 'Settings' },
+  ];
+
   return (
     <Sidebar variant="sidebar" collapsible="icon">
       <SidebarContent>
@@ -25,46 +38,16 @@ export function AppSidebar() {
           <Logo />
         </SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive tooltip="Dashboard">
-              <Link href="/">
-                <LayoutDashboard />
-                <span className="group-data-[state=collapsed]:hidden">Dashboard</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Timetables">
-              <Link href="#">
-                <CalendarDays />
-                <span className="group-data-[state=collapsed]:hidden">Timetables</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Faculty">
-              <Link href="#">
-                <BookUser />
-                <span className="group-data-[state=collapsed]:hidden">Faculty</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Students">
-              <Link href="#">
-                <Users />
-                <span className="group-data-[state=collapsed]:hidden">Students</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Settings">
-              <Link href="#">
-                <Settings />
-                <span className="group-data-[state=collapsed]:hidden">Settings</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          {menuItems.map((item) => (
+            <SidebarMenuItem key={item.href}>
+              <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={item.label}>
+                <Link href={item.href}>
+                  <item.icon />
+                  <span className="group-data-[state=collapsed]:hidden">{item.label}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
         </SidebarMenu>
       </SidebarContent>
     </Sidebar>
