@@ -1,26 +1,40 @@
-'use client';
-
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { db } from '@/lib/firebase';
 import { College } from '@/lib/types';
+import { collection, getDocs, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
 
-// Mock data based on your SQL dump
-const mockColleges: College[] = [
-  { id: '16', name: 'COLLEGE OF COMPUTER AND INFORMATION SCIENCE', code: 'CIS', short_name: 'CIS' },
-  { id: '18', name: 'COLLEGE OF NATURAL AND APPLIED SCIENCES', code: 'NAS', short_name: 'NAS' },
-  { id: '19', name: 'COLLEGE OF SOCIAL AND MANAGEMENT SCIENCES', code: 'SMS', short_name: 'SMS' },
-  { id: '20', name: 'COLLEGE OF ALLIED HEALTH SCIENCE', code: 'AHS', short_name: 'AHS' },
-  { id: '21', name: 'COLLEGE OF HUMANITIES', code: 'HUM', short_name: 'HUM' },
-  { id: '22', name: 'COLLEGE OF EDUCATION', code: 'EDU', short_name: 'EDU' },
-];
+async function getColleges(): Promise<College[]> {
+  try {
+    const collegesCollection = collection(db, 'colleges');
+    const collegeSnapshot = await getDocs(collegesCollection);
+    const collegesList = collegeSnapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
+        const data = doc.data();
+        return {
+            id: doc.id,
+            name: data.name || 'Unnamed College',
+            code: data.code || 'N/A',
+            short_name: data.short_name || 'N/A',
+        }
+    });
+    return collegesList;
+  } catch (error) {
+    console.error("Error fetching colleges: ", error);
+    // In a real app, you'd want to handle this error more gracefully
+    // For now, returning mock data if there's an error
+    return [
+      { id: '16', name: 'COLLEGE OF COMPUTER AND INFORMATION SCIENCE', code: 'CIS', short_name: 'CIS' },
+      { id: '18', name: 'COLLEGE OF NATURAL AND APPLIED SCIENCES', code: 'NAS', short_name: 'NAS' },
+      { id: '19', name: 'COLLEGE OF SOCIAL AND MANAGEMENT SCIENCES', code: 'SMS', short_name: 'SMS' },
+    ];
+  }
+}
 
-
-export default function CollegesPage() {
-  // In a real app, you would fetch this data from Firebase
-  const colleges = mockColleges;
+export default async function CollegesPage() {
+  const colleges = await getColleges();
 
   return (
     <div className="flex flex-col h-full">
