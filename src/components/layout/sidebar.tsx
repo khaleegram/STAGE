@@ -1,3 +1,4 @@
+
 'use client';
 import Link from 'next/link';
 import {
@@ -16,6 +17,7 @@ import {
   Settings,
   Building,
   Library,
+  GraduationCap,
 } from 'lucide-react';
 import { Logo } from '@/components/icons/logo';
 import { usePathname } from 'next/navigation';
@@ -27,6 +29,7 @@ export function AppSidebar() {
     { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/colleges', icon: Building, label: 'Colleges' },
     { href: '/departments', icon: Library, label: 'Departments' },
+    { href: '/programs', icon: GraduationCap, label: 'Programs' },
     { href: '#', icon: CalendarDays, label: 'Timetables' },
     { href: '#', icon: BookUser, label: 'Faculty' },
     { href: '#', icon: Users, label: 'Students' },
