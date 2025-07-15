@@ -54,3 +54,11 @@ export interface Staff {
   collegeName?: string;
   departmentName?: string;
 }
+
+export interface Venue {
+  id: string;
+  name: string;
+  code: string;
+  capacity: number;
+  venue_type: 'CBT' | 'Written';
+}
