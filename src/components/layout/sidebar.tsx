@@ -42,20 +42,21 @@ export function AppSidebar() {
     { href: '/venues', icon: MapPin, label: 'Venues' },
     { href: '/sessions', icon: Clock, label: 'Sessions' },
     { href: '/timetables', icon: CalendarDays, label: 'Timetables' },
-    { href: '#', icon: Users, label: 'Students' },
-    { href: '#', icon: Settings, label: 'Settings' },
+    { href: '#students', icon: Users, label: 'Students' },
+    { href: '#settings', icon: Settings, label: 'Settings' },
   ];
 
   return (
-    <Sidebar variant="sidebar" collapsible="icon">
-      <SidebarContent>
+    <Sidebar variant="sidebar" collapsible="icon" className="bg-sandy-brown">
+      <SidebarContent className="text-white">
         <SidebarHeader>
           <Logo />
         </SidebarHeader>
         <SidebarMenu>
           {menuItems.map((item) => (
             <SidebarMenuItem key={item.label}>
-              <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={item.label}>
+              <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={item.label}
+                className="text-white hover:bg-maroon-dark data-[active=true]:bg-maroon-dark data-[active=true]:text-white">
                 <Link href={item.href}>
                   <item.icon />
                   <span className="group-data-[state=collapsed]:hidden">{item.label}</span>

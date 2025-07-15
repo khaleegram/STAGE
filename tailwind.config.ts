@@ -75,9 +75,9 @@ export default {
           ring: 'hsl(var(--sidebar-ring))',
         },
         maroon: '#800000',
-        'sandy-brown': '#f4a300',
+        'sandy-brown': '#f4a460',
         'maroon-dark': '#660000',
-        'cream': '#EAD9C6',
+        'cream': '#F5F5DC',
       },
       
       keyframes: {

@@ -9,7 +9,7 @@ export function Logo({ className }: { className?: string }) {
             viewBox="0 0 24 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            className="text-primary flex-shrink-0"
+            className="text-white flex-shrink-0"
         >
             <path
             d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
@@ -19,7 +19,7 @@ export function Logo({ className }: { className?: string }) {
             strokeLinejoin="round"
             />
         </svg>
-      <span className="font-bold text-lg group-data-[state=collapsed]:hidden">
+      <span className="font-bold text-lg text-white group-data-[state=collapsed]:hidden">
         Al-Qalam Scheduler
       </span>
     </div>
