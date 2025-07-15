@@ -1,12 +1,10 @@
-
-import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { db } from '@/lib/firebase';
 import { Program } from '@/lib/types';
 import { collection, getDocs, QueryDocumentSnapshot, DocumentData, doc, getDoc } from 'firebase/firestore';
-import { PlusCircle, MoreHorizontal, GraduationCap } from 'lucide-react';
+import { PlusCircle, MoreHorizontal } from 'lucide-react';
 
 async function getPrograms(): Promise<Program[]> {
   try {
@@ -53,50 +51,49 @@ export default async function ProgramsPage() {
   const programs = await getPrograms();
 
   return (
-    <div className="flex flex-col h-full">
-      <Header title="Programs" />
-      <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Programs</CardTitle>
-              <CardDescription>Manage your university's academic programs.</CardDescription>
-            </div>
-            <Button>
-              <PlusCircle className="mr-2" />
-              Add Program
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Max Level</TableHead>
-                  <TableHead>Expected Intake</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+    <div className="space-y-6">
+       <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">Programs</h1>
+        <Button>
+          <PlusCircle className="mr-2" />
+          Add Program
+        </Button>
+      </div>
+
+      <Card>
+        <CardHeader>
+            <CardTitle>Manage Programs</CardTitle>
+            <CardDescription>Manage your university's academic programs.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Department</TableHead>
+                <TableHead>Max Level</TableHead>
+                <TableHead>Expected Intake</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {programs.map((program) => (
+                <TableRow key={program.id}>
+                  <TableCell className="font-medium">{program.name}</TableCell>
+                  <TableCell>{program.departmentName || program.departmentId}</TableCell>
+                  <TableCell>{program.max_level}</TableCell>
+                  <TableCell>{program.expected_intake}</TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon">
+                      <MoreHorizontal />
+                    </Button>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {programs.map((program) => (
-                  <TableRow key={program.id}>
-                    <TableCell className="font-medium">{program.name}</TableCell>
-                    <TableCell>{program.departmentName || program.departmentId}</TableCell>
-                    <TableCell>{program.max_level}</TableCell>
-                    <TableCell>{program.expected_intake}</TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </main>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }

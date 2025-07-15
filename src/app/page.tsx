@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Header } from '@/components/layout/header';
 import { GeneratorForm } from '@/components/timetable/generator-form';
 import { TimetableDisplay } from '@/components/timetable/timetable-display';
 import type { GenerateExamTimetableOutput } from '@/ai/flows/generate-exam-timetable';
@@ -23,9 +22,8 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <Header title="Dashboard" />
-      <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+    <div className="space-y-6">
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           <div className="lg:col-span-1">
             <GeneratorForm
@@ -42,7 +40,6 @@ export default function Home() {
             />
           </div>
         </div>
-      </main>
     </div>
   );
 }

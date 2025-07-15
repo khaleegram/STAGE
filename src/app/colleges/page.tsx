@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -39,63 +38,62 @@ export default function CollegesPage() {
   }, []);
 
   return (
-    <div className="flex flex-col h-full">
-      <Header title="Colleges" />
-      <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Colleges</CardTitle>
-              <CardDescription>Manage your university's colleges.</CardDescription>
-            </div>
-            <Button onClick={() => setIsAddDialogOpen(true)}>
-              <PlusCircle className="mr-2" />
-              Add College
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Short Name</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  Array.from({ length: 3 }).map((_, index) => (
-                    <TableRow key={index}>
-                      <TableCell><Skeleton className="h-5 w-48" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-16" /></TableCell>
-                      <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
-                    </TableRow>
-                  ))
-                ) : colleges.length > 0 ? (
-                  colleges.map((college) => (
-                    <TableRow key={college.id}>
-                      <TableCell className="font-medium">{college.name}</TableCell>
-                      <TableCell>{college.code}</TableCell>
-                      <TableCell>{college.short_name}</TableCell>
-                      <TableCell className="text-right">
-                        <CollegeActions college={college} />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center">
-                      No colleges found. Get started by adding a new one.
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">Colleges</h1>
+        <Button onClick={() => setIsAddDialogOpen(true)}>
+          <PlusCircle className="mr-2" />
+          Add College
+        </Button>
+      </div>
+
+      <Card>
+        <CardHeader>
+            <CardTitle>Manage Colleges</CardTitle>
+            <CardDescription>View, add, edit, or delete your university's colleges.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Code</TableHead>
+                <TableHead>Short Name</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                Array.from({ length: 3 }).map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                    <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                  </TableRow>
+                ))
+              ) : colleges.length > 0 ? (
+                colleges.map((college) => (
+                  <TableRow key={college.id}>
+                    <TableCell className="font-medium">{college.name}</TableCell>
+                    <TableCell>{college.code}</TableCell>
+                    <TableCell>{college.short_name}</TableCell>
+                    <TableCell className="text-right">
+                      <CollegeActions college={college} />
                     </TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </main>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-24 text-center">
+                    No colleges found. Get started by adding a new one.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
       <AddCollegeDialog isOpen={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
     </div>
   );

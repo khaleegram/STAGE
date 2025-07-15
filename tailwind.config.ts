@@ -9,6 +9,15 @@ export default {
   ],
   theme: {
     extend: {
+      backgroundImage: {
+        'light': "url('/assets/light.png')",
+        'dark': "url('/assets/dark.png')",
+      },
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
+      },
       fontFamily: {
         body: ['Inter', 'sans-serif'],
         headline: ['Inter', 'sans-serif'],
@@ -65,12 +74,12 @@ export default {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
+        maroon: '#800000',
+        'sandy-brown': '#f4a300',
+        'maroon-dark': '#660000',
+        'cream': '#EAD9C6',
       },
-      borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
-      },
+      
       keyframes: {
         'accordion-down': {
           from: {

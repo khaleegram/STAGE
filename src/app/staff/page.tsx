@@ -1,5 +1,3 @@
-
-import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -57,19 +55,19 @@ export default async function StaffPage() {
   const staff = await getStaff();
 
   return (
-    <div className="flex flex-col h-full">
-      <Header title="Staff" />
-      <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Staff</CardTitle>
-              <CardDescription>Manage your university's staff members.</CardDescription>
-            </div>
-            <Button>
-              <PlusCircle className="mr-2" />
-              Add Staff
-            </Button>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">Staff</h1>
+        <Button>
+          <PlusCircle className="mr-2" />
+          Add Staff
+        </Button>
+      </div>
+
+      <Card>
+          <CardHeader>
+            <CardTitle>Manage Staff</CardTitle>
+            <CardDescription>Manage your university's staff members.</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -104,7 +102,6 @@ export default async function StaffPage() {
             </Table>
           </CardContent>
         </Card>
-      </main>
     </div>
   );
 }

@@ -1,4 +1,3 @@
-
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { db } from '@/lib/firebase';
 import { CombinedCourse, CombinedCourseOffering } from '@/lib/types';
 import { collection, getDocs, QueryDocumentSnapshot, DocumentData, doc, getDoc, query, where } from 'firebase/firestore';
-import { PlusCircle, MoreHorizontal, BookCopy } from 'lucide-react';
+import { PlusCircle, MoreHorizontal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 async function getCombinedCourses(): Promise<CombinedCourse[]> {
@@ -71,56 +70,55 @@ export default async function CombinedCoursesPage() {
   const combinedCourses = await getCombinedCourses();
 
   return (
-    <div className="flex flex-col h-full">
-      <Header title="Combined Courses" />
-      <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Combined Courses</CardTitle>
-              <CardDescription>Manage courses shared across multiple programs or levels.</CardDescription>
-            </div>
-            <Button>
-              <PlusCircle className="mr-2" />
-              Combine Course
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Offered To</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+    <div className="space-y-6">
+       <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">Combined Courses</h1>
+        <Button>
+          <PlusCircle className="mr-2" />
+          Combine Course
+        </Button>
+      </div>
+
+      <Card>
+        <CardHeader>
+            <CardTitle>Manage Combined Courses</CardTitle>
+            <CardDescription>Manage courses shared across multiple programs or levels.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Code</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Offered To</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {combinedCourses.map((course) => (
+                <TableRow key={course.id}>
+                  <TableCell className="font-medium">{course.course_code}</TableCell>
+                  <TableCell>{course.course_name}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {course.offerings.map((offering, index) => (
+                        <Badge key={index} variant="secondary">
+                          {offering.programName} - {offering.level}00L
+                        </Badge>
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon">
+                      <MoreHorizontal />
+                    </Button>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {combinedCourses.map((course) => (
-                  <TableRow key={course.id}>
-                    <TableCell className="font-medium">{course.course_code}</TableCell>
-                    <TableCell>{course.course_name}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {course.offerings.map((offering, index) => (
-                          <Badge key={index} variant="secondary">
-                            {offering.programName} - {offering.level}00L
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </main>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -99,13 +98,13 @@ function mockSessions(): AcademicSession[] {
     ];
 }
 
-const statusIcons = {
+const statusIcons: { [key: string]: React.ReactElement } = {
     open: <PlayCircle className="h-4 w-4 text-green-500" />,
     closed: <CheckCircle className="h-4 w-4 text-gray-500" />,
     locked: <Lock className="h-4 w-4 text-red-500" />,
 };
 
-const statusColors = {
+const statusColors: { [key: string]: string } = {
     open: 'bg-green-100 text-green-800',
     closed: 'bg-gray-100 text-gray-800',
     locked: 'bg-red-100 text-red-800',
@@ -152,96 +151,95 @@ function SessionsView({ sessions, isLoading }: { sessions: AcademicSession[], is
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <Header title="Academic Sessions" />
-      <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Academic Sessions</CardTitle>
-              <CardDescription>Manage academic years and semesters.</CardDescription>
-            </div>
-            <div className="flex gap-2">
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button variant="outline" disabled={isPromoting}>
-                            {isPromoting ? 'Promoting...' : 'Promote Students'}
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action will advance students to the next academic level based on their program's promotion rules. Graduating students will be cleared from their final level, and new students will be added to the first level. This action cannot be undone.
-                        </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handlePromote}>Yes, Promote Students</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-                <Button>
-                    <PlusCircle className="mr-2" />
-                    New Session
-                </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? <p>Loading sessions...</p> : (
-            <Accordion type="single" collapsible className="w-full" defaultValue={sessions[0]?.id}>
-                {sessions.map((session) => (
-                    <AccordionItem value={session.id} key={session.id}>
-                        <div className="flex items-center justify-between w-full pr-4 hover:bg-muted/50 rounded-md">
-                            <AccordionTrigger className="flex-1 hover:no-underline px-4 py-0">
-                               <div className="flex items-center gap-4">
-                                   <span className="font-bold text-lg">{session.session_name}</span>
-                                   <Badge className={`${statusColors[session.status]} hover:${statusColors[session.status]}`}>
-                                       {statusIcons[session.status]}
-                                       <span className="ml-1 capitalize">{session.status}</span>
-                                   </Badge>
-                               </div>
-                            </AccordionTrigger>
-                            <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
-                                <MoreHorizontal />
-                            </Button>
-                        </div>
-                        <AccordionContent>
-                           <div className="p-4 bg-muted/50 rounded-md">
-                                <h4 className="font-semibold mb-2">Semesters</h4>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Semester</TableHead>
-                                            <TableHead>Start Date</TableHead>
-                                            <TableHead>End Date</TableHead>
-                                            <TableHead>Status</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {session.semesters.map(semester => (
-                                            <TableRow key={semester.id}>
-                                                <TableCell>{semester.semester_number === 1 ? 'First' : 'Second'} Semester</TableCell>
-                                                <TableCell>{semester.start_date}</TableCell>
-                                                <TableCell>{semester.end_date ?? 'N/A'}</TableCell>
-                                                <TableCell>
-                                                    <Badge variant={semester.status === 'open' ? 'default' : 'secondary'} className="capitalize">
-                                                        {semester.status}
-                                                    </Badge>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                           </div>
-                        </AccordionContent>
-                    </AccordionItem>
-                ))}
-            </Accordion>
-            )}
-          </CardContent>
-        </Card>
-      </main>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">Academic Sessions</h1>
+        <div className="flex gap-2">
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="outline" disabled={isPromoting}>
+                        {isPromoting ? 'Promoting...' : 'Promote Students'}
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action will advance students to the next academic level based on their program's promotion rules. Graduating students will be cleared from their final level, and new students will be added to the first level. This action cannot be undone.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handlePromote}>Yes, Promote Students</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            <Button>
+                <PlusCircle className="mr-2" />
+                New Session
+            </Button>
+        </div>
+      </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Manage Sessions</CardTitle>
+          <CardDescription>Manage academic years and semesters.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? <p>Loading sessions...</p> : (
+          <Accordion type="single" collapsible className="w-full" defaultValue={sessions[0]?.id}>
+              {sessions.map((session) => (
+                  <AccordionItem value={session.id} key={session.id}>
+                      <div className="flex items-center justify-between w-full pr-4 hover:bg-muted/50 rounded-md">
+                          <AccordionTrigger className="flex-1 hover:no-underline px-4 py-0">
+                             <div className="flex items-center gap-4">
+                                 <span className="font-bold text-lg">{session.session_name}</span>
+                                 <Badge className={`${statusColors[session.status]} hover:${statusColors[session.status]}`}>
+                                     {statusIcons[session.status]}
+                                     <span className="ml-1 capitalize">{session.status}</span>
+                                 </Badge>
+                             </div>
+                          </AccordionTrigger>
+                          <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
+                              <MoreHorizontal />
+                          </Button>
+                      </div>
+                      <AccordionContent>
+                         <div className="p-4 bg-muted/50 rounded-md">
+                              <h4 className="font-semibold mb-2">Semesters</h4>
+                              <Table>
+                                  <TableHeader>
+                                      <TableRow>
+                                          <TableHead>Semester</TableHead>
+                                          <TableHead>Start Date</TableHead>
+                                          <TableHead>End Date</TableHead>
+                                          <TableHead>Status</TableHead>
+                                      </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                      {session.semesters.map(semester => (
+                                          <TableRow key={semester.id}>
+                                              <TableCell>{semester.semester_number === 1 ? 'First' : 'Second'} Semester</TableCell>
+                                              <TableCell>{semester.start_date}</TableCell>
+                                              <TableCell>{semester.end_date ?? 'N/A'}</TableCell>
+                                              <TableCell>
+                                                  <Badge variant={semester.status === 'open' ? 'default' : 'secondary'} className="capitalize">
+                                                      {semester.status}
+                                                  </Badge>
+                                              </TableCell>
+                                          </TableRow>
+                                      ))}
+                                  </TableBody>
+                              </Table>
+                         </div>
+                      </AccordionContent>
+                  </AccordionItem>
+              ))}
+          </Accordion>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

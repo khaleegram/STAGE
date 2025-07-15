@@ -1,4 +1,3 @@
-import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -51,19 +50,19 @@ export default async function DepartmentsPage() {
   const departments = await getDepartments();
 
   return (
-    <div className="flex flex-col h-full">
-      <Header title="Departments" />
-      <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Departments</CardTitle>
-              <CardDescription>Manage your university's departments.</CardDescription>
-            </div>
-            <Button>
-              <PlusCircle className="mr-2" />
-              Add Department
-            </Button>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">Departments</h1>
+        <Button>
+          <PlusCircle className="mr-2" />
+          Add Department
+        </Button>
+      </div>
+
+      <Card>
+          <CardHeader>
+            <CardTitle>Manage Departments</CardTitle>
+            <CardDescription>Manage your university's departments.</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -90,7 +89,6 @@ export default async function DepartmentsPage() {
             </Table>
           </CardContent>
         </Card>
-      </main>
     </div>
   );
 }

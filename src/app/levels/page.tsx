@@ -1,12 +1,10 @@
-
-import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { db } from '@/lib/firebase';
 import { Level } from '@/lib/types';
 import { collection, getDocs, QueryDocumentSnapshot, DocumentData, doc, getDoc } from 'firebase/firestore';
-import { PlusCircle, MoreHorizontal, Layers } from 'lucide-react';
+import { PlusCircle, MoreHorizontal } from 'lucide-react';
 
 async function getLevels(): Promise<Level[]> {
   try {
@@ -54,50 +52,49 @@ export default async function LevelsPage() {
   const levels = await getLevels();
 
   return (
-    <div className="flex flex-col h-full">
-      <Header title="Levels" />
-      <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Levels</CardTitle>
-              <CardDescription>Manage your program's academic levels.</CardDescription>
-            </div>
-            <Button>
-              <PlusCircle className="mr-2" />
-              Add Level
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Program</TableHead>
-                  <TableHead>Level</TableHead>
-                  <TableHead>Student Count</TableHead>
-                  <TableHead>Promotion Rate</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+    <div className="space-y-6">
+       <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">Levels</h1>
+        <Button>
+          <PlusCircle className="mr-2" />
+          Add Level
+        </Button>
+      </div>
+
+      <Card>
+        <CardHeader>
+            <CardTitle>Manage Levels</CardTitle>
+            <CardDescription>Manage your program's academic levels.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Program</TableHead>
+                <TableHead>Level</TableHead>
+                <TableHead>Student Count</TableHead>
+                <TableHead>Promotion Rate</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {levels.map((level) => (
+                <TableRow key={level.id}>
+                  <TableCell className="font-medium">{level.programName}</TableCell>
+                  <TableCell>{level.level}00</TableCell>
+                  <TableCell>{level.students_count}</TableCell>
+                  <TableCell>{(level.promotion_rate * 100).toFixed(0)}%</TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon">
+                      <MoreHorizontal />
+                    </Button>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {levels.map((level) => (
-                  <TableRow key={level.id}>
-                    <TableCell className="font-medium">{level.programName}</TableCell>
-                    <TableCell>{level.level}00</TableCell>
-                    <TableCell>{level.students_count}</TableCell>
-                    <TableCell>{(level.promotion_rate * 100).toFixed(0)}%</TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </main>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
