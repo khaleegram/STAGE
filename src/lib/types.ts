@@ -95,3 +95,20 @@ export interface CombinedCourse {
   course_name: string;
   offerings: CombinedCourseOffering[];
 }
+
+export interface Semester {
+    id: string;
+    semester_number: number;
+    start_date: string; // Storing as string for simplicity
+    end_date: string | null;
+    status: 'open' | 'closed';
+}
+
+export interface AcademicSession {
+    id: string;
+    session_name: string;
+    start_year: number;
+    end_year: number;
+    status: 'open' | 'closed' | 'locked';
+    semesters: Semester[];
+}

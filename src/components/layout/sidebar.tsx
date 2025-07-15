@@ -22,6 +22,7 @@ import {
   MapPin,
   Layers,
   BookCopy,
+  Clock,
 } from 'lucide-react';
 import { Logo } from '@/components/icons/logo';
 import { usePathname } from 'next/navigation';
@@ -39,6 +40,7 @@ export function AppSidebar() {
     { href: '/combined-courses', icon: BookCopy, label: 'Combined Courses' },
     { href: '/staff', icon: BookUser, label: 'Staff' },
     { href: '/venues', icon: MapPin, label: 'Venues' },
+    { href: '/sessions', icon: Clock, label: 'Sessions' },
     { href: '/timetables', icon: CalendarDays, label: 'Timetables' },
     { href: '#', icon: Users, label: 'Students' },
     { href: '#', icon: Settings, label: 'Settings' },
