@@ -10,7 +10,7 @@ const departmentSchema = z.object({
   collegeId: z.string().min(1, { message: 'Please select a college.' }),
 });
 
-export async function addDepartment(formData: FormData): Promise<{ success: boolean; message: string }> {
+export async function addDepartment(prevState: any, formData: FormData): Promise<{ success: boolean; message: string }> {
   const values = {
     name: formData.get('name') as string,
     collegeId: formData.get('collegeId') as string,
@@ -41,7 +41,7 @@ export async function addDepartment(formData: FormData): Promise<{ success: bool
   }
 }
 
-export async function updateDepartment(departmentId: string, formData: FormData): Promise<{ success: boolean; message: string }> {
+export async function updateDepartment(departmentId: string, prevState: any, formData: FormData): Promise<{ success: boolean; message: string }> {
     const values = {
         name: formData.get('name') as string,
         collegeId: formData.get('collegeId') as string,
