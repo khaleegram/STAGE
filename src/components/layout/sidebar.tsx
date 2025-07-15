@@ -3,15 +3,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Menu,
-  Home,
-  Users,
-  CalendarAlt,
   Database,
-  University,
-  Building,
-  Book,
-  ChalkboardTeacher,
-  DoorOpen,
   LayoutDashboard,
   Building2,
   Library,
@@ -24,6 +16,7 @@ import {
   Clock,
   CalendarDays,
   Settings,
+  Users,
 } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 
@@ -61,7 +54,7 @@ export function AppSidebar() {
     { href: '/data-creation/combined-courses', label: 'Combined Courses', icon: <BookCopy size={18} /> },
     { href: '/data-creation/staff', label: 'Staff', icon: <BookUser size={18} /> },
     { href: '/data-creation/venues', label: 'Venues', icon: <MapPin size={18} /> },
-    { href: '/#sessions', label: 'Sessions', icon: <Clock size={18} /> },
+    { href: '/data-creation/sessions', label: 'Sessions', icon: <Clock size={18} /> },
     { href: '/#students', label: 'Students', icon: <Users size={18} /> },
     { href: '/#settings', label: 'Settings', icon: <Settings size={18} /> },
   ];
