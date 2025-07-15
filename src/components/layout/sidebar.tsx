@@ -1,71 +1,130 @@
 
 'use client';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-} from '@/components/ui/sidebar';
-import {
-  CalendarDays,
-  LayoutDashboard,
+  Menu,
+  Home,
   Users,
-  BookUser,
-  Settings,
+  CalendarAlt,
+  Database,
+  University,
   Building,
+  Book,
+  ChalkboardTeacher,
+  DoorOpen,
+  LayoutDashboard,
+  Building2,
   Library,
   GraduationCap,
   BookOpen,
-  MapPin,
   Layers,
   BookCopy,
+  BookUser,
+  MapPin,
   Clock,
+  CalendarDays,
+  Settings,
 } from 'lucide-react';
-import { Logo } from '@/components/icons/logo';
-import { usePathname } from 'next/navigation';
+import { useSidebar } from '@/components/ui/sidebar';
 
 export function AppSidebar() {
+  const { open: isOpen, toggleSidebar, setOpenMobile } = useSidebar();
   const pathname = usePathname();
 
+  const handleLinkClick = () => {
+    // Close mobile sidebar on link click
+    setOpenMobile(false);
+  };
+
+  const linkClass = (path: string, exact: boolean = true) => {
+    const isActive = exact ? pathname === path : pathname.startsWith(path);
+    return `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 ${
+      isActive
+        ? 'bg-yellow-500/20 text-yellow-400'
+        : 'text-white hover:bg-cream/10 hover:text-yellow-400'
+    }`;
+  }
+
   const menuItems = [
-    { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { href: '/colleges', icon: Building, label: 'Colleges' },
-    { href: '/departments', icon: Library, label: 'Departments' },
-    { href: '/programs', icon: GraduationCap, label: 'Programs' },
-    { href: '/levels', icon: Layers, label: 'Levels' },
-    { href: '/courses', icon: BookOpen, label: 'Courses' },
-    { href: '/combined-courses', icon: BookCopy, label: 'Combined Courses' },
-    { href: '/staff', icon: BookUser, label: 'Staff' },
-    { href: '/venues', icon: MapPin, label: 'Venues' },
-    { href: '/sessions', icon: Clock, label: 'Sessions' },
-    { href: '/timetables', icon: CalendarDays, label: 'Timetables' },
-    { href: '#students', icon: Users, label: 'Students' },
-    { href: '#settings', icon: Settings, label: 'Settings' },
+    { href: '/', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+    { href: '/timetables', label: 'Timetables', icon: <CalendarDays size={18} /> },
   ];
 
+  const dataCreationItems = [
+    { href: '/colleges', label: 'Colleges', icon: <Building2 size={18} /> },
+    { href: '/departments', label: 'Departments', icon: <Library size={18} /> },
+    { href: '/programs', label: 'Programs', icon: <GraduationCap size={18} /> },
+    { href: '/levels', label: 'Levels', icon: <Layers size={18} /> },
+    { href: '/courses', label: 'Courses', icon: <BookOpen size={18} /> },
+    { href: '/combined-courses', label: 'Combined Courses', icon: <BookCopy size={18} /> },
+    { href: '/staff', label: 'Staff', icon: <BookUser size={18} /> },
+    { href: '/venues', label: 'Venues', icon: <MapPin size={18} /> },
+    { href: '/sessions', label: 'Sessions', icon: <Clock size={18} /> },
+    { href: '/#students', label: 'Students', icon: <Users size={18} /> },
+    { href: '/#settings', label: 'Settings', icon: <Settings size={18} /> },
+  ];
+
+  const isDataCreationActive = pathname.startsWith('/colleges') ||
+    pathname.startsWith('/departments') ||
+    pathname.startsWith('/programs') ||
+    pathname.startsWith('/levels') ||
+    pathname.startsWith('/courses') ||
+    pathname.startsWith('/combined-courses') ||
+    pathname.startsWith('/staff') ||
+    pathname.startsWith('/venues') ||
+    pathname.startsWith('/sessions');
+
+
   return (
-    <Sidebar variant="sidebar" collapsible="icon" className="bg-sandy-brown">
-      <SidebarContent className="text-white">
-        <SidebarHeader>
-          <Logo />
-        </SidebarHeader>
-        <SidebarMenu>
-          {menuItems.map((item) => (
-            <SidebarMenuItem key={item.label}>
-              <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={item.label}
-                className="text-white hover:bg-maroon-dark data-[active=true]:bg-maroon-dark data-[active=true]:text-white">
-                <Link href={item.href}>
-                  <item.icon />
-                  <span className="group-data-[state=collapsed]:hidden">{item.label}</span>
+    <>
+      <div
+        className={`fixed sm:relative top-0 left-0 z-50 h-screen transition-all duration-300 ease-in-out ${
+          isOpen ? 'w-64' : 'w-16'
+        } bg-black/30 dark:bg-black/50 backdrop-blur-xl border-r border-white/10 shadow-xl flex flex-col`}
+      >
+        <div className="flex items-center justify-between p-4">
+          <div onClick={toggleSidebar} className="cursor-pointer text-white">
+            <Menu size={20} />
+          </div>
+          {isOpen && (
+            <span className="text-xl text-white font-bold tracking-wide">
+              AUK
+            </span>
+          )}
+        </div>
+
+        <nav className="px-2 mt-2 flex-1 overflow-y-auto">
+          <ul className="space-y-2 text-sm font-medium">
+            {menuItems.map((item) => (
+              <li key={item.href}>
+                <Link href={item.href} onClick={handleLinkClick} className={linkClass(item.href)}>
+                  {item.icon}
+                  {isOpen && <span>{item.label}</span>}
                 </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </SidebarContent>
-    </Sidebar>
+              </li>
+            ))}
+             <li>
+                <div className={linkClass('/data-creation', false)}>
+                    <Database size={18} />
+                    {isOpen && <span>Data Creation</span>}
+                </div>
+            </li>
+            {isOpen && (
+              <div className="ml-5 mt-2 space-y-2 border-l border-gray-500 pl-4">
+                {dataCreationItems.map((item) => (
+                  <li key={item.href}>
+                    <Link href={item.href} onClick={handleLinkClick} className={linkClass(item.href)}>
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </Link>
+                  </li>
+                ))}
+              </div>
+            )}
+          </ul>
+        </nav>
+      </div>
+    </>
   );
 }
