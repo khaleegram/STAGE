@@ -1,6 +1,8 @@
 'use server';
 
 import { generateExamTimetable, GenerateExamTimetableInput, GenerateExamTimetableOutput } from '@/ai/flows/generate-exam-timetable';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { z } from 'zod';
 
 const formSchema = z.object({
@@ -19,6 +21,22 @@ export async function handleGenerateTimetable(values: z.infer<typeof formSchema>
   try {
     const validatedInput = formSchema.parse(values);
     const result = await generateExamTimetable(validatedInput);
+
+    // Save the generated timetable to Firestore
+    try {
+        await addDoc(collection(db, 'timetables'), {
+            name: `Timetable - ${new Date().toLocaleString()}`,
+            timetable: result.timetable,
+            conflicts: result.conflicts || '',
+            createdAt: serverTimestamp(),
+            inputs: validatedInput,
+        });
+    } catch (dbError) {
+        console.error("Error saving timetable to Firestore: ", dbError);
+        // We can still return the result to the user even if saving fails.
+        // A more robust implementation might warn the user that it wasn't saved.
+    }
+
     return { data: result, error: null };
   } catch (error) {
     console.error('Error generating timetable:', error);

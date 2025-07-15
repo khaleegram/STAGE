@@ -11,6 +11,17 @@ export interface TimetableEntry {
   instructor?: string;
 }
 
+export interface Timetable {
+  id: string;
+  name: string;
+  createdAt: {
+    seconds: number;
+    nanoseconds: number;
+  };
+  timetable: string;
+  conflicts?: string;
+}
+
 export interface College {
   id: string;
   name: string;
@@ -79,7 +90,7 @@ export interface CombinedCourseOffering {
 }
 
 export interface CombinedCourse {
-  id: string;
+  id:string;
   course_code: string;
   course_name: string;
   offerings: CombinedCourseOffering[];

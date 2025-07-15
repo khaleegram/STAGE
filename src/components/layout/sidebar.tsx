@@ -39,7 +39,7 @@ export function AppSidebar() {
     { href: '/combined-courses', icon: BookCopy, label: 'Combined Courses' },
     { href: '/staff', icon: BookUser, label: 'Staff' },
     { href: '/venues', icon: MapPin, label: 'Venues' },
-    { href: '#', icon: CalendarDays, label: 'Timetables' },
+    { href: '/timetables', icon: CalendarDays, label: 'Timetables' },
     { href: '#', icon: Users, label: 'Students' },
     { href: '#', icon: Settings, label: 'Settings' },
   ];
