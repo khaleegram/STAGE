@@ -1,4 +1,5 @@
 
+
 export interface TimetableEntry {
   id: string;
   date: string;
@@ -70,4 +71,16 @@ export interface Level {
     level: number;
     students_count: number;
     promotion_rate: number;
+}
+
+export interface CombinedCourseOffering {
+  programName: string;
+  level: number;
+}
+
+export interface CombinedCourse {
+  id: string;
+  course_code: string;
+  course_name: string;
+  offerings: CombinedCourseOffering[];
 }
