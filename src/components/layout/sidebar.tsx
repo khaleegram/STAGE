@@ -1,4 +1,3 @@
-
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -34,7 +33,9 @@ export function AppSidebar() {
 
   const handleLinkClick = () => {
     // Close mobile sidebar on link click
-    setOpenMobile(false);
+    if (window.innerWidth < 768) { // md breakpoint
+        setOpenMobile(false);
+    }
   };
 
   const linkClass = (path: string, exact: boolean = true) => {
@@ -52,28 +53,20 @@ export function AppSidebar() {
   ];
 
   const dataCreationItems = [
-    { href: '/colleges', label: 'Colleges', icon: <Building2 size={18} /> },
-    { href: '/departments', label: 'Departments', icon: <Library size={18} /> },
-    { href: '/programs', label: 'Programs', icon: <GraduationCap size={18} /> },
-    { href: '/levels', label: 'Levels', icon: <Layers size={18} /> },
-    { href: '/courses', label: 'Courses', icon: <BookOpen size={18} /> },
-    { href: '/combined-courses', label: 'Combined Courses', icon: <BookCopy size={18} /> },
-    { href: '/staff', label: 'Staff', icon: <BookUser size={18} /> },
-    { href: '/venues', label: 'Venues', icon: <MapPin size={18} /> },
-    { href: '/sessions', label: 'Sessions', icon: <Clock size={18} /> },
+    { href: '/data-creation/colleges', label: 'Colleges', icon: <Building2 size={18} /> },
+    { href: '/data-creation/departments', label: 'Departments', icon: <Library size={18} /> },
+    { href: '/data-creation/programs', label: 'Programs', icon: <GraduationCap size={18} /> },
+    { href: '/data-creation/levels', label: 'Levels', icon: <Layers size={18} /> },
+    { href: '/data-creation/courses', label: 'Courses', icon: <BookOpen size={18} /> },
+    { href: '/data-creation/combined-courses', label: 'Combined Courses', icon: <BookCopy size={18} /> },
+    { href: '/data-creation/staff', label: 'Staff', icon: <BookUser size={18} /> },
+    { href: '/data-creation/venues', label: 'Venues', icon: <MapPin size={18} /> },
+    { href: '/data-creation/sessions', label: 'Sessions', icon: <Clock size={18} /> },
     { href: '/#students', label: 'Students', icon: <Users size={18} /> },
     { href: '/#settings', label: 'Settings', icon: <Settings size={18} /> },
   ];
 
-  const isDataCreationActive = pathname.startsWith('/colleges') ||
-    pathname.startsWith('/departments') ||
-    pathname.startsWith('/programs') ||
-    pathname.startsWith('/levels') ||
-    pathname.startsWith('/courses') ||
-    pathname.startsWith('/combined-courses') ||
-    pathname.startsWith('/staff') ||
-    pathname.startsWith('/venues') ||
-    pathname.startsWith('/sessions');
+  const isDataCreationActive = pathname.startsWith('/data-creation');
 
 
   return (
@@ -97,7 +90,7 @@ export function AppSidebar() {
         <nav className="px-2 mt-2 flex-1 overflow-y-auto">
           <ul className="space-y-2 text-sm font-medium">
             {menuItems.map((item) => (
-              <li key={item.href}>
+              <li key={item.label}>
                 <Link href={item.href} onClick={handleLinkClick} className={linkClass(item.href)}>
                   {item.icon}
                   {isOpen && <span>{item.label}</span>}
@@ -113,7 +106,7 @@ export function AppSidebar() {
             {isOpen && (
               <div className="ml-5 mt-2 space-y-2 border-l border-gray-500 pl-4">
                 {dataCreationItems.map((item) => (
-                  <li key={item.href}>
+                  <li key={item.label}>
                     <Link href={item.href} onClick={handleLinkClick} className={linkClass(item.href)}>
                       {item.icon}
                       <span>{item.label}</span>
