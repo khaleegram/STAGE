@@ -32,6 +32,11 @@ async function getSessions(): Promise<AcademicSession[]> {
     const q = query(sessionsCollection, orderBy('start_year', 'desc'));
     const sessionSnapshot = await getDocs(q);
 
+    if (sessionSnapshot.empty) {
+        console.warn("No sessions found in Firestore. Falling back to mock data.");
+        return mockSessions();
+    }
+
     const sessionsList = await Promise.all(sessionSnapshot.docs.map(async (sessionDoc) => {
         const data = sessionDoc.data();
         
@@ -60,12 +65,14 @@ async function getSessions(): Promise<AcademicSession[]> {
         } as AcademicSession;
     }));
 
-    if (sessionsList.length === 0) throw new Error("No sessions found in Firestore.");
-
     return sessionsList;
   } catch (error) {
     console.error("Error fetching sessions: ", error);
-    // Fallback mock data
+    return mockSessions();
+  }
+}
+
+function mockSessions(): AcademicSession[] {
     return [
       { 
         id: '1', 
@@ -90,7 +97,6 @@ async function getSessions(): Promise<AcademicSession[]> {
         ]
       },
     ];
-  }
 }
 
 const statusIcons = {
