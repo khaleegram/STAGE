@@ -1,4 +1,5 @@
 
+
 export interface TimetableEntry {
   id: string;
   date: string;
@@ -63,27 +64,6 @@ export interface Course {
   programName?: string;
 }
 
-
-export interface Staff {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  position: string;
-  collegeId: string;
-  departmentId: string;
-  collegeName?: string;
-  departmentName?: string;
-}
-
-export interface Venue {
-  id: string;
-  name: string;
-  code: string;
-  capacity: number;
-  venue_type: 'CBT' | 'Written';
-}
-
 export interface CombinedCourseOffering {
   programId: string;
   programName: string;
@@ -97,6 +77,26 @@ export interface CombinedCourse {
   course_name: string;
   exam_type: 'CBT' | 'Written';
   offerings: CombinedCourseOffering[];
+}
+
+export interface Staff {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  position: string;
+  collegeId: string;
+  collegeName?: string;
+  departmentId: string;
+  departmentName?: string;
+}
+
+export interface Venue {
+  id: string;
+  name: string;
+  code: string;
+  capacity: number;
+  venue_type: 'CBT' | 'Written';
 }
 
 export interface Semester {
