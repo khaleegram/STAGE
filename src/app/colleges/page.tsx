@@ -1,40 +1,42 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { db } from '@/lib/firebase';
 import { College } from '@/lib/types';
-import { collection, getDocs, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
-import { PlusCircle, MoreHorizontal } from 'lucide-react';
+import { collection, onSnapshot, query, orderBy, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
+import { PlusCircle } from 'lucide-react';
+import { AddCollegeDialog } from './add-college-dialog';
+import { CollegeActions } from './college-actions';
+import { Skeleton } from '@/components/ui/skeleton';
 
-async function getColleges(): Promise<College[]> {
-  try {
-    const collegesCollection = collection(db, 'colleges');
-    const collegeSnapshot = await getDocs(collegesCollection);
-    const collegesList = collegeSnapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
-        const data = doc.data();
-        return {
-            id: doc.id,
-            name: data.name || 'Unnamed College',
-            code: data.code || 'N/A',
-            short_name: data.short_name || 'N/A',
-        }
+export default function CollegesPage() {
+  const [colleges, setColleges] = useState<College[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+
+  useEffect(() => {
+    const collegesQuery = query(collection(db, 'colleges'), orderBy('name'));
+    
+    const unsubscribe = onSnapshot(collegesQuery, (snapshot) => {
+      const collegesList = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
+        id: doc.id,
+        name: doc.data().name || 'Unnamed College',
+        code: doc.data().code || 'N/A',
+        short_name: doc.data().short_name || 'N/A',
+      }));
+      setColleges(collegesList);
+      setIsLoading(false);
+    }, (error) => {
+      console.error("Error fetching colleges in real-time: ", error);
+      setIsLoading(false);
     });
-    return collegesList;
-  } catch (error) {
-    console.error("Error fetching colleges: ", error);
-    // In a real app, you'd want to handle this error more gracefully
-    // For now, returning mock data if there's an error
-    return [
-      { id: '16', name: 'COLLEGE OF COMPUTER AND INFORMATION SCIENCE', code: 'CIS', short_name: 'CIS' },
-      { id: '18', name: 'COLLEGE OF NATURAL AND APPLIED SCIENCES', code: 'NAS', short_name: 'NAS' },
-      { id: '19', name: 'COLLEGE OF SOCIAL AND MANAGEMENT SCIENCES', code: 'SMS', short_name: 'SMS' },
-    ];
-  }
-}
 
-export default async function CollegesPage() {
-  const colleges = await getColleges();
+    return () => unsubscribe();
+  }, []);
 
   return (
     <div className="flex flex-col h-full">
@@ -46,7 +48,7 @@ export default async function CollegesPage() {
               <CardTitle>Colleges</CardTitle>
               <CardDescription>Manage your university's colleges.</CardDescription>
             </div>
-            <Button>
+            <Button onClick={() => setIsAddDialogOpen(true)}>
               <PlusCircle className="mr-2" />
               Add College
             </Button>
@@ -62,23 +64,39 @@ export default async function CollegesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {colleges.map((college) => (
-                  <TableRow key={college.id}>
-                    <TableCell className="font-medium">{college.name}</TableCell>
-                    <TableCell>{college.code}</TableCell>
-                    <TableCell>{college.short_name}</TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal />
-                      </Button>
+                {isLoading ? (
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <TableRow key={index}>
+                      <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : colleges.length > 0 ? (
+                  colleges.map((college) => (
+                    <TableRow key={college.id}>
+                      <TableCell className="font-medium">{college.name}</TableCell>
+                      <TableCell>{college.code}</TableCell>
+                      <TableCell>{college.short_name}</TableCell>
+                      <TableCell className="text-right">
+                        <CollegeActions college={college} />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center">
+                      No colleges found. Get started by adding a new one.
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
       </main>
+      <AddCollegeDialog isOpen={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
     </div>
   );
 }
