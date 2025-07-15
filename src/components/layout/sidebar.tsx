@@ -18,6 +18,7 @@ import {
   Building,
   Library,
   GraduationCap,
+  BookOpen,
 } from 'lucide-react';
 import { Logo } from '@/components/icons/logo';
 import { usePathname } from 'next/navigation';
@@ -30,6 +31,7 @@ export function AppSidebar() {
     { href: '/colleges', icon: Building, label: 'Colleges' },
     { href: '/departments', icon: Library, label: 'Departments' },
     { href: '/programs', icon: GraduationCap, label: 'Programs' },
+    { href: '/courses', icon: BookOpen, label: 'Courses' },
     { href: '#', icon: CalendarDays, label: 'Timetables' },
     { href: '#', icon: BookUser, label: 'Faculty' },
     { href: '#', icon: Users, label: 'Students' },

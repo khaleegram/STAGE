@@ -32,3 +32,13 @@ export interface Program {
   max_level: number;
   expected_intake: number;
 }
+
+export interface Course {
+  id: string;
+  course_code: string;
+  course_name: string;
+  credit_unit: number;
+  level: number;
+  programName?: string;
+  exam_type: 'CBT' | 'Written';
+}
