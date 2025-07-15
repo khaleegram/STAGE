@@ -1,4 +1,6 @@
+'use client';
 
+import { useState } from 'react';
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +12,19 @@ import { PlusCircle, MoreHorizontal, CheckCircle, Lock, PlayCircle } from 'lucid
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { format } from 'date-fns';
+import { promoteStudents } from './actions';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 async function getSessions(): Promise<AcademicSession[]> {
   try {
@@ -90,8 +105,45 @@ const statusColors = {
     locked: 'bg-red-100 text-red-800',
 };
 
-export default async function SessionsPage() {
-  const sessions = await getSessions();
+// We need to fetch data on the server, but use hooks and state on the client.
+// This component now acts as a wrapper.
+export default function SessionsPage() {
+    const [sessions, setSessions] = useState<AcademicSession[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    React.useEffect(() => {
+        getSessions().then(data => {
+            setSessions(data);
+            setIsLoading(false);
+        });
+    }, []);
+    
+    return <SessionsView sessions={sessions} isLoading={isLoading} />;
+}
+
+
+function SessionsView({ sessions, isLoading }: { sessions: AcademicSession[], isLoading: boolean }) {
+  const { toast } = useToast();
+  const [isPromoting, setIsPromoting] = useState(false);
+
+  const handlePromote = async () => {
+    setIsPromoting(true);
+    const result = await promoteStudents();
+    if (result.success) {
+      toast({
+        title: 'Success',
+        description: result.message,
+      });
+      // Optionally, re-fetch data here to show updated counts
+    } else {
+      toast({
+        title: 'Error',
+        description: result.message,
+        variant: 'destructive',
+      });
+    }
+    setIsPromoting(false);
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -104,9 +156,25 @@ export default async function SessionsPage() {
               <CardDescription>Manage academic years and semesters.</CardDescription>
             </div>
             <div className="flex gap-2">
-                <Button variant="outline">
-                    Promote Students
-                </Button>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="outline" disabled={isPromoting}>
+                            {isPromoting ? 'Promoting...' : 'Promote Students'}
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action will advance students to the next academic level based on their program's promotion rules. Graduating students will be cleared from their final level, and new students will be added to the first level. This action cannot be undone.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handlePromote}>Yes, Promote Students</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
                 <Button>
                     <PlusCircle className="mr-2" />
                     New Session
@@ -114,7 +182,8 @@ export default async function SessionsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <Accordion type="single" collapsible className="w-full">
+            {isLoading ? <p>Loading sessions...</p> : (
+            <Accordion type="single" collapsible className="w-full" defaultValue={sessions[0]?.id}>
                 {sessions.map((session) => (
                     <AccordionItem value={session.id} key={session.id}>
                         <AccordionTrigger className="hover:no-underline">
@@ -163,6 +232,7 @@ export default async function SessionsPage() {
                     </AccordionItem>
                 ))}
             </Accordion>
+            )}
           </CardContent>
         </Card>
       </main>
