@@ -1,6 +1,7 @@
 
 
 
+
 export interface TimetableEntry {
   id: string;
   date: string;
@@ -45,6 +46,14 @@ export interface Program {
   expected_intake: number;
 }
 
+export interface Level {
+  id: string;
+  programId: string;
+  programName?: string;
+  level: number;
+  students_count: number;
+}
+
 export interface Course {
   id: string;
   course_code: string;
@@ -73,15 +82,6 @@ export interface Venue {
   code: string;
   capacity: number;
   venue_type: 'CBT' | 'Written';
-}
-
-export interface Level {
-    id: string;
-    programId: string;
-    programName?: string;
-    level: number;
-    students_count: number;
-    promotion_rate: number;
 }
 
 export interface CombinedCourseOffering {
