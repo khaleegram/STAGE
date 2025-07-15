@@ -15,6 +15,7 @@ import {
   BookUser,
   Settings,
   Building,
+  Library,
 } from 'lucide-react';
 import { Logo } from '@/components/icons/logo';
 import { usePathname } from 'next/navigation';
@@ -25,6 +26,7 @@ export function AppSidebar() {
   const menuItems = [
     { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/colleges', icon: Building, label: 'Colleges' },
+    { href: '/departments', icon: Library, label: 'Departments' },
     { href: '#', icon: CalendarDays, label: 'Timetables' },
     { href: '#', icon: BookUser, label: 'Faculty' },
     { href: '#', icon: Users, label: 'Students' },

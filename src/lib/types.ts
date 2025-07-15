@@ -15,3 +15,10 @@ export interface College {
   code: string;
   short_name: string;
 }
+
+export interface Department {
+  id: string;
+  name: string;
+  collegeId: string;
+  collegeName?: string; // Optional: To store the denormalized college name
+}
