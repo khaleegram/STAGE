@@ -1,20 +1,16 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Level, Program } from '@/lib/types';
 import { addLevel, updateLevel, deleteLevel } from './actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { ChevronsUpDown, Check } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface LevelFormProps {
   level: Level | null;
@@ -26,23 +22,27 @@ export function LevelForm({ level, programs, onClose }: LevelFormProps) {
   const { toast } = useToast();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
+  // Form state
   const [selectedProgramId, setSelectedProgramId] = useState(level?.programId || '');
+  const [programSearch, setProgramSearch] = useState(level?.programName || '');
   const [levelNumber, setLevelNumber] = useState(level?.level.toString() || '');
   const [studentCount, setStudentCount] = useState(level?.students_count.toString() || '0');
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   useEffect(() => {
     if (level) {
       setSelectedProgramId(level.programId);
+      setProgramSearch(level.programName || '');
       setLevelNumber(level.level.toString());
       setStudentCount(level.students_count.toString());
     } else {
       setSelectedProgramId('');
+      setProgramSearch('');
       setLevelNumber('');
       setStudentCount('0');
     }
   }, [level]);
 
+  // Server action setup
   const action = level ? updateLevel.bind(null, level.id) : addLevel;
   const [state, formAction] = useActionState(action, { success: false, message: '' });
 
@@ -73,7 +73,19 @@ export function LevelForm({ level, programs, onClose }: LevelFormProps) {
       }
   };
 
-  const selectedProgramName = programs.find(p => p.id === selectedProgramId)?.name || 'Select a program';
+  const filteredPrograms = useMemo(() => {
+    if (!programSearch) return [];
+    // Don't show results if a program is already selected
+    if (selectedProgramId && programs.find(p => p.id === selectedProgramId)?.name === programSearch) return [];
+    return programs.filter(p => 
+      p.name.toLowerCase().includes(programSearch.toLowerCase())
+    );
+  }, [programSearch, programs, selectedProgramId]);
+
+  const handleSelectProgram = (prog: Program) => {
+    setSelectedProgramId(prog.id);
+    setProgramSearch(prog.name);
+  }
 
   return (
     <>
@@ -84,42 +96,34 @@ export function LevelForm({ level, programs, onClose }: LevelFormProps) {
 
         <div>
             <label className="block text-sm font-medium mb-1">Program</label>
-            <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-                <PopoverTrigger asChild>
-                    <Button variant="outline" role="combobox" aria-expanded={isPopoverOpen} className="w-full justify-between">
-                        <span className="truncate">{selectedProgramName}</span>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                    <Command>
-                        <CommandInput placeholder="Search programs..." />
-                        <CommandList>
-                            <CommandEmpty>No program found.</CommandEmpty>
-                            <CommandGroup>
-                                {programs.map((program) => (
-                                <CommandItem
-                                    key={program.id}
-                                    value={program.name}
-                                    onSelect={() => {
-                                        setSelectedProgramId(program.id);
-                                        setIsPopoverOpen(false);
-                                    }}
-                                >
-                                    <Check className={cn("mr-2 h-4 w-4", selectedProgramId === program.id ? "opacity-100" : "opacity-0")} />
-                                    {program.name}
-                                </CommandItem>
-                                ))}
-                            </CommandGroup>
-                        </CommandList>
-                    </Command>
-                </PopoverContent>
-            </Popover>
+            <Input
+              id="program-search"
+              placeholder="Search for a program"
+              value={programSearch}
+              onChange={(e) => {
+                setProgramSearch(e.target.value);
+                setSelectedProgramId(''); // Clear selection when user types
+              }}
+              required
+            />
+            {filteredPrograms.length > 0 && (
+              <div className="border border-input rounded-md mt-1 max-h-40 overflow-y-auto z-50 bg-background">
+                {filteredPrograms.map(prog => (
+                  <div
+                    key={prog.id}
+                    onClick={() => handleSelectProgram(prog)}
+                    className="p-2 hover:bg-accent cursor-pointer text-sm"
+                  >
+                    {prog.name}
+                  </div>
+                ))}
+              </div>
+            )}
         </div>
         
         <div>
           <label htmlFor='level-number' className="block text-sm font-medium mb-1">Level</label>
-            <Select onValueChange={setLevelNumber} defaultValue={levelNumber} required>
+            <Select onValueChange={setLevelNumber} value={levelNumber} required>
                 <SelectTrigger id="level-number">
                     <SelectValue placeholder="Select a level" />
                 </SelectTrigger>
@@ -157,7 +161,7 @@ export function LevelForm({ level, programs, onClose }: LevelFormProps) {
                         <AlertDialogHeader>
                             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                             <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the level.
+                                This action cannot be undone. This will permanently delete the level and all associated courses.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -170,7 +174,7 @@ export function LevelForm({ level, programs, onClose }: LevelFormProps) {
             </div>
             <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                <SubmitButton label={level ? 'Update' : 'Add'} />
+                <SubmitButton label={level ? 'Update' : 'Add'} disabled={!selectedProgramId} />
             </div>
         </div>
       </form>
@@ -178,10 +182,10 @@ export function LevelForm({ level, programs, onClose }: LevelFormProps) {
   );
 }
 
-function SubmitButton({ label }: { label: string }) {
+function SubmitButton({ label, disabled }: { label: string; disabled?: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending}>
+    <Button type="submit" disabled={pending || disabled}>
       {pending ? `${label}...` : label}
     </Button>
   );

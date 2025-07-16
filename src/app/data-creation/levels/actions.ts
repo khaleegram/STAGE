@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 
@@ -98,11 +98,30 @@ export async function deleteLevel(levelId: string): Promise<{ success: boolean; 
         return { success: false, message: 'Level ID is missing.' };
     }
     try {
-        await deleteDoc(doc(db, 'levels', levelId));
+        const batch = writeBatch(db);
+
+        // 1. Delete the level document itself
+        const levelRef = doc(db, 'levels', levelId);
+        batch.delete(levelRef);
+
+        // 2. Find and delete all courses associated with this level
+        const coursesQuery = query(collection(db, 'courses'), where('levelId', '==', levelId));
+        const coursesSnapshot = await getDocs(coursesQuery);
+        coursesSnapshot.forEach(courseDoc => {
+            batch.delete(courseDoc.ref);
+        });
+
+        // Commit all batched writes
+        await batch.commit();
+        
         revalidatePath('/data-creation/levels');
-        return { success: true, message: 'Level deleted successfully.' };
+        revalidatePath('/data-creation/courses'); // Also revalidate courses page
+        return { success: true, message: 'Level and all associated courses deleted successfully.' };
     } catch (error) {
-        console.error('Error deleting level:', error);
+        console.error('Error deleting level and associated courses:', error);
+        if (error instanceof Error) {
+            return { success: false, message: `An error occurred: ${error.message}` };
+        }
         return { success: false, message: 'An unexpected error occurred.' };
     }
 }
