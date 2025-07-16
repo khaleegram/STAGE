@@ -3,6 +3,7 @@
 
 
 
+
 export interface TimetableEntry {
   id: string;
   date: string;
@@ -109,7 +110,7 @@ export interface Semester {
     id: string;
     sessionId: string;
     semester_number: number;
-    start_date: string; 
+    start_date: string | null; 
     end_date: string | null;
     status: 'open' | 'closed' | 'locked';
 }
@@ -122,5 +123,3 @@ export interface AcademicSession {
     status: 'open' | 'closed' | 'locked';
     semesters?: Semester[]; // Optional for UI display
 }
-
-

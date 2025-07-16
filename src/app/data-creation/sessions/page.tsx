@@ -144,7 +144,7 @@ export default function SessionsPage() {
                             sessionId: sessionDoc.id,
                             semester_number: sData.semester_number,
                             start_date: isValid(startDate) ? format(startDate, 'PPP') : 'N/A',
-                            end_date: isValid(endDate) ? format(endDate, 'PPP') : null,
+                            end_date: isValid(endDate) ? format(endDate, 'PPP') : 'N/A',
                             status: sData.status
                         };
                     });
@@ -214,12 +214,6 @@ export default function SessionsPage() {
     const handleEditSession = (session: AcademicSession) => {
         setEditingSession(session);
         setShowSessionModal(true);
-    }
-
-    const handleAddNewSemester = (sessionId: string) => {
-        setEditingSemester(null);
-        setCurrentSessionForSemester(sessionId);
-        setShowSemesterModal(true);
     }
 
     const handleEditSemester = (semester: Semester) => {
@@ -307,9 +301,11 @@ export default function SessionsPage() {
                                             <div className="p-4 bg-muted/50 rounded-md">
                                                 <div className="flex justify-between items-center mb-2">
                                                     <h4 className="font-semibold">Semesters</h4>
+                                                    {/* Semesters are created automatically, no need for an add button
                                                     <Button variant="outline" size="sm" onClick={() => handleAddNewSemester(session.id)}>
                                                         <PlusCircle className="mr-2 h-4 w-4" /> Add Semester
                                                     </Button>
+                                                    */}
                                                 </div>
                                                 <Table>
                                                     <TableHeader>
@@ -326,8 +322,8 @@ export default function SessionsPage() {
                                                         session.semesters.map(semester => (
                                                             <TableRow key={semester.id}>
                                                                 <TableCell>{semester.semester_number === 1 ? 'First' : 'Second'}</TableCell>
-                                                                <TableCell>{semester.start_date}</TableCell>
-                                                                <TableCell>{semester.end_date ?? 'N/A'}</TableCell>
+                                                                <TableCell>{semester.start_date ?? 'Not Set'}</TableCell>
+                                                                <TableCell>{semester.end_date ?? 'Not Set'}</TableCell>
                                                                 <TableCell>
                                                                     <Badge className={`${statusColors[semester.status]} hover:${statusColors[semester.status]}`}>
                                                                         {statusIcons[semester.status]}
@@ -352,6 +348,7 @@ export default function SessionsPage() {
                                                                             {semester.status !== 'locked' && <DropdownMenuItem onClick={() => handleSemesterStatusChange(semester, 'locked')}>
                                                                                 <Lock className="mr-2 h-4 w-4 text-red-500" /> Mark as Locked
                                                                             </DropdownMenuItem>}
+                                                                            {/* Deleting individual semesters is disabled to maintain session structure
                                                                             <AlertDialog>
                                                                                 <AlertDialogTrigger asChild>
                                                                                     <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
@@ -369,6 +366,7 @@ export default function SessionsPage() {
                                                                                     </AlertDialogFooter>
                                                                                 </AlertDialogContent>
                                                                             </AlertDialog>
+                                                                            */}
                                                                         </DropdownMenuContent>
                                                                     </DropdownMenu>
                                                                 </td>
@@ -406,7 +404,7 @@ export default function SessionsPage() {
             <Dialog open={showSemesterModal} onOpenChange={setShowSemesterModal}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>{editingSemester ? 'Edit Semester' : 'Add New Semester'}</DialogTitle>
+                        <DialogTitle>Edit Semester</DialogTitle>
                     </DialogHeader>
                     {currentSessionForSemester && (
                         <SemesterForm
@@ -421,4 +419,3 @@ export default function SessionsPage() {
     );
 }
 
-    

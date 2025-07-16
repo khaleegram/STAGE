@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Semester } from '@/lib/types';
-import { addSemester, updateSemester } from './actions';
+import { updateSemester } from './actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -40,12 +40,12 @@ export function SemesterForm({ semester, sessionId, onClose }: SemesterFormProps
     if (semester) {
         setSemesterNumber(semester.semester_number.toString());
         setStatus(semester.status);
-        setStartDate(new Date(semester.start_date));
+        setStartDate(semester.start_date ? new Date(semester.start_date) : undefined);
         setEndDate(semester.end_date ? new Date(semester.end_date) : undefined);
     }
   }, [semester]);
   
-  const action = semester ? updateSemester.bind(null, semester.id, sessionId) : addSemester.bind(null, sessionId);
+  const action = semester ? updateSemester.bind(null, semester.id, sessionId) : async () => ({ success: false, message: 'Cannot add semester directly.'});
   const [state, formAction] = useActionState(action, { success: false, message: '' });
 
   useEffect(() => {
@@ -70,16 +70,7 @@ export function SemesterForm({ semester, sessionId, onClose }: SemesterFormProps
 
         <div>
             <Label>Semester</Label>
-            <RadioGroup value={semesterNumber} onValueChange={setSemesterNumber} className="flex gap-4 mt-2">
-                <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="1" id="s1" />
-                    <Label htmlFor="s1">First</Label>
-                </div>
-                 <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="2" id="s2" />
-                    <Label htmlFor="s2">Second</Label>
-                </div>
-            </RadioGroup>
+            <Input readOnly value={semesterNumber === '1' ? 'First Semester' : 'Second Semester'} className="bg-muted mt-1" />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -98,7 +89,7 @@ export function SemesterForm({ semester, sessionId, onClose }: SemesterFormProps
                 </Popover>
             </div>
              <div>
-                <Label htmlFor="end-date">End Date (Optional)</Label>
+                <Label htmlFor="end-date">End Date</Label>
                 <Popover>
                     <PopoverTrigger asChild>
                         <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !endDate && "text-muted-foreground")}>
