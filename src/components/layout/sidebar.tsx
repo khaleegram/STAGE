@@ -17,6 +17,7 @@ import {
   CalendarDays,
   Settings,
   Users,
+  Sparkles,
 } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 
@@ -42,6 +43,7 @@ export function AppSidebar() {
 
   const menuItems = [
     { href: '/', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+    { href: '/generation', label: 'Generate Timetable', icon: <Sparkles size={18} /> },
     { href: '/timetables', label: 'Timetables', icon: <CalendarDays size={18} /> },
   ];
 
