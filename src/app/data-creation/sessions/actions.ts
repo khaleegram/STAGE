@@ -149,13 +149,13 @@ export async function promoteStudents(): Promise<{ success: boolean; message: st
   try {
     const batch = writeBatch(db);
     const programsSnapshot = await getDocs(collection(db, 'programs'));
-    const levelsSnapshot = await getDocs(collection(db, 'levels'));
+    const allLevelsSnapshot = await getDocs(collection(db, 'levels'));
 
     if (programsSnapshot.empty) {
       return { success: false, message: 'No programs found to process.' };
     }
 
-    const allLevels = levelsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Level));
+    const allLevels = allLevelsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Level));
 
     for (const programDoc of programsSnapshot.docs) {
       const program = { id: programDoc.id, ...programDoc.data() } as Program;
@@ -166,27 +166,25 @@ export async function promoteStudents(): Promise<{ success: boolean; message: st
 
       if (levelsForProgram.length === 0) continue;
 
-      let studentsFromBelow = 0; // Starts at 0 for the graduating class.
-
+      let studentsFromBelow = 0; // Starts at 0, representing graduating students for the top level.
+      
       for (const level of levelsForProgram) {
-        const levelRef = doc(db, 'levels', level.id);
         const currentStudentCount = level.students_count;
+        const levelRef = doc(db, 'levels', level.id);
         
-        // The new count for this level is the count of students from the level below.
+        // Update the current level with the count from the level below it
         batch.update(levelRef, { students_count: studentsFromBelow });
         
-        // For the next iteration (the level below this one), the number of students
-        // being promoted *is* the original count of the current level.
+        // Pass the current level's original count down to the next iteration
         studentsFromBelow = currentStudentCount;
       }
-
-      // After the loop, `studentsFromBelow` holds the count from the original Level 1.
-      // Now we must find and reset the *new* Level 1 to 0 for the new intake.
-      const firstLevel = levelsForProgram.find(l => l.level === 1);
-      if (firstLevel) {
-          const firstLevelRef = doc(db, 'levels', firstLevel.id);
-          // This promotion logic moves the L1 students to L2. Now we clear L1 for new intake.
-          batch.update(firstLevelRef, { students_count: 0 });
+      
+      // After loop, studentsFromBelow holds the original 100L count.
+      // Now, we find the new Level 1 and set its count to 0 for new intake.
+      const levelOne = levelsForProgram.find(l => l.level === 1);
+      if(levelOne) {
+          const levelOneRef = doc(db, 'levels', levelOne.id);
+          batch.update(levelOneRef, { students_count: 0 });
       }
     }
 
