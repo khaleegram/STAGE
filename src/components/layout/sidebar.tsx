@@ -36,7 +36,7 @@ const SidebarContent = () => {
   const handleLinkClick = (e: React.MouseEvent) => {
     // For desktop view, if sidebar is collapsed, a click should expand it.
     if (!isMobile && !isOpen) {
-      e.preventDefault(); // Prevent navigation to allow sidebar to expand first
+      // Don't prevent navigation, just open the sidebar.
       setOpen(true);
       return;
     }
