@@ -19,9 +19,11 @@ const addFormSchema = z.object({
 const getUniqueOfferings = (offerings: { programId: string; levelId: string }[]) => {
     const unique = new Map<string, { programId: string; levelId: string }>();
     offerings.forEach(o => {
-        const key = `${o.programId}-${o.levelId}`;
-        if (!unique.has(key)) {
-            unique.set(key, o);
+        if (o.programId && o.levelId) { // Ensure both IDs are present
+            const key = `${o.programId}-${o.levelId}`;
+            if (!unique.has(key)) {
+                unique.set(key, o);
+            }
         }
     });
     return Array.from(unique.values());
@@ -59,7 +61,6 @@ export async function addCombinedCourse(values: z.infer<typeof addFormSchema>): 
       course_code: courseData.course_code,
       course_name: courseData.course_name,
       exam_type: courseData.exam_type,
-      // offerings are now handled in a subcollection
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });

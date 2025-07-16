@@ -66,17 +66,23 @@ const CombinedCoursesPage: React.FC = () => {
             const levelId = offering.levelId || 'N/A';
 
             if (levelId !== 'N/A') {
-              const levelRef = doc(db, 'levels', levelId);
-              const levelSnap = await getDoc(levelRef);
-              if (levelSnap.exists()) {
-                  const levelData = levelSnap.data();
-                  levelNumber = levelData.level || 0;
-                  
-                  const progRef = doc(db, 'programs', levelData.programId);
-                  const progSnap = await getDoc(progRef);
-                  if (progSnap.exists()) {
-                      programName = progSnap.data().name || 'Unknown Program';
-                  }
+              try {
+                const levelRef = doc(db, 'levels', levelId);
+                const levelSnap = await getDoc(levelRef);
+                if (levelSnap.exists()) {
+                    const levelData = levelSnap.data();
+                    levelNumber = levelData.level || 0;
+                    
+                    if (levelData.programId) {
+                      const progRef = doc(db, 'programs', levelData.programId);
+                      const progSnap = await getDoc(progRef);
+                      if (progSnap.exists()) {
+                          programName = progSnap.data().name || 'Unknown Program';
+                      }
+                    }
+                }
+              } catch (error) {
+                console.error(`Error fetching details for offering with levelId ${levelId}`, error);
               }
             }
             return { programName, level: levelNumber, programId, levelId };
@@ -228,7 +234,7 @@ const CombinedCoursesPage: React.FC = () => {
                          {filteredCourses.length === 0 && (
                             <tr>
                                 <td colSpan={4} className="text-center p-8 text-muted-foreground">
-                                    No combined courses found.
+                                    No combined courses found for the selected filters.
                                 </td>
                             </tr>
                         )}

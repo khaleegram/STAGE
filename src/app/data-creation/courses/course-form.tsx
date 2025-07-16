@@ -75,7 +75,10 @@ export function CourseForm({ course, programs, onClose }: CourseFormProps) {
       if (course && course.programId === selectedProgramId) {
           setSelectedLevelId(course.levelId)
       } else {
-          setSelectedLevelId('');
+          // If the previously selected level is not in the new list, reset it
+          if (!fetchedLevels.some(l => l.id === selectedLevelId)) {
+              setSelectedLevelId('');
+          }
       }
 
     }, (error) => {
@@ -85,7 +88,7 @@ export function CourseForm({ course, programs, onClose }: CourseFormProps) {
     });
 
     return () => unsubscribe();
-  }, [selectedProgramId, course, toast]);
+  }, [selectedProgramId, course, toast, selectedLevelId]);
 
    // Auto-set exam type based on selected level
    useEffect(() => {

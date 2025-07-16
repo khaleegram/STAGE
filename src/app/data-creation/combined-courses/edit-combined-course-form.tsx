@@ -43,8 +43,9 @@ export function EditCombinedCourseForm({ course, allPrograms, allLevels, onClose
     control: form.control,
     name: 'offerings',
   });
-
-  const currentOfferings = form.watch('offerings');
+  
+  const { watch } = form;
+  const currentOfferings = watch('offerings');
 
   const handleAppend = () => {
     append({ programId: '', levelId: '' }, { shouldFocus: true });
@@ -84,7 +85,7 @@ export function EditCombinedCourseForm({ course, allPrograms, allLevels, onClose
   
   const isOfferingDuplicate = (currentIndex: number) => {
     const current = currentOfferings[currentIndex];
-    if (!current.programId || !current.levelId) return false;
+    if (!current || !current.programId || !current.levelId) return false;
     return currentOfferings.some((offering, index) => 
         index !== currentIndex &&
         offering.programId === current.programId &&

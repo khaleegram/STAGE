@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, where, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, where, getDocs, writeBatch, getDoc } from 'firebase/firestore';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 
@@ -35,19 +35,19 @@ export async function addCourse(prevState: any, formData: FormData): Promise<{ s
 
   if (!validatedFields.success) {
     const error = validatedFields.error.flatten().fieldErrors;
-    const message = error.levelId?.[0] || error.course_code?.[0] || error.course_name?.[0] || error.credit_unit?.[0] || 'Invalid input.';
+    const message = error.levelId?.[0] || error.course_code?.[0] || error.course_name?.[0] || error.credit_unit?.[0] || error.exam_type?.[0] || 'Invalid input.';
     return { success: false, message };
   }
   
   const { levelId, course_code, course_name, credit_unit, exam_type } = validatedFields.data;
 
   try {
-    const courseRef = doc(db, 'levels', levelId);
-    const courseSnap = await getDoc(courseRef);
-    if (!courseSnap.exists()) {
+    const levelRef = doc(db, 'levels', levelId);
+    const levelSnap = await getDoc(levelRef);
+    if (!levelSnap.exists()) {
         return { success: false, message: 'The selected level does not exist.' };
     }
-    const programId = courseSnap.data().programId;
+    const programId = levelSnap.data().programId;
 
     // Check for duplicate course code within the same program
     const q = query(collection(db, 'courses'), where('programId', '==', programId), where('course_code', '==', course_code));
@@ -87,7 +87,7 @@ export async function updateCourse(courseId: string, prevState: any, formData: F
 
   if (!validatedFields.success) {
      const error = validatedFields.error.flatten().fieldErrors;
-     const message = error.levelId?.[0] || error.course_code?.[0] || error.course_name?.[0] || error.credit_unit?.[0] || 'Invalid input.';
+     const message = error.levelId?.[0] || error.course_code?.[0] || error.course_name?.[0] || error.credit_unit?.[0] || error.exam_type?.[0] || 'Invalid input.';
      return { success: false, message };
   }
   
