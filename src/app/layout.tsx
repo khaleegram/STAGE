@@ -23,14 +23,14 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-body antialiased bg-light dark:bg-dark bg-cover bg-center bg-no-repeat bg-fixed">
+      <body className="font-body antialiased">
         <ThemeProvider storageKey="al-qalam-theme">
           <SidebarProvider>
-            <div className="flex min-h-screen">
+            <div className="flex min-h-screen bg-light dark:bg-dark bg-cover bg-center bg-no-repeat bg-fixed">
               <AppSidebar />
-              <div className="flex-1 flex flex-col bg-background/90 backdrop-blur-sm">
+              <div className="flex-1 flex flex-col">
                 <ClientNavbar />
-                <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-muted/40">
+                <main className="flex-1 overflow-y-auto p-4 lg:p-6">
                   {children}
                 </main>
               </div>

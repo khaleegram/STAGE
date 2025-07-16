@@ -22,24 +22,23 @@ export default function Navbar() {
   
   if (isMobile === undefined) {
     return (
-        <header className="sticky top-0 z-40 w-full border-b">
+        <header className="sticky top-0 z-30 w-full">
              <div className="container mx-auto flex h-16 items-center" />
         </header>
     )
   }
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-card/50 backdrop-blur-sm border-b">
+    <header className="sticky top-0 z-30 w-full">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 lg:px-6">
         <div className="flex items-center gap-4">
            {/* This button is only visible on mobile to toggle the sidebar */}
           {isMobile && (
             <Button variant="ghost" size="icon" onClick={toggleSidebar}>
-                <Menu className="text-primary" />
+                <Menu className="text-foreground" />
                 <span className="sr-only">Toggle Sidebar</span>
             </Button>
           )}
-           <h1 className="text-xl font-bold tracking-tight hidden sm:block">Al-Qalam Scheduler</h1>
         </div>
         
         <div className="flex items-center gap-4">

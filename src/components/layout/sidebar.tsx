@@ -47,8 +47,8 @@ export function AppSidebar() {
     return cn(
       "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200",
       isActive
-        ? 'bg-primary/80 text-white'
-        : 'text-white hover:bg-white/10'
+        ? 'bg-primary/20 text-primary'
+        : 'text-white hover:bg-white/10 hover:text-primary'
     );
   }
   
@@ -57,8 +57,8 @@ export function AppSidebar() {
      return cn(
       "flex items-center gap-3 pl-4 pr-2 py-2 text-sm rounded-lg transition-colors duration-200",
       isActive
-        ? 'bg-primary/80 text-white'
-        : 'text-gray-300 hover:bg-white/10 hover:text-white'
+        ? 'bg-primary/20 text-primary'
+        : 'text-gray-300 hover:bg-white/10 hover:text-primary'
     );
   }
 
@@ -80,17 +80,14 @@ export function AppSidebar() {
     { href: '/data-creation/venues', label: 'Venues', icon: <MapPin size={18} /> },
   ];
 
-  const isDataCreationActive = pathname.startsWith('/data-creation');
-
 
   return (
-    <>
       <div
-        className={`fixed sm:relative top-0 left-0 z-50 h-screen transition-all duration-300 ease-in-out ${
+        className={cn(`fixed sm:relative top-0 left-0 z-50 h-screen transition-all duration-300 ease-in-out bg-black/30 dark:bg-black/50 backdrop-blur-xl border-r border-white/10 shadow-xl flex flex-col`,
           isOpen ? 'w-64' : 'w-20'
-        } bg-sidebar-background text-sidebar-foreground flex flex-col`}
+        )}
       >
-        <div className="flex items-center justify-between p-4 border-b border-sidebar-border h-16">
+        <div className="flex items-center justify-between p-4 border-b border-white/10 h-16">
           <Link href="/" className={cn("flex items-center gap-2", !isOpen && "w-full justify-center")}>
               <svg
                   width="28"
@@ -98,7 +95,7 @@ export function AppSidebar() {
                   viewBox="0 0 24 24"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
-                  className="text-white flex-shrink-0"
+                  className="text-primary flex-shrink-0"
               >
                   <path
                   d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
@@ -112,7 +109,6 @@ export function AppSidebar() {
               Al-Qalam
             </span>
           </Link>
-
           <button onClick={toggleSidebar} className="text-white hover:text-primary md:hidden">
             <Menu size={24} />
           </button>
@@ -140,11 +136,11 @@ export function AppSidebar() {
                 </button>
             </li>
             {isOpen && isDataCreationOpen && (
-              <ul className="mt-1 space-y-1">
+              <ul className="mt-1 space-y-1 pl-5">
                 {dataCreationItems.map((item) => (
                   <li key={item.label}>
                     <Link href={item.href} onClick={handleLinkClick} className={dataCreationLinkClass(item.href)}>
-                      {item.icon}
+                      <div className="w-5">{item.icon}</div>
                       <span className="truncate">{item.label}</span>
                     </Link>
                   </li>
@@ -153,7 +149,7 @@ export function AppSidebar() {
             )}
             
              <div className="px-3 pt-4">
-                <div className="border-t border-sidebar-border" />
+                <div className="border-t border-white/10" />
             </div>
 
              <li>
@@ -165,6 +161,5 @@ export function AppSidebar() {
           </ul>
         </nav>
       </div>
-    </>
   );
 }
