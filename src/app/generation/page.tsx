@@ -16,16 +16,24 @@ import { CalendarIcon, Sparkles } from 'lucide-react';
 import { format, differenceInWeeks } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { DateRange } from 'react-day-picker';
-import { getGenerationData, GenerationData } from './actions';
+import { compileAndStoreGenerationData, getExistingGenerationData, GenerationData } from './actions';
 import { Badge } from '@/components/ui/badge';
 
-function GenerationSetup({ onDataFetched, setIsLoading }: { onDataFetched: (data: GenerationData | null) => void, setIsLoading: (loading: boolean) => void }) {
+function GenerationSetup({ 
+    onDataLoaded, 
+    setIsLoading, 
+    existingData 
+}: { 
+    onDataLoaded: (data: GenerationData | null) => void, 
+    setIsLoading: (loading: boolean) => void,
+    existingData: GenerationData | null
+}) {
   const [sessions, setSessions] = useState<AcademicSession[]>([]);
   const [semesters, setSemesters] = useState<Semester[]>([]);
   const [selectedSession, setSelectedSession] = useState('');
   const [selectedSemester, setSelectedSemester] = useState('');
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
-  const [isFetching, setIsFetching] = useState(false);
+  const [isCompiling, setIsCompiling] = useState(false);
   const { toast } = useToast();
 
   // Fetch sessions
@@ -51,23 +59,50 @@ function GenerationSetup({ onDataFetched, setIsLoading }: { onDataFetched: (data
     return () => unsubscribe();
   }, [selectedSession]);
 
-  const handleFetchData = async () => {
-    if (!selectedSemester || !dateRange?.from || !dateRange?.to) {
-      toast({ title: 'Missing Information', description: 'Please select a semester and a valid date range.', variant: 'destructive' });
+  // Fetch existing data when semester changes
+  useEffect(() => {
+    if (!selectedSemester) {
+        onDataLoaded(null);
+        setDateRange(undefined);
+        return;
+    };
+    
+    const fetchExistingData = async () => {
+        setIsLoading(true);
+        const { data, error } = await getExistingGenerationData(selectedSemester);
+        if (error) {
+            toast({ title: 'Error', description: error, variant: 'destructive' });
+        }
+        onDataLoaded(data);
+        if(data?.dateRange) {
+             setDateRange({
+                from: new Date(data.dateRange.from!),
+                to: new Date(data.dateRange.to!),
+            });
+        }
+        setIsLoading(false);
+    };
+
+    fetchExistingData();
+  }, [selectedSemester, onDataLoaded, setIsLoading, toast]);
+
+  const handleCompileData = async () => {
+    if (!selectedSemester || !selectedSession || !dateRange?.from || !dateRange?.to) {
+      toast({ title: 'Missing Information', description: 'Please select a session, semester, and a valid date range.', variant: 'destructive' });
       return;
     }
-    setIsFetching(true);
-    setIsLoading(true);
-    const { data, error } = await getGenerationData(selectedSemester);
-    if (error) {
-      toast({ title: 'Error', description: error, variant: 'destructive' });
-      onDataFetched(null);
+    setIsCompiling(true);
+    const { success, message } = await compileAndStoreGenerationData(selectedSemester, selectedSession, dateRange);
+    
+    if (success) {
+      toast({ title: 'Success', description: message });
+      // Refetch data after compiling
+      const { data } = await getExistingGenerationData(selectedSemester);
+      onDataLoaded(data);
     } else {
-      onDataFetched(data);
-      toast({ title: 'Success', description: 'Data for generation has been compiled.' });
+      toast({ title: 'Error', description: message, variant: 'destructive' });
     }
-    setIsFetching(false);
-    setIsLoading(false);
+    setIsCompiling(false);
   };
 
   const weeks = useMemo(() => {
@@ -76,12 +111,23 @@ function GenerationSetup({ onDataFetched, setIsLoading }: { onDataFetched: (data
     }
     return 0;
   }, [dateRange]);
+  
+  const compileButtonText = existingData ? 'Re-compile & Update Data' : 'Compile Data';
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>1. Generation Setup</CardTitle>
-        <CardDescription>Select the active semester and define the examination period.</CardDescription>
+        <div className="flex justify-between items-center">
+            <div>
+                <CardTitle>1. Generation Setup</CardTitle>
+                <CardDescription>Select the active semester and define the examination period.</CardDescription>
+            </div>
+            {existingData?.compiledAt && (
+                 <p className="text-xs text-muted-foreground">
+                    Last compiled: {format(new Date(existingData.compiledAt.seconds * 1000), 'PPP p')}
+                </p>
+            )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -128,8 +174,8 @@ function GenerationSetup({ onDataFetched, setIsLoading }: { onDataFetched: (data
            <div className="text-sm text-muted-foreground">
              {weeks > 0 && `Total available weeks: ${weeks}`}
            </div>
-           <Button onClick={handleFetchData} disabled={isFetching || !selectedSemester || !dateRange?.from || !dateRange?.to}>
-            {isFetching ? 'Fetching Data...' : 'Compile Data'}
+           <Button onClick={handleCompileData} disabled={isCompiling || !selectedSemester || !dateRange?.from || !dateRange?.to}>
+            {isCompiling ? 'Compiling...' : compileButtonText}
            </Button>
         </div>
       </CardContent>
@@ -151,16 +197,18 @@ const DataTable = ({ title, description, headers, children, isLoading }: { title
                     <Skeleton className="h-8 w-full" />
                 </div>
             ) : (
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            {headers.map(h => <TableHead key={h}>{h}</TableHead>)}
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {children}
-                    </TableBody>
-                </Table>
+                <div className="overflow-x-auto rounded-lg border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                {headers.map(h => <TableHead key={h}>{h}</TableHead>)}
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {children}
+                        </TableBody>
+                    </Table>
+                </div>
             )}
         </CardContent>
     </Card>
@@ -177,7 +225,7 @@ export default function GenerationPage() {
         <h1 className="text-3xl font-bold tracking-tight">Generate Timetable</h1>
       </div>
       
-      <GenerationSetup onDataFetched={setGenerationData} setIsLoading={setIsLoading} />
+      <GenerationSetup onDataLoaded={setGenerationData} setIsLoading={setIsLoading} existingData={generationData} />
       
       {generationData && (
           <>
@@ -193,7 +241,7 @@ export default function GenerationPage() {
                 headers={['Course Code', 'Offering Programs', 'Exam Type']}
                 isLoading={isLoading}
             >
-                {generationData.courses.map(c => (
+                {generationData.courses?.length > 0 ? generationData.courses.map(c => (
                     <TableRow key={c.id}>
                         <TableCell className="font-medium">{c.course_code}</TableCell>
                         <TableCell>
@@ -203,7 +251,7 @@ export default function GenerationPage() {
                         </TableCell>
                         <TableCell>{c.exam_type}</TableCell>
                     </TableRow>
-                ))}
+                )) : <TableRow><TableCell colSpan={3} className="text-center">No courses found.</TableCell></TableRow>}
             </DataTable>
             <DataTable
                 title="3. Staff List"
@@ -211,7 +259,7 @@ export default function GenerationPage() {
                 headers={['S/N', 'Name', 'College', 'Department', 'Phone Number']}
                 isLoading={isLoading}
             >
-                {generationData.staff.map((s, i) => (
+                {generationData.staff?.length > 0 ? generationData.staff.map((s, i) => (
                     <TableRow key={s.id}>
                         <TableCell>{i + 1}</TableCell>
                         <TableCell>{s.name}</TableCell>
@@ -219,7 +267,7 @@ export default function GenerationPage() {
                         <TableCell>{s.departmentName}</TableCell>
                         <TableCell>{s.phone}</TableCell>
                     </TableRow>
-                ))}
+                )) : <TableRow><TableCell colSpan={5} className="text-center">No staff found.</TableCell></TableRow>}
             </DataTable>
             <DataTable
                 title="4. Venue Information"
@@ -227,13 +275,13 @@ export default function GenerationPage() {
                 headers={['Hall Name', 'Venue Code', 'Exam Capacity']}
                 isLoading={isLoading}
             >
-                {generationData.venues.map(v => (
+                {generationData.venues?.length > 0 ? generationData.venues.map(v => (
                     <TableRow key={v.id}>
                         <TableCell>{v.name}</TableCell>
                         <TableCell>{v.code}</TableCell>
                         <TableCell>{v.capacity}</TableCell>
                     </TableRow>
-                ))}
+                )) : <TableRow><TableCell colSpan={3} className="text-center">No venues found.</TableCell></TableRow>}
             </DataTable>
           </>
       )}

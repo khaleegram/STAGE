@@ -1,14 +1,19 @@
-
 'use server';
 
 import { db } from '@/lib/firebase';
 import { Course, Staff, Venue } from '@/lib/types';
-import { collection, getDocs, query, orderBy, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import type { DateRange } from 'react-day-picker';
 
 export interface GenerationData {
     courses: (Course & { offeringPrograms: string[] })[];
     staff: Staff[];
     venues: Venue[];
+    dateRange?: DateRange;
+    compiledAt?: {
+        seconds: number;
+        nanoseconds: number;
+    };
 }
 
 // Helper to get program and level details from a levelId
@@ -36,14 +41,16 @@ async function getProgramAndLevelDetails(levelId: string): Promise<{ programName
 }
 
 
-export async function getGenerationData(semesterId: string): Promise<{ data: GenerationData | null; error: string | null; }> {
-    if (!semesterId) {
-        return { data: null, error: "Semester ID must be provided." };
+export async function compileAndStoreGenerationData(
+    semesterId: string, 
+    sessionId: string,
+    dateRange: DateRange
+): Promise<{ success: boolean; message: string; }> {
+    if (!semesterId || !sessionId || !dateRange.from || !dateRange.to) {
+        return { success: false, message: "Missing semester, session, or a complete date range." };
     }
 
     try {
-        const semesterNumber = semesterId.endsWith('_1') ? 1 : 2; // Simple check, might need adjustment based on actual ID format
-
         // 1. Fetch all Venues
         const venuesQuery = query(collection(db, 'venues'), orderBy('name'));
         const venuesSnapshot = await getDocs(venuesQuery);
@@ -56,7 +63,7 @@ export async function getGenerationData(semesterId: string): Promise<{ data: Gen
         const staffQuery = query(collection(db, 'staffs'), orderBy('name'));
         const staffSnapshot = await getDocs(staffQuery);
         const staffList: Staff[] = await Promise.all(staffSnapshot.docs.map(async (s) => {
-             const data = s.data();
+             const { createdAt, ...data } = s.data();
              const staff: Staff = {
                  id: s.id,
                  name: data.name,
@@ -115,7 +122,6 @@ export async function getGenerationData(semesterId: string): Promise<{ data: Gen
                 const existingCourse = coursesMap.get(ccData.base_course_id)!;
                 existingCourse.offeringPrograms = [...new Set([...existingCourse.offeringPrograms, ...offeringPrograms])];
             } else {
-                 // This case is unlikely if data is consistent, but as a fallback:
                  const baseCourseSnap = await getDoc(doc(db, 'courses', ccData.base_course_id));
                  if (baseCourseSnap.exists()) {
                      const courseData = baseCourseSnap.data();
@@ -131,19 +137,64 @@ export async function getGenerationData(semesterId: string): Promise<{ data: Gen
         
         const allCourses = Array.from(coursesMap.values());
 
-        return {
-            data: {
-                courses: allCourses,
-                staff: staffList,
-                venues: venues
-            },
-            error: null
+        const compiledData: Omit<GenerationData, 'compiledAt'> = {
+            courses: allCourses,
+            staff: staffList,
+            venues: venues,
+            dateRange: dateRange,
         };
+
+        // 4. Store the compiled data
+        const generationDocRef = doc(db, 'generation_data', semesterId);
+        await setDoc(generationDocRef, {
+            ...compiledData,
+            semesterId: semesterId,
+            sessionId: sessionId,
+            compiledAt: serverTimestamp(),
+        });
+        
+        return {
+            success: true,
+            message: 'Data compiled and saved successfully.'
+        };
+
     } catch (error) {
-        console.error("Error fetching data for timetable generation: ", error);
+        console.error("Error compiling and storing data: ", error);
         if (error instanceof Error) {
-            return { data: null, error: `An unexpected error occurred: ${error.message}` };
+            return { success: false, message: `An unexpected error occurred: ${error.message}` };
         }
-        return { data: null, error: 'An unexpected error occurred while fetching data.' };
+        return { success: false, message: 'An unexpected error occurred while compiling data.' };
+    }
+}
+
+export async function getExistingGenerationData(semesterId: string): Promise<{ data: GenerationData | null; error: string | null; }> {
+    if (!semesterId) {
+        return { data: null, error: 'Semester ID is required.' };
+    }
+    try {
+        const docRef = doc(db, 'generation_data', semesterId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            // Convert Firestore Timestamps to serializable format for the client
+            const serializableData: GenerationData = {
+                ...data,
+                dateRange: {
+                    from: data.dateRange.from.toDate(),
+                    to: data.dateRange.to.toDate(),
+                },
+                compiledAt: {
+                    seconds: data.compiledAt.seconds,
+                    nanoseconds: data.compiledAt.nanoseconds,
+                }
+            } as GenerationData;
+            return { data: serializableData, error: null };
+        } else {
+            return { data: null, error: null }; // No existing data is not an error
+        }
+    } catch (error) {
+        console.error('Error fetching existing generation data:', error);
+        return { data: null, error: 'Failed to fetch existing data.' };
     }
 }
