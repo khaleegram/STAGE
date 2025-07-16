@@ -1,8 +1,8 @@
+
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Menu,
   Database,
   LayoutDashboard,
   Building2,
@@ -35,13 +35,11 @@ const SidebarContent = () => {
   const isMobile = useIsMobile();
 
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    // On desktop, if the sidebar is collapsed, the first click should expand it.
     if (!isMobile && !isOpen) {
       e.preventDefault();
       setOpen(true);
       return;
     }
-    // On mobile, clicking a link should close the sheet.
     if (isMobile) {
       setOpen(false);
     }
@@ -49,7 +47,6 @@ const SidebarContent = () => {
 
   const toggleDataCreationMenu = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // If collapsed on desktop, expand first.
     if (!isOpen && !isMobile) {
         setOpen(true);
         setIsDataCreationOpen(true);
@@ -58,7 +55,6 @@ const SidebarContent = () => {
     setIsDataCreationOpen(!isDataCreationOpen);
   }
   
-  // Ensure the data creation menu stays open on page load if the path matches
   useEffect(() => {
     setIsDataCreationOpen(pathname.startsWith('/data-creation'));
   }, [pathname]);
@@ -127,8 +123,8 @@ const SidebarContent = () => {
         "bg-black/30 backdrop-blur-xl border-r border-white/10"
       )}
     >
-      <div className="flex items-center justify-between p-4 h-16 shrink-0">
-        <Link href="/" className={cn("flex items-center gap-2", !isOpen && "w-full justify-center")}>
+      <div className="p-4 h-16 shrink-0">
+         <button onClick={toggleSidebar} className={cn("flex items-center gap-2 w-full", !isOpen && "justify-center")}>
             <svg
                 width="28"
                 height="28"
@@ -148,7 +144,7 @@ const SidebarContent = () => {
           <span className={cn("font-bold text-lg", !isOpen && "sm:hidden")}>
             Al-Qalam
           </span>
-        </Link>
+        </button>
       </div>
 
       <nav className="flex-1 overflow-y-auto overflow-x-hidden p-2">
@@ -194,13 +190,6 @@ const SidebarContent = () => {
            <NavLink href="/settings" label="Settings" icon={<Settings size={20} />} />
         </ul>
       </nav>
-
-      <div className="p-4 border-t border-sidebar-border/50 h-16 flex items-center justify-center shrink-0">
-        <Button variant="ghost" onClick={toggleSidebar} className="text-sidebar-foreground hover:text-primary hidden sm:flex">
-          <Menu size={24} />
-          <span className="sr-only">Toggle Sidebar</span>
-        </Button>
-      </div>
     </div>
   );
 }
@@ -208,7 +197,7 @@ const SidebarContent = () => {
 
 export function AppSidebar() {
   const isMobile = useIsMobile();
-  const { open, setOpen } = useSidebar();
+  const { open, setOpen, toggleSidebar } = useSidebar();
 
   if (isMobile === undefined) {
     return (
@@ -221,18 +210,16 @@ export function AppSidebar() {
   if (isMobile) {
     return (
         <Sheet open={open} onOpenChange={setOpen}>
-          {/* The trigger for mobile is now in the main ClientNavbar */}
-          <SheetContent side="left" className="p-0 border-r-0 w-64 bg-transparent">
-            <SheetHeader>
-                <SheetTitle className="sr-only">Main Menu</SheetTitle>
-            </SheetHeader>
+           <SheetContent side="left" className="p-0 border-r-0 w-64 bg-transparent">
+             <SheetHeader>
+                 <SheetTitle className="sr-only">Main Menu</SheetTitle>
+             </SheetHeader>
             <SidebarContent />
           </SheetContent>
         </Sheet>
     )
   }
 
-  // Desktop sidebar
   return (
     <>
       <div className={cn(
@@ -241,7 +228,7 @@ export function AppSidebar() {
       )}>
         <SidebarContent />
       </div>
-      <Navbar />
+      <Navbar onToggleSidebar={toggleSidebar} />
     </>
   );
 }
