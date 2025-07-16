@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { db } from '@/lib/firebase';
 import { AcademicSession, Semester, Level } from '@/lib/types';
-import { collection, onSnapshot, query, orderBy, getDocs, where, doc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, getDocs, where, doc, getDoc } from 'firebase/firestore';
 import { PlusCircle, CheckCircle, Lock, PlayCircle, Trash2, Edit, Users, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
