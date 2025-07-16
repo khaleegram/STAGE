@@ -104,7 +104,7 @@ const ProgramsPage: React.FC = () => {
   );
 
   return (
-    <section className="p-4 sm:p-6 lg:p-8 rounded-lg">
+    <section className="bg-card/80 dark:bg-card/60 p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg backdrop-blur-sm">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-6 text-foreground">Manage Programs</h1>
 
@@ -138,7 +138,7 @@ const ProgramsPage: React.FC = () => {
                         <h2 className="text-xl font-semibold mb-2 text-primary">{deptName}</h2>
                          <div className="overflow-x-auto rounded-lg border">
                             <table className="min-w-full table-auto">
-                                <thead className="bg-muted">
+                                <thead className="bg-muted/50">
                                     <tr>
                                         <th className="p-4 text-left font-semibold">#</th>
                                         <th className="p-4 text-left font-semibold">Program Name</th>
@@ -146,7 +146,7 @@ const ProgramsPage: React.FC = () => {
                                         <th className="p-4 text-left font-semibold">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y">
+                                <tbody className="divide-y divide-border/50">
                                     {progArray.sort((a, b) => a.name.localeCompare(b.name)).map((prog, index) => (
                                         <tr key={prog.id}>
                                             <td className="p-4">{index + 1}</td>

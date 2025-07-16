@@ -22,7 +22,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
@@ -34,7 +34,6 @@ const SidebarContent = () => {
   const [isDataCreationOpen, setIsDataCreationOpen] = useState(pathname.startsWith('/data-creation'));
 
   const handleLinkClick = () => {
-    // This will be called by mobile sidebar to close on navigation
     const isMobile = window.innerWidth < 768;
     if(isMobile) {
       setOpen(false);
@@ -42,7 +41,7 @@ const SidebarContent = () => {
   };
 
   const toggleDataCreationMenu = (e: React.MouseEvent) => {
-    e.stopPropagation(); // prevent link navigation if it's a button
+    e.stopPropagation();
     setIsDataCreationOpen(!isDataCreationOpen);
   }
 
@@ -52,7 +51,7 @@ const SidebarContent = () => {
       "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200",
       isActive
         ? 'bg-primary/20 text-primary'
-        : 'text-sidebar-foreground hover:bg-sidebar-accent/10'
+        : 'text-white hover:bg-cream/10 hover:text-primary'
     );
   }
   
@@ -62,7 +61,7 @@ const SidebarContent = () => {
       "flex items-center gap-3 pl-4 pr-2 py-2 text-sm rounded-lg transition-colors duration-200",
       isActive
         ? 'bg-primary/20 text-primary'
-        : 'text-gray-300 hover:bg-sidebar-accent/10'
+        : 'text-gray-300 hover:bg-cream/10 hover:text-primary'
     );
   }
 
@@ -88,11 +87,10 @@ const SidebarContent = () => {
     <div
       data-state={isOpen ? 'open' : 'collapsed'}
       className={cn(
-        `h-full bg-sidebar backdrop-blur-xl border-r border-sidebar-border shadow-xl flex flex-col transition-all duration-300 ease-in-out group`,
-        isOpen ? 'w-64' : 'w-20'
+        `h-full bg-sidebar flex flex-col transition-all duration-300 ease-in-out group`
       )}
     >
-      <div className="flex items-center justify-between p-4 border-b border-sidebar-border h-16">
+      <div className="flex items-center justify-between p-4 h-16">
         <Link href="/" className={cn("flex items-center gap-2", !isOpen && "w-full justify-center")}>
             <svg
                 width="28"
@@ -178,31 +176,43 @@ export function AppSidebar() {
 
   if (isMobile === undefined) {
     return (
-        <div className="w-20 md:w-64 h-screen">
-             <Skeleton className="h-full w-full" />
-        </div>
+      <div className="w-20 md:w-64 h-screen">
+        <Skeleton className="h-full w-full" />
+      </div>
     );
   }
   
   if (isMobile) {
     return (
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden">
-              <Menu className="text-foreground" />
-              <span className="sr-only">Toggle Sidebar</span>
-            </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="p-0 border-r-0 w-64 bg-transparent">
-          <SheetHeader>
-            <SheetTitle className="sr-only">Main Menu</SheetTitle>
-          </SheetHeader>
-          <SidebarContent />
-        </SheetContent>
-      </Sheet>
+      <header className="sm:hidden fixed top-0 left-0 w-full z-40 flex items-center justify-between bg-sidebar px-4 py-3 shadow-lg">
+        <Link href="/" className="flex items-center gap-2">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span className="font-bold text-lg text-sidebar-foreground">Al-Qalam</span>
+        </Link>
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="text-sidebar-foreground" />
+                <span className="sr-only">Toggle Sidebar</span>
+              </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="p-0 border-r-0 w-64 bg-transparent">
+            <SheetHeader>
+                <SheetTitle className="sr-only">Main Menu</SheetTitle>
+            </SheetHeader>
+            <SidebarContent />
+          </SheetContent>
+        </Sheet>
+      </header>
     )
   }
 
   // Desktop sidebar
-  return <SidebarContent />;
+  return (
+    <div className={cn("fixed top-0 left-0 z-40 h-screen transition-all duration-300 ease-in-out", open ? 'w-64' : 'w-20')}>
+      <SidebarContent />
+    </div>
+  );
 }

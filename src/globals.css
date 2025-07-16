@@ -4,25 +4,25 @@
 
 @layer base {
   :root {
-    --background: 240 5% 96%; /* Light gray */
-    --foreground: 240 10% 3.9%;
+    --background: 0 0% 100%;
+    --foreground: 224 71.4% 4.1%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 224 71.4% 4.1%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 221 44% 48%; /* Deep Blue #3F51B5 */
-    --primary-foreground: 0 0% 98%;
-    --secondary: 174 63% 40%; /* Soft Teal #26A69A */
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 5% 90%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 174 63% 40%; /* Soft Teal #26A69A for accents */
-    --accent-foreground: 0 0% 98%;
+    --popover-foreground: 224 71.4% 4.1%;
+    --primary: 45 93% 47%; /* Gold/Yellow */
+    --primary-foreground: 224 71.4% 4.1%;
+    --secondary: 220 14.3% 95.9%;
+    --secondary-foreground: 224 71.4% 4.1%;
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
+    --accent: 220 14.3% 95.9%;
+    --accent-foreground: 224 71.4% 4.1%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 221 44% 48%; /* Deep Blue */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 224 71.4% 4.1%;
     --radius: 0.5rem;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
@@ -30,43 +30,53 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
 
+    /* Custom colors from user's design */
+    --maroon: 0 100% 25%;
+    --maroon-dark: 0 100% 20%;
+    --cream: 30 56% 90%;
+
     /* Sidebar specific variables */
-    --sidebar-background: 225 39% 32%;
+    --sidebar-background: 1 83% 15%; /* Dark Maroon/Almost black */
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-border: 225 39% 42%;
-    --sidebar-accent: 221 44% 48%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-ring: 221 44% 48%;
+    --sidebar-border: 45 93% 57%; /* Gold border */
+    --sidebar-accent: 45 93% 47%; /* Gold for active/hover */
+    --sidebar-accent-foreground: 240 10% 3.9%;
+    --sidebar-ring: 45 93% 57%;
   }
 
   .dark {
-    --background: 240 10% 3.9%;
+    --background: 224 71.4% 4.1%;
     --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
+    --card: 224 71.4% 4.1%;
     --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
+    --popover: 224 71.4% 4.1%;
     --popover-foreground: 0 0% 98%;
-    --primary: 221 44% 58%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 174 63% 50%;
+    --primary: 45 93% 47%;
+    --primary-foreground: 224 71.4% 4.1%;
+    --secondary: 220 13% 18%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 174 63% 50%;
+    --muted: 220 13% 18%;
+    --muted-foreground: 220 8.9% 55.9%;
+    --accent: 220 13% 18%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 221 44% 58%;
-
+    --border: 220 13% 18%;
+    --input: 220 13% 18%;
+    --ring: 45 93% 47%;
+    
+    /* Custom colors from user's design */
+    --maroon: 0 100% 25%;
+    --maroon-dark: 0 100% 20%;
+    --cream: 30 56% 90%;
+    
     /* Sidebar specific variables */
     --sidebar-background: 240 4% 10%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-border: 240 4% 20%;
-    --sidebar-accent: 221 44% 58%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-ring: 221 44% 58%;
+    --sidebar-border: 45 93% 57%;
+    --sidebar-accent: 45 93% 47%;
+    --sidebar-accent-foreground: 240 10% 3.9%;
+    --sidebar-ring: 45 93% 57%;
   }
 }
 

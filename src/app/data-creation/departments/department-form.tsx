@@ -35,30 +35,18 @@ export function DepartmentForm({ department, colleges, onClose }: DepartmentForm
   const { toast } = useToast();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
-  const prefix = "B.SC. ";
-  const [appendedName, setAppendedName] = useState(
-    department ? department.name.replace(prefix, '') : ''
-  );
+  const [departmentName, setDepartmentName] = useState(department?.name || '');
   const [selectedCollegeId, setSelectedCollegeId] = useState(department?.collegeId || '');
   
   useEffect(() => {
     if (department) {
-      setAppendedName(department.name.replace(prefix, ''));
+      setDepartmentName(department.name);
       setSelectedCollegeId(department.collegeId);
     } else {
-      setAppendedName('');
+      setDepartmentName('');
       setSelectedCollegeId('');
     }
   }, [department]);
-
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (value.toUpperCase().startsWith(prefix)) {
-        setAppendedName(toTitleCase(value.slice(prefix.length)));
-    } else {
-        setAppendedName(toTitleCase(value));
-    }
-  };
 
   const action = department ? updateDepartment.bind(null, department.id) : addDepartment;
   const [state, formAction] = useActionState(action, { success: false, message: '' });
@@ -94,7 +82,7 @@ export function DepartmentForm({ department, colleges, onClose }: DepartmentForm
   return (
     <>
       <form action={formAction} className="space-y-4">
-        <input type="hidden" name="name" value={prefix + appendedName} />
+        <input type="hidden" name="name" value={departmentName} />
         <input type="hidden" name="collegeId" value={selectedCollegeId} />
 
         <div>
@@ -118,8 +106,8 @@ export function DepartmentForm({ department, colleges, onClose }: DepartmentForm
           <Input
             id="department-name"
             type="text"
-            value={prefix + appendedName}
-            onChange={handleNameChange}
+            value={departmentName}
+            onChange={(e) => setDepartmentName(toTitleCase(e.target.value))}
             required
             placeholder="e.g., Computer Science"
           />

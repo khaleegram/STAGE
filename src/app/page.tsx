@@ -28,7 +28,7 @@ interface StudentPopulationData {
 
 function StatCard({ title, value, icon: Icon, isLoading }: { title: string, value: string | number, icon: React.ElementType, isLoading: boolean }) {
     return (
-        <Card>
+        <Card className="bg-card/80 dark:bg-card/60 backdrop-blur-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">{title}</CardTitle>
                 <Icon className="h-4 w-4 text-muted-foreground" />
@@ -109,7 +109,7 @@ function RecentTimetables() {
     }, []);
 
     return (
-        <Card>
+        <Card className="bg-card/80 dark:bg-card/60 backdrop-blur-sm">
             <CardHeader>
                 <CardTitle>Recent Timetables</CardTitle>
                 <CardDescription>A list of the most recently generated timetables.</CardDescription>
@@ -188,7 +188,7 @@ function StudentPopulationChart() {
     }
 
     return (
-        <Card>
+        <Card className="bg-card/80 dark:bg-card/60 backdrop-blur-sm">
             <CardHeader>
                 <CardTitle>Student Population Overview</CardTitle>
                 <CardDescription>Number of students across different levels for each program.</CardDescription>
@@ -201,11 +201,11 @@ function StudentPopulationChart() {
                         <YAxis />
                         <Tooltip />
                         <Legend />
-                        <Bar dataKey="100L" stackId="a" fill="#8884d8" />
-                        <Bar dataKey="200L" stackId="a" fill="#82ca9d" />
-                        <Bar dataKey="300L" stackId="a" fill="#ffc658" />
-                        <Bar dataKey="400L" stackId="a" fill="#ff8042" />
-                        <Bar dataKey="500L" stackId="a" fill="#d0ed57" />
+                        <Bar dataKey="100L" stackId="a" fill="hsl(var(--chart-1))" />
+                        <Bar dataKey="200L" stackId="a" fill="hsl(var(--chart-2))" />
+                        <Bar dataKey="300L" stackId="a" fill="hsl(var(--chart-3))" />
+                        <Bar dataKey="400L" stackId="a" fill="hsl(var(--chart-4))" />
+                        <Bar dataKey="500L" stackId="a" fill="hsl(var(--chart-5))" />
                     </BarChart>
                 </ResponsiveContainer>
             </CardContent>

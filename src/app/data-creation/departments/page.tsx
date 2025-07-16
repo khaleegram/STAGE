@@ -91,7 +91,7 @@ const DepartmentsPage: React.FC = () => {
   );
 
   return (
-    <section className="p-4 sm:p-6 lg:p-8 rounded-lg">
+    <section className="bg-card/80 dark:bg-card/60 p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg backdrop-blur-sm">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-6 text-foreground">Manage Departments</h1>
 
@@ -122,7 +122,7 @@ const DepartmentsPage: React.FC = () => {
                 {/* Desktop Table View */}
                 <div className="overflow-x-auto hidden sm:block rounded-lg border">
                   <table className="min-w-full table-auto">
-                    <thead className="bg-muted">
+                    <thead className="bg-muted/50">
                       <tr>
                         <th className="p-4 text-left font-semibold">#</th>
                         <th className="p-4 text-left font-semibold">Department Name</th>
@@ -130,7 +130,7 @@ const DepartmentsPage: React.FC = () => {
                         <th className="p-4 text-left font-semibold">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y">
+                    <tbody className="divide-y divide-border/50">
                       {filteredDepartments.map((dept, index) => (
                         <tr key={dept.id}>
                           <td className="p-4">{index + 1}</td>
@@ -157,7 +157,7 @@ const DepartmentsPage: React.FC = () => {
                 {/* Mobile Card View */}
                 <div className="space-y-4 block sm:hidden">
                   {filteredDepartments.map((dept, index) => (
-                    <div key={dept.id} className="bg-card p-4 rounded-lg shadow-sm border">
+                    <div key={dept.id} className="bg-card/80 p-4 rounded-lg shadow-sm border">
                       <div className="flex justify-between items-start">
                         <div>
                           <h4 className="font-bold text-primary">#{index + 1}</h4>
