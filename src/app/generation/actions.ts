@@ -2,14 +2,16 @@
 
 import { db } from '@/lib/firebase';
 import { Course, Staff, Venue } from '@/lib/types';
-import { collection, getDocs, query, orderBy, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, doc, getDoc, setDoc, serverTimestamp, addDoc, limit, where } from 'firebase/firestore';
 import type { DateRange } from 'react-day-picker';
 
 export interface GenerationData {
+    id: string; // The snapshot ID
     courses: (Course & { offeringPrograms: string[] })[];
     staff: Staff[];
     venues: Venue[];
     dateRange?: DateRange;
+    additionalConstraints?: string;
     compiledAt?: {
         seconds: number;
         nanoseconds: number;
@@ -44,7 +46,8 @@ async function getProgramAndLevelDetails(levelId: string): Promise<{ programName
 export async function compileAndStoreGenerationData(
     semesterId: string, 
     sessionId: string,
-    dateRange: DateRange
+    dateRange: DateRange,
+    additionalConstraints: string,
 ): Promise<{ success: boolean; message: string; }> {
     if (!semesterId || !sessionId || !dateRange.from || !dateRange.to) {
         return { success: false, message: "Missing semester, session, or a complete date range." };
@@ -92,7 +95,6 @@ export async function compileAndStoreGenerationData(
         const regularCoursesSnapshot = await getDocs(coursesQuery);
         for (const courseDoc of regularCoursesSnapshot.docs) {
             const courseData = courseDoc.data();
-            // Omit the non-serializable 'createdAt' field
             const { createdAt, ...serializableData } = courseData;
             
             const { programName } = await getProgramAndLevelDetails(courseData.levelId);
@@ -118,7 +120,6 @@ export async function compileAndStoreGenerationData(
             }
 
             if (coursesMap.has(ccData.base_course_id)) {
-                // Update existing course with combined offerings
                 const existingCourse = coursesMap.get(ccData.base_course_id)!;
                 existingCourse.offeringPrograms = [...new Set([...existingCourse.offeringPrograms, ...offeringPrograms])];
             } else {
@@ -137,25 +138,24 @@ export async function compileAndStoreGenerationData(
         
         const allCourses = Array.from(coursesMap.values());
 
-        const compiledData: Omit<GenerationData, 'compiledAt'> = {
+        const compiledData: Omit<GenerationData, 'id' | 'compiledAt'> = {
             courses: allCourses,
             staff: staffList,
             venues: venues,
             dateRange: dateRange,
+            additionalConstraints: additionalConstraints,
         };
 
-        // 4. Store the compiled data
-        const generationDocRef = doc(db, 'generation_data', semesterId);
-        await setDoc(generationDocRef, {
+        // 4. Store the compiled data in a new snapshot document
+        const snapshotCollectionRef = collection(db, 'academic_sessions', sessionId, 'semesters', semesterId, 'generation_snapshots');
+        await addDoc(snapshotCollectionRef, {
             ...compiledData,
-            semesterId: semesterId,
-            sessionId: sessionId,
             compiledAt: serverTimestamp(),
         });
         
         return {
             success: true,
-            message: 'Data compiled and saved successfully.'
+            message: 'Data snapshot created successfully.'
         };
 
     } catch (error) {
@@ -167,18 +167,59 @@ export async function compileAndStoreGenerationData(
     }
 }
 
-export async function getExistingGenerationData(semesterId: string): Promise<{ data: GenerationData | null; error: string | null; }> {
-    if (!semesterId) {
-        return { data: null, error: 'Semester ID is required.' };
+
+export async function getGenerationSnapshots(sessionId: string, semesterId: string): Promise<{ data: GenerationData[] | null; error: string | null; }> {
+    if (!sessionId || !semesterId) {
+        return { data: null, error: 'Session and Semester IDs are required.' };
     }
     try {
-        const docRef = doc(db, 'generation_data', semesterId);
+        const snapshotsQuery = query(
+            collection(db, 'academic_sessions', sessionId, 'semesters', semesterId, 'generation_snapshots'),
+            orderBy('compiledAt', 'desc')
+        );
+        const snapshotDocs = await getDocs(snapshotsQuery);
+
+        if (snapshotDocs.empty) {
+            return { data: [], error: null };
+        }
+        
+        const snapshots = snapshotDocs.docs.map(doc => {
+             const data = doc.data();
+             return {
+                id: doc.id,
+                ...data,
+                dateRange: {
+                    from: data.dateRange.from.toDate(),
+                    to: data.dateRange.to.toDate(),
+                },
+                compiledAt: {
+                    seconds: data.compiledAt.seconds,
+                    nanoseconds: data.compiledAt.nanoseconds,
+                }
+            } as GenerationData;
+        });
+
+        return { data: snapshots, error: null };
+
+    } catch (error) {
+        console.error('Error fetching snapshots:', error);
+        return { data: null, error: 'Failed to fetch snapshots.' };
+    }
+}
+
+
+export async function getGenerationSnapshotById(sessionId: string, semesterId: string, snapshotId: string): Promise<{ data: GenerationData | null; error: string | null; }> {
+    if (!sessionId || !semesterId || !snapshotId) {
+        return { data: null, error: 'Session, Semester, and Snapshot IDs are required.' };
+    }
+    try {
+        const docRef = doc(db, 'academic_sessions', sessionId, 'semesters', semesterId, 'generation_snapshots', snapshotId);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
             const data = docSnap.data();
-            // Convert Firestore Timestamps to serializable format for the client
             const serializableData: GenerationData = {
+                id: docSnap.id,
                 ...data,
                 dateRange: {
                     from: data.dateRange.from.toDate(),
@@ -191,10 +232,10 @@ export async function getExistingGenerationData(semesterId: string): Promise<{ d
             } as GenerationData;
             return { data: serializableData, error: null };
         } else {
-            return { data: null, error: null }; // No existing data is not an error
+            return { data: null, error: "Snapshot not found." };
         }
     } catch (error) {
-        console.error('Error fetching existing generation data:', error);
+        console.error('Error fetching generation snapshot:', error);
         return { data: null, error: 'Failed to fetch existing data.' };
     }
 }

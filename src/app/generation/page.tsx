@@ -13,11 +13,11 @@ import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarIcon, Sparkles, Clock, AlertTriangle, PlusCircle, X } from 'lucide-react';
+import { CalendarIcon, Sparkles, Clock, AlertTriangle, PlusCircle, X, History, ChevronDown } from 'lucide-react';
 import { format, differenceInWeeks, eachDayOfInterval, getDay, parse } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { DateRange } from 'react-day-picker';
-import { compileAndStoreGenerationData, getExistingGenerationData, GenerationData } from './actions';
+import { compileAndStoreGenerationData, getGenerationSnapshots, getGenerationSnapshotById, GenerationData } from './actions';
 import { generateExamTimetable, GenerateExamTimetableInput, GenerateExamTimetableOutput } from '@/ai/flows/generate-exam-timetable';
 import { Badge } from '@/components/ui/badge';
 import { TimetableDisplay } from '@/components/timetable/timetable-display';
@@ -26,6 +26,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { saveTimetable } from '@/app/timetables/actions';
 import { Label } from '@/components/ui/label';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+
 
 // --- Time Slot Logic & Components ---
 interface TimeSlot {
@@ -148,14 +150,14 @@ function AddSlotModal({ isOpen, onClose, onAddSlot }: { isOpen: boolean, onClose
 function GenerationSetup({ 
     onDataLoaded, 
     setIsLoading, 
-    existingData,
+    generationData,
     onDateChange,
     additionalConstraints,
     setAdditionalConstraints
 }: { 
     onDataLoaded: (data: GenerationData | null) => void, 
     setIsLoading: (loading: boolean) => void,
-    existingData: GenerationData | null,
+    generationData: GenerationData | null,
     onDateChange: (range: DateRange | undefined) => void,
     additionalConstraints: string,
     setAdditionalConstraints: (value: string) => void
@@ -166,7 +168,24 @@ function GenerationSetup({
   const [selectedSemester, setSelectedSemester] = useState('');
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [isCompiling, setIsCompiling] = useState(false);
+  const [snapshotHistory, setSnapshotHistory] = useState<GenerationData[]>([]);
+
   const { toast } = useToast();
+
+  const handleSetData = useCallback((data: GenerationData | null) => {
+    onDataLoaded(data);
+    if(data?.dateRange) {
+        const range = {
+            from: new Date(data.dateRange.from!),
+            to: new Date(data.dateRange.to!),
+        };
+        setDateRange(range);
+        onDateChange(range);
+    }
+     if (data?.additionalConstraints) {
+      setAdditionalConstraints(data.additionalConstraints);
+    }
+  }, [onDataLoaded, onDateChange, setAdditionalConstraints]);
 
   // Fetch sessions
   useEffect(() => {
@@ -193,8 +212,9 @@ function GenerationSetup({
 
   // Fetch existing data when semester changes
   useEffect(() => {
-    if (!selectedSemester) {
-        onDataLoaded(null);
+    if (!selectedSemester || !selectedSession) {
+        handleSetData(null);
+        setSnapshotHistory([]);
         setDateRange(undefined);
         onDateChange(undefined);
         return;
@@ -202,27 +222,17 @@ function GenerationSetup({
     
     const fetchExistingData = async () => {
         setIsLoading(true);
-        const { data, error } = await getExistingGenerationData(selectedSemester);
+        const { data, error } = await getGenerationSnapshots(selectedSession, selectedSemester);
         if (error) {
             toast({ title: 'Error', description: error, variant: 'destructive' });
         }
-        onDataLoaded(data);
-        if(data?.dateRange) {
-            const range = {
-                from: new Date(data.dateRange.from!),
-                to: new Date(data.dateRange.to!),
-            };
-            setDateRange(range);
-            onDateChange(range); // Pass date up to parent
-        } else {
-            setDateRange(undefined);
-            onDateChange(undefined);
-        }
+        setSnapshotHistory(data || []);
+        handleSetData(data?.[0] || null); // Load latest snapshot by default
         setIsLoading(false);
     };
 
     fetchExistingData();
-  }, [selectedSemester, onDataLoaded, setIsLoading, toast, onDateChange]);
+  }, [selectedSemester, selectedSession, handleSetData, setIsLoading, toast, onDateChange]);
 
   const handleDateSelect = (range: DateRange | undefined) => {
       setDateRange(range);
@@ -235,18 +245,30 @@ function GenerationSetup({
       return;
     }
     setIsCompiling(true);
-    const { success, message } = await compileAndStoreGenerationData(selectedSemester, selectedSession, dateRange);
+    const { success, message } = await compileAndStoreGenerationData(selectedSemester, selectedSession, dateRange, additionalConstraints);
     
     if (success) {
       toast({ title: 'Success', description: message });
-      // Refetch data after compiling
-      const { data } = await getExistingGenerationData(selectedSemester);
-      onDataLoaded(data);
+      // Refetch snapshots after compiling
+      const { data } = await getGenerationSnapshots(selectedSession, selectedSemester);
+      setSnapshotHistory(data || []);
+      handleSetData(data?.[0] || null);
     } else {
       toast({ title: 'Error', description: message, variant: 'destructive' });
     }
     setIsCompiling(false);
   };
+  
+  const handleLoadSnapshot = async (snapshotId: string) => {
+    if (!selectedSession || !selectedSemester) return;
+    setIsLoading(true);
+    const { data, error } = await getGenerationSnapshotById(selectedSession, selectedSemester, snapshotId);
+     if (error) {
+        toast({ title: 'Error', description: error, variant: 'destructive' });
+    }
+    handleSetData(data);
+    setIsLoading(false);
+  }
 
   const weeks = useMemo(() => {
     if (dateRange?.from && dateRange?.to) {
@@ -255,20 +277,33 @@ function GenerationSetup({
     return 0;
   }, [dateRange]);
   
-  const compileButtonText = existingData ? 'Re-compile & Update Data' : 'Compile Data';
+  const compileButtonText = 'Compile New Data Snapshot';
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-start">
             <div>
                 <CardTitle>1. Generation Setup</CardTitle>
-                <CardDescription>Select the active semester and define the examination period.</CardDescription>
+                <CardDescription>Select the active semester, define the examination period, and compile a data snapshot.</CardDescription>
             </div>
-            {existingData?.compiledAt && (
-                 <p className="text-xs text-muted-foreground">
-                    Last compiled: {format(new Date(existingData.compiledAt.seconds * 1000), 'PPP p')}
-                </p>
+            {snapshotHistory.length > 0 && (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline">
+                            <History className="mr-2 h-4 w-4" />
+                            {snapshotHistory.length} Saved Snapshot{snapshotHistory.length > 1 ? 's' : ''}
+                            <ChevronDown className="ml-2 h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        {snapshotHistory.map(snap => (
+                            <DropdownMenuItem key={snap.id} onSelect={() => handleLoadSnapshot(snap.id)}>
+                                {format(new Date(snap.compiledAt!.seconds * 1000), 'PPP p')}
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
             )}
         </div>
       </CardHeader>
@@ -322,7 +357,13 @@ function GenerationSetup({
         </div>
         <div className="flex items-center justify-between">
            <div className="text-sm text-muted-foreground">
-             {weeks > 0 && `Total available weeks: ${weeks}`}
+             {generationData?.compiledAt ? (
+                 <p className="text-xs">
+                    Viewing snapshot from: {format(new Date(generationData.compiledAt.seconds * 1000), 'PPP p')}
+                </p>
+             ) : (
+                weeks > 0 && `Total available weeks: ${weeks}`
+             )}
            </div>
            <Button onClick={handleCompileData} disabled={isCompiling || !selectedSemester || !dateRange?.from || !dateRange?.to}>
             {isCompiling ? 'Compiling...' : compileButtonText}
@@ -401,7 +442,7 @@ const TimeSlotsDisplay = ({ dailySlots, isLoading, setDailySlots }: { dailySlots
                     </div>
                 ) : (
                      <div className="text-center py-8 text-muted-foreground">
-                        <p>Select a date range to see and edit the default time slots.</p>
+                        <p>Select a semester to load data or pick a new date range to configure time slots.</p>
                     </div>
                 )}
             </CardContent>
@@ -484,21 +525,10 @@ export default function GenerationPage() {
     const coursesWithStudentCount = await Promise.all(
       generationData.courses.map(async (course) => {
         let student_count = 0;
-        // For combined courses, student count is sum of all offerings
-        if(course.offeringPrograms.length > 1 && course.levelNumber === undefined) {
-             const levelQuery = query(
-                collection(db, 'levels'),
-                where('programId', 'in', course.offeringPrograms.map(p => p)) // This logic might need refinement based on how programs are stored
-             );
-             // This is a simplification. A more complex logic is needed to correctly map offerings to levels
-             // and sum up student counts. For now, we'll assign a placeholder or zero.
-             student_count = 0; // Placeholder for combined courses.
-        } else if (course.levelId) {
-          // For regular courses
-          const levelQuery = query(collection(db, 'levels'), where('__name__', '==', course.levelId));
-          const levelSnapshot = await getDocs(levelQuery);
-          if (!levelSnapshot.empty) {
-            student_count = levelSnapshot.docs[0].data().students_count || 0;
+        if (course.levelId) {
+          const levelDoc = await getDoc(doc(db, 'levels', course.levelId));
+          if (levelDoc.exists()) {
+             student_count = levelDoc.data().students_count || 0;
           }
         }
         return { ...course, student_count };
@@ -577,7 +607,7 @@ export default function GenerationPage() {
       <GenerationSetup 
         onDataLoaded={handleDataLoaded} 
         setIsLoading={handleSetIsLoading} 
-        existingData={generationData} 
+        generationData={generationData} 
         onDateChange={handleDateChange}
         additionalConstraints={additionalConstraints}
         setAdditionalConstraints={setAdditionalConstraints}
