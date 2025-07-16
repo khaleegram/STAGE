@@ -57,7 +57,7 @@ const VenuesPage: React.FC = () => {
   }, [venues, searchTerm]);
 
   return (
-    <section className="bg-card/80 dark:bg-card/60 p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg backdrop-blur-sm">
+    <section className="bg-card p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg">
       <div className="max-w-7xl mx-auto">
         <h3 className="text-2xl font-bold mb-6 text-primary">Manage Venues</h3>
 
@@ -137,7 +137,7 @@ const VenuesPage: React.FC = () => {
                 {/* Mobile Card View */}
                 <div className="space-y-4 block sm:hidden">
                   {filteredVenues.map((venue, index) => (
-                    <div key={venue.id} className="bg-card/80 p-4 rounded-lg shadow-sm border">
+                    <div key={venue.id} className="bg-card p-4 rounded-lg shadow-sm border">
                         <div className="flex justify-between items-start mb-2">
                              <h4 className="font-bold text-primary">#{index + 1} - {venue.name}</h4>
                              <Button variant="outline" size="sm" onClick={() => handleEdit(venue)}>

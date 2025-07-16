@@ -28,14 +28,14 @@ interface StudentPopulationData {
 
 function StatCard({ title, value, icon: Icon, isLoading }: { title: string, value: string | number, icon: React.ElementType, isLoading: boolean }) {
     return (
-        <Card className="bg-card/80 dark:bg-card/60 backdrop-blur-sm">
+        <Card className="bg-maroon text-white">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">{title}</CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
+                <Icon className="h-4 w-4 text-white/80" />
             </CardHeader>
             <CardContent>
                 {isLoading ? (
-                    <Skeleton className="h-8 w-1/2" />
+                    <Skeleton className="h-8 w-1/2 bg-white/20" />
                 ) : (
                     <div className="text-2xl font-bold">{value}</div>
                 )}
@@ -109,43 +109,43 @@ function RecentTimetables() {
     }, []);
 
     return (
-        <Card className="bg-card/80 dark:bg-card/60 backdrop-blur-sm">
+        <Card className="bg-maroon text-white">
             <CardHeader>
                 <CardTitle>Recent Timetables</CardTitle>
-                <CardDescription>A list of the most recently generated timetables.</CardDescription>
+                <CardDescription className="text-white/80">A list of the most recently generated timetables.</CardDescription>
             </CardHeader>
             <CardContent>
                 {isLoading ? (
                     <div className="space-y-2">
-                        <Skeleton className="h-8 w-full" />
-                        <Skeleton className="h-8 w-full" />
-                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-8 w-full bg-white/20" />
+                        <Skeleton className="h-8 w-full bg-white/20" />
+                        <Skeleton className="h-8 w-full bg-white/20" />
                     </div>
                 ) : (
                     <Table>
                         <TableHeader>
-                            <TableRow>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead className="text-right">Conflicts</TableHead>
+                            <TableRow className="border-white/20">
+                                <TableHead className="text-white">Name</TableHead>
+                                <TableHead className="text-white">Date</TableHead>
+                                <TableHead className="text-right text-white">Conflicts</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {timetables.length > 0 ? timetables.map(t => (
-                                <TableRow key={t.id}>
+                                <TableRow key={t.id} className="border-white/20">
                                     <TableCell className="font-medium">{t.name}</TableCell>
                                     <TableCell>{t.createdAt ? format(t.createdAt.seconds * 1000, 'PPP') : 'N/A'}</TableCell>
                                     <TableCell className="text-right">
                                         {t.conflicts ? (
                                             <span className="text-destructive font-bold">Yes</span>
                                         ) : (
-                                            <span className="text-green-600">No</span>
+                                            <span className="text-green-400">No</span>
                                         )}
                                     </TableCell>
                                 </TableRow>
                             )) : (
                                 <TableRow>
-                                    <TableCell colSpan={3} className="text-center">No timetables generated yet.</TableCell>
+                                    <TableCell colSpan={3} className="text-center text-white/70">No timetables generated yet.</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
@@ -184,23 +184,29 @@ function StudentPopulationChart() {
     }, []);
 
     if (isLoading) {
-        return <Skeleton className="h-[350px] w-full" />;
+        return <Skeleton className="h-[350px] w-full bg-white/20" />;
     }
 
     return (
-        <Card className="bg-card/80 dark:bg-card/60 backdrop-blur-sm">
+        <Card className="bg-maroon text-white">
             <CardHeader>
                 <CardTitle>Student Population Overview</CardTitle>
-                <CardDescription>Number of students across different levels for each program.</CardDescription>
+                <CardDescription className="text-white/80">Number of students across different levels for each program.</CardDescription>
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={350}>
                     <BarChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} interval={0} />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.2)" />
+                        <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} interval={0} stroke="rgba(255, 255, 255, 0.7)" />
+                        <YAxis stroke="rgba(255, 255, 255, 0.7)"/>
+                        <Tooltip 
+                            contentStyle={{ 
+                                backgroundColor: 'hsl(var(--primary))', 
+                                border: '1px solid rgba(255, 255, 255, 0.2)',
+                                color: '#fff' 
+                            }} 
+                        />
+                        <Legend wrapperStyle={{ color: '#fff' }} />
                         <Bar dataKey="100L" stackId="a" fill="hsl(var(--chart-1))" />
                         <Bar dataKey="200L" stackId="a" fill="hsl(var(--chart-2))" />
                         <Bar dataKey="300L" stackId="a" fill="hsl(var(--chart-3))" />

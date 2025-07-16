@@ -103,7 +103,7 @@ const ProgramsPage: React.FC = () => {
   );
 
   return (
-    <section className="bg-card/80 dark:bg-card/60 p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg backdrop-blur-sm">
+    <section className="bg-card p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg">
       <div className="max-w-7xl mx-auto">
         <h3 className="text-2xl font-bold mb-6 text-primary">Manage Programs</h3>
 

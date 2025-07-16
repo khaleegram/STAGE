@@ -222,7 +222,7 @@ export default function SessionsPage() {
     }
 
     return (
-        <section className="bg-card/80 dark:bg-card/60 p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg backdrop-blur-sm">
+        <section className="bg-card p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg">
             <div className="max-w-7xl mx-auto">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
                     <h3 className="text-2xl font-bold tracking-tight text-primary">Academic Sessions</h3>
@@ -255,7 +255,7 @@ export default function SessionsPage() {
 
                 <UnresolvedPromotionsCard />
 
-                <Card className="mt-6 bg-card/50">
+                <Card className="mt-6 bg-background/50">
                     <CardHeader>
                         <CardTitle>Manage Sessions & Semesters</CardTitle>
                         <CardDescription>Manage academic years and their corresponding semesters.</CardDescription>

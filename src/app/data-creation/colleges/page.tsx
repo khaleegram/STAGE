@@ -55,7 +55,7 @@ const CollegesPage: React.FC = () => {
   );
 
   return (
-    <section className="bg-card/80 dark:bg-card/60 p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg backdrop-blur-sm">
+    <section className="bg-card p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg">
       <div className="max-w-7xl mx-auto">
         <h3 className="text-2xl font-bold mb-6 text-primary">Manage Colleges</h3>
 
@@ -121,7 +121,7 @@ const CollegesPage: React.FC = () => {
                 {/* Mobile Card View */}
                 <div className="space-y-4 block sm:hidden">
                   {filteredColleges.map((college, index) => (
-                    <div key={college.id} className="bg-card/80 p-4 rounded-lg shadow-sm border">
+                    <div key={college.id} className="bg-card p-4 rounded-lg shadow-sm border">
                       <div className="flex justify-between items-start">
                         <div>
                           <h4 className="font-bold text-primary">#{index + 1}</h4>

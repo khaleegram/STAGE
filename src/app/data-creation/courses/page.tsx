@@ -144,11 +144,11 @@ const CoursesPage: React.FC = () => {
 
 
   return (
-    <section className="bg-card/80 dark:bg-card/60 p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg backdrop-blur-sm">
+    <section className="bg-card p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg">
       <div className="max-w-7xl mx-auto">
         <h3 className="text-2xl font-bold mb-6 text-primary">Manage Courses</h3>
 
-        <div className="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 bg-card/50 p-4 rounded-lg border">
+        <div className="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 bg-background/50 p-4 rounded-lg border">
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                  <Select onValueChange={handleProgramFilterChange} value={selectedProgram}>
                     <SelectTrigger className="w-full sm:w-[250px]">

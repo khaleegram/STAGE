@@ -93,7 +93,7 @@ const StaffPage: React.FC = () => {
 
 
   return (
-    <section className="bg-card/80 dark:bg-card/60 p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg backdrop-blur-sm">
+    <section className="bg-card p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg">
       <div className="max-w-7xl mx-auto">
         <h3 className="text-2xl font-bold mb-6 text-primary">Manage Staff</h3>
 
@@ -162,7 +162,7 @@ const StaffPage: React.FC = () => {
                 {/* Mobile Card View */}
                 <div className="space-y-4 block sm:hidden">
                   {filteredStaff.map((s) => (
-                    <div key={s.id} className="bg-card/80 p-4 rounded-lg shadow-sm border space-y-2">
+                    <div key={s.id} className="bg-card p-4 rounded-lg shadow-sm border space-y-2">
                         <div className="flex justify-between items-start">
                             <h4 className="font-bold text-primary">{s.name}</h4>
                             <Button variant="outline" size="sm" onClick={() => handleEdit(s)}>Edit</Button>
