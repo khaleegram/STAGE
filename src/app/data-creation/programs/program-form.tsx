@@ -98,14 +98,9 @@ export function ProgramForm({ program, departments, onClose }: ProgramFormProps)
                                 {departments.map((department) => (
                                 <CommandItem
                                     key={department.id}
-                                    value={department.name}
-                                    onSelect={(currentValue) => {
-                                        // Find the department that was selected
-                                        const selectedDept = departments.find(d => d.name.toLowerCase() === currentValue.toLowerCase());
-                                        if (selectedDept) {
-                                            // If it's already selected, unselect it. Otherwise, select it.
-                                            setSelectedDepartmentId(selectedDept.id === selectedDepartmentId ? '' : selectedDept.id);
-                                        }
+                                    value={department.id}
+                                    onSelect={(deptId) => {
+                                        setSelectedDepartmentId(deptId === selectedDepartmentId ? '' : deptId);
                                         setIsPopoverOpen(false);
                                     }}
                                 >
