@@ -21,7 +21,7 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-card/80 backdrop-blur-sm border-b">
+    <header className="sticky top-0 z-40 w-full bg-card/50 backdrop-blur-sm border-b">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 lg:px-6">
         <div className="flex items-center gap-4">
            {/* This button is only visible on mobile to toggle the sidebar */}
