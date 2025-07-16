@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { Level } from '@/lib/types';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDoc, doc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -24,53 +24,31 @@ export function UnresolvedPromotions() {
     );
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const levelsListPromises = snapshot.docs.map(async (doc) => {
-        const data = doc.data();
-        const level: Level = {
-            id: doc.id,
-            programId: data.programId,
-            level: data.level,
-            students_count: data.students_count,
-        };
-
-        if (level.programId) {
-            try {
-                const programRef = (await db.collection('programs').doc(level.programId).get());
-                if(programRef.exists) {
-                    level.programName = (programRef.data() as any).name || 'Unknown Program';
-                }
-            } catch (e) {
-                // This is a simplified fetch, a more robust solution would be needed for production
-                // For now, we just log the error.
-                console.error("Failed to fetch program name for level", level.id);
-            }
+        if (snapshot.empty) {
+            setEmptyLevels([]);
+            setIsLoading(false);
+            return;
         }
-        return level;
-      });
 
-      // A real app should use a proper backend to denormalize this data
-      // For simplicity, we are doing it on the client
       const levelsWithProgramNames = await Promise.all(
-        snapshot.docs.map(async (doc) => {
-          const levelData = doc.data() as Omit<Level, 'id' | 'programName'> & {id: string};
-          let programName = 'Loading...';
+        snapshot.docs.map(async (levelDoc) => {
+          const levelData = { id: levelDoc.id, ...levelDoc.data() } as Level;
           if (levelData.programId) {
             try {
-              const programDoc = await db.collection('programs').doc(levelData.programId).get();
-              if (programDoc.exists) {
-                programName = programDoc.data()?.name || 'Unknown Program';
-              } else {
-                programName = 'Unknown Program'
+              const programDoc = await getDoc(doc(db, 'programs', levelData.programId));
+              if (programDoc.exists()) {
+                levelData.programName = programDoc.data()?.name || 'Unknown Program';
               }
-            } catch(e) {
-                programName = 'Error fetching program';
+            } catch (e) {
+                console.error("Failed to fetch program name for level", levelData.id, e);
+                levelData.programName = 'Error fetching program';
             }
           }
-          return { id: doc.id, ...levelData, programName };
+          return levelData;
         })
       );
       
-      setEmptyLevels(levelsWithProgramNames as Level[]);
+      setEmptyLevels(levelsWithProgramNames);
       setIsLoading(false);
     }, (error) => {
       console.error("Error fetching unresolved promotions:", error);

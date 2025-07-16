@@ -13,6 +13,7 @@ import { ArrowRight, BookOpen, Building2, Calendar, Eye, GraduationCap, Users, U
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
+import { UnresolvedPromotions } from '@/components/dashboard/unresolved-promotions';
 
 interface StudentPopulationData {
   name: string;
@@ -226,6 +227,7 @@ export default function Home() {
         </Button>
       </div>
       
+      <UnresolvedPromotions />
       <StatsOverview />
       <RecentTimetables />
       <StudentPopulationChart />
