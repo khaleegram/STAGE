@@ -5,8 +5,6 @@ import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/layout/theme-provider';
 import ClientNavbar from '@/components/layout/client-navbar';
 import { AppSidebar } from '@/components/layout/sidebar';
-import { useSidebar } from '@/hooks/use-sidebar-state';
-import { cn } from '@/lib/utils';
 import MainContent from '@/components/layout/main-content';
 
 export const metadata: Metadata = {
@@ -29,7 +27,7 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <ThemeProvider storageKey="al-qalam-theme">
           <SidebarProvider>
-            <div className="min-h-screen bg-light dark:bg-dark bg-cover bg-center bg-no-repeat bg-fixed">
+            <div className="min-h-screen bg-light dark:bg-dark bg-cover bg-center bg-no-repeat bg-fixed overflow-x-hidden">
               <AppSidebar />
               <ClientNavbar />
               <MainContent>
