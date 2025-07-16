@@ -1,11 +1,11 @@
 'use client';
 
 import React from 'react';
-import { Moon, Sun, Menu } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { useTheme } from './theme-provider';
 import Image from 'next/image';
-import { useSidebar } from '../ui/sidebar';
 import { Button } from '../ui/button';
+import { AppSidebar } from './sidebar';
 
 const user = {
   firstName: 'Admin',
@@ -14,31 +14,16 @@ const user = {
 
 export default function Navbar() {
   const { theme, setTheme } = useTheme();
-  const { toggleSidebar, isMobile } = useSidebar();
 
   const toggleTheme = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');
   };
-  
-  if (isMobile === undefined) {
-    return (
-        <header className="sticky top-0 z-30 w-full">
-             <div className="container mx-auto flex h-16 items-center" />
-        </header>
-    )
-  }
 
   return (
     <header className="sticky top-0 z-30 w-full">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 lg:px-6">
         <div className="flex items-center gap-4">
-           {/* This button is only visible on mobile to toggle the sidebar */}
-          {isMobile && (
-            <Button variant="ghost" size="icon" onClick={toggleSidebar}>
-                <Menu className="text-foreground" />
-                <span className="sr-only">Toggle Sidebar</span>
-            </Button>
-          )}
+          <AppSidebar />
         </div>
         
         <div className="flex items-center gap-4">

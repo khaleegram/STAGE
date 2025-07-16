@@ -1,78 +1,52 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import { useIsMobile } from "@/hooks/use-mobile"
-import { cn } from "@/lib/utils"
-import { Sheet, SheetContent, SheetOverlay } from "@/components/ui/sheet"
+import * as React from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
-type SidebarContext = {
-  open: boolean
-  setOpen: (open: boolean) => void
-  openMobile: boolean
-  setOpenMobile: (open: boolean) => void
-  isMobile: boolean | undefined
-  toggleSidebar: () => void
-}
+type SidebarContextValue = {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  toggleSidebar: () => void;
+};
 
-const SidebarContext = React.createContext<SidebarContext | null>(null)
+const SidebarContext = React.createContext<SidebarContextValue | null>(null);
 
 export function useSidebar() {
-  const context = React.useContext(SidebarContext)
+  const context = React.useContext(SidebarContext);
   if (!context) {
-    throw new Error("useSidebar must be used within a SidebarProvider.")
+    throw new Error('useSidebar must be used within a SidebarProvider.');
   }
-  return context
+  return context;
 }
 
-export const SidebarProvider = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<"div">
->(
-  ({ className, children, ...props }, ref) => {
-    const isMobile = useIsMobile()
-    const [open, setOpen] = React.useState(true)
-    const [openMobile, setOpenMobile] = React.useState(false)
+export function SidebarProvider({ children }: { children: React.ReactNode }) {
+  const isMobile = useIsMobile();
+  // Default to closed on mobile, open on desktop
+  const [open, setOpen] = React.useState(isMobile === undefined ? true : !isMobile);
 
-    const toggleSidebar = React.useCallback(() => {
-      if (isMobile) {
-        setOpenMobile((prev) => !prev)
-      } else {
-        setOpen((prev) => !prev)
-      }
-    }, [isMobile])
+  React.useEffect(() => {
+    if (isMobile !== undefined) {
+      setOpen(!isMobile);
+    }
+  }, [isMobile]);
 
-    const contextValue = React.useMemo<SidebarContext>(
-      () => ({
-        open,
-        setOpen,
-        isMobile,
-        openMobile,
-        setOpenMobile,
-        toggleSidebar,
-      }),
-      [open, isMobile, openMobile, toggleSidebar]
-    )
+  const toggleSidebar = React.useCallback(() => {
+    setOpen((prev) => !prev);
+  }, []);
 
-    return (
-      <SidebarContext.Provider value={contextValue}>
-        <div
-          ref={ref}
-          className={cn("flex w-full", className)}
-          {...props}
-        >
-          {isMobile ? (
-            <Sheet open={openMobile} onOpenChange={setOpenMobile}>
-               <SheetOverlay className="bg-black/60 backdrop-blur-sm" />
-              <SheetContent side="left" className="p-0 border-r-0 w-64">
-                {children}
-              </SheetContent>
-            </Sheet>
-          ) : (
-            children
-          )}
-        </div>
-      </SidebarContext.Provider>
-    )
-  }
-)
-SidebarProvider.displayName = "SidebarProvider"
+  const contextValue = React.useMemo<SidebarContextValue>(
+    () => ({
+      open,
+      setOpen,
+      toggleSidebar,
+    }),
+    [open, toggleSidebar]
+  );
+
+  return (
+    <SidebarContext.Provider value={contextValue}>
+      {children}
+    </SidebarContext.Provider>
+  );
+}

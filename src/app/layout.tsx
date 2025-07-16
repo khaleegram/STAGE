@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { AppSidebar } from '@/components/layout/sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/layout/theme-provider';
 import ClientNavbar from '@/components/layout/client-navbar';
@@ -27,9 +26,8 @@ export default function RootLayout({
         <ThemeProvider storageKey="al-qalam-theme">
           <SidebarProvider>
             <div className="flex min-h-screen bg-light dark:bg-dark bg-cover bg-center bg-no-repeat bg-fixed">
-              <AppSidebar />
+              <ClientNavbar />
               <div className="flex-1 flex flex-col">
-                <ClientNavbar />
                 <main className="flex-1 overflow-y-auto p-4 lg:p-6">
                   {children}
                 </main>

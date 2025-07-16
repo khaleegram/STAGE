@@ -1,4 +1,3 @@
-
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -24,21 +23,22 @@ import {
 import { useSidebar } from '@/components/ui/sidebar';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
+import { Button } from '../ui/button';
 
-export function AppSidebar() {
-  const { open: isOpen, toggleSidebar, setOpenMobile } = useSidebar();
+const SidebarContent = () => {
+  const { open: isOpen, toggleSidebar, setOpen } = useSidebar();
   const pathname = usePathname();
   const [isDataCreationOpen, setIsDataCreationOpen] = useState(pathname.startsWith('/data-creation'));
 
-
   const handleLinkClick = () => {
-    // Close mobile sidebar on link click
-    if (window.innerWidth < 768) { // md breakpoint
-        setOpenMobile(false);
-    }
+    // This will be called by mobile sidebar to close on navigation
+    setOpen(false);
   };
 
-  const toggleDataCreationMenu = () => {
+  const toggleDataCreationMenu = (e: React.MouseEvent) => {
+    e.stopPropagation(); // prevent link navigation if it's a button
     setIsDataCreationOpen(!isDataCreationOpen);
   }
 
@@ -80,86 +80,119 @@ export function AppSidebar() {
     { href: '/data-creation/venues', label: 'Venues', icon: <MapPin size={18} /> },
   ];
 
-
   return (
-      <div
-        className={cn(`fixed sm:relative top-0 left-0 z-50 h-screen transition-all duration-300 ease-in-out bg-black/30 dark:bg-black/50 backdrop-blur-xl border-r border-white/10 shadow-xl flex flex-col`,
-          isOpen ? 'w-64' : 'w-20'
-        )}
-      >
-        <div className="flex items-center justify-between p-4 border-b border-white/10 h-16">
-          <Link href="/" className={cn("flex items-center gap-2", !isOpen && "w-full justify-center")}>
-              <svg
-                  width="28"
-                  height="28"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="text-primary flex-shrink-0"
-              >
-                  <path
-                  d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  />
-              </svg>
-            <span className={cn("font-bold text-lg text-white", !isOpen && "hidden")}>
-              Al-Qalam
-            </span>
-          </Link>
-          <button onClick={toggleSidebar} className="text-white hover:text-primary md:hidden">
-            <Menu size={24} />
-          </button>
-        </div>
-
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden p-2">
-          <ul className="space-y-1.5 text-sm font-medium">
-            {menuItems.map((item) => (
-              <li key={item.label}>
-                <Link href={item.href} onClick={handleLinkClick} className={linkClass(item.href)}>
-                  <div className="flex-shrink-0">{item.icon}</div>
-                  {isOpen && <span className="truncate">{item.label}</span>}
-                </Link>
-              </li>
-            ))}
-             <li>
-                <button onClick={toggleDataCreationMenu} className={cn(linkClass('/data-creation', false), "w-full justify-between")}>
-                    <div className="flex items-center gap-3">
-                        <Database size={18} />
-                        {isOpen && <span className="truncate">Data Creation</span>}
-                    </div>
-                    {isOpen && (
-                      <ChevronDown size={18} className={cn("transition-transform", isDataCreationOpen && "rotate-180")} />
-                    )}
-                </button>
-            </li>
-            {isOpen && isDataCreationOpen && (
-              <ul className="mt-1 space-y-1 pl-5">
-                {dataCreationItems.map((item) => (
-                  <li key={item.label}>
-                    <Link href={item.href} onClick={handleLinkClick} className={dataCreationLinkClass(item.href)}>
-                      <div className="w-5">{item.icon}</div>
-                      <span className="truncate">{item.label}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-            
-             <div className="px-3 pt-4">
-                <div className="border-t border-white/10" />
-            </div>
-
-             <li>
-                <Link href="#" onClick={handleLinkClick} className={linkClass('/#settings', false)}>
-                  <div className="flex-shrink-0"><Settings size={18} /></div>
-                  {isOpen && <span className="truncate">Settings</span>}
-                </Link>
-              </li>
-          </ul>
-        </nav>
+    <div
+      className={cn(
+        `h-full bg-sidebar backdrop-blur-xl border-r border-sidebar-border shadow-xl flex flex-col transition-all duration-300 ease-in-out`,
+        isOpen ? 'w-64' : 'w-20'
+      )}
+    >
+      <div className="flex items-center justify-between p-4 border-b border-sidebar-border h-16">
+        <Link href="/" className={cn("flex items-center gap-2", !isOpen && "w-full justify-center")}>
+            <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="text-primary flex-shrink-0"
+            >
+                <path
+                d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                />
+            </svg>
+          <span className={cn("font-bold text-lg text-sidebar-foreground", !isOpen && "hidden")}>
+            Al-Qalam
+          </span>
+        </Link>
       </div>
+
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden p-2">
+        <ul className="space-y-1.5 text-sm font-medium">
+          {menuItems.map((item) => (
+            <li key={item.label}>
+              <Link href={item.href} onClick={handleLinkClick} className={linkClass(item.href)}>
+                <div className="flex-shrink-0">{item.icon}</div>
+                {isOpen && <span className="truncate">{item.label}</span>}
+              </Link>
+            </li>
+          ))}
+           <li>
+              <button onClick={toggleDataCreationMenu} className={cn(linkClass('/data-creation', false), "w-full justify-between")}>
+                  <div className="flex items-center gap-3">
+                      <Database size={18} />
+                      {isOpen && <span className="truncate">Data Creation</span>}
+                  </div>
+                  {isOpen && (
+                    <ChevronDown size={18} className={cn("transition-transform", isDataCreationOpen && "rotate-180")} />
+                  )}
+              </button>
+          </li>
+          {isOpen && isDataCreationOpen && (
+            <ul className="mt-1 space-y-1 pl-5">
+              {dataCreationItems.map((item) => (
+                <li key={item.label}>
+                  <Link href={item.href} onClick={handleLinkClick} className={dataCreationLinkClass(item.href)}>
+                    <div className="w-5">{item.icon}</div>
+                    <span className="truncate">{item.label}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          
+           <div className="px-3 pt-4">
+              <div className="border-t border-sidebar-border/50" />
+          </div>
+
+           <li>
+              <Link href="#" onClick={handleLinkClick} className={linkClass('/#settings', false)}>
+                <div className="flex-shrink-0"><Settings size={18} /></div>
+                {isOpen && <span className="truncate">Settings</span>}
+              </Link>
+            </li>
+        </ul>
+      </nav>
+
+      <div className="p-4 border-t border-sidebar-border h-16 flex items-center justify-center">
+        <Button variant="ghost" onClick={toggleSidebar} className="text-sidebar-foreground hover:text-primary hidden md:flex">
+          <Menu size={24} />
+          <span className="sr-only">Toggle Sidebar</span>
+        </Button>
+      </div>
+    </div>
   );
+}
+
+
+export function AppSidebar() {
+  const isMobile = useIsMobile();
+  const { open, setOpen } = useSidebar();
+
+  if (isMobile === undefined) {
+    return null; // Don't render anything on the server to avoid hydration mismatch
+  }
+  
+  if (isMobile) {
+    return (
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="md:hidden">
+              <Menu className="text-foreground" />
+              <span className="sr-only">Toggle Sidebar</span>
+            </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="p-0 border-r-0 w-64 bg-transparent">
+          <SidebarContent />
+        </SheetContent>
+      </Sheet>
+    )
+  }
+
+  // Desktop sidebar
+  return <SidebarContent />;
 }
