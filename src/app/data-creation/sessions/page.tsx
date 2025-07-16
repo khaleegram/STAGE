@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { db } from '@/lib/firebase';
 import { AcademicSession, Semester } from '@/lib/types';
-import { collection, onSnapshot, query, orderBy, collectionGroup, where } from 'firebase/firestore';
-import { PlusCircle, MoreHorizontal, CheckCircle, Lock, PlayCircle, Trash2, Edit } from 'lucide-react';
+import { collection, onSnapshot, query, orderBy, getDocs } from 'firebase/firestore';
+import { PlusCircle, CheckCircle, Lock, PlayCircle, Trash2, Edit, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { format, isValid } from 'date-fns';
@@ -143,6 +143,7 @@ export default function SessionsPage() {
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <Button variant="outline" disabled={isPromoting} className="w-full sm:w-auto">
+                                    <Users className="mr-2 h-4 w-4" />
                                     {isPromoting ? 'Promoting...' : 'Promote Students'}
                                 </Button>
                             </AlertDialogTrigger>
@@ -150,7 +151,7 @@ export default function SessionsPage() {
                                 <AlertDialogHeader>
                                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        This will advance students to the next academic level. This action cannot be undone.
+                                        This will advance all students to their next academic level and reset Level 1 counts to zero. This action cannot be undone.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>

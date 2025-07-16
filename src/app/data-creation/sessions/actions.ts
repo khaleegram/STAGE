@@ -8,13 +8,12 @@ import {
   doc,
   getDocs,
   query,
-  runTransaction,
-  where,
   writeBatch,
   addDoc,
   updateDoc,
   deleteDoc,
-  serverTimestamp
+  serverTimestamp,
+  where
 } from 'firebase/firestore';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
@@ -159,13 +158,14 @@ export async function promoteStudents(): Promise<{ success: boolean; message: st
 
     for (const programDoc of programsSnapshot.docs) {
       const program = { id: programDoc.id, ...programDoc.data() } as Program;
-      
+      const maxLevel = program.max_level || 5; // Default to 5 if not set
+
       const levelsQuery = query(collection(db, 'levels'), where('programId', '==', program.id));
       const levelsSnapshot = await getDocs(levelsQuery);
       
       const levels = levelsSnapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() } as Level))
-        .sort((a, b) => b.level - a.level); // Sort descending (400L, 300L, etc.)
+        .sort((a, b) => b.level - a.level); // Sort descending (500L, 400L, etc.)
 
       if (levels.length === 0) continue;
 
@@ -176,32 +176,34 @@ export async function promoteStudents(): Promise<{ success: boolean; message: st
         const levelRef = doc(db, 'levels', level.id);
         const currentStudentsInLevel = level.students_count;
         
-        // This is the new count for the current level in the loop
-        const newCountForThisLevel = studentsToPromoteFromBelow;
-        
-        // Update the current level with the count from the level below it
-        batch.update(levelRef, { students_count: newCountForThisLevel });
-
-        // Now, set the number of students to be promoted for the *next* iteration (the level above this one)
-        // For now, we assume 100% promotion rate
-        studentsToPromoteFromBelow = currentStudentsInLevel;
+        if (level.level === maxLevel) {
+            // These are graduating students. They are "promoted" out of the system.
+            studentsToPromoteFromBelow = currentStudentsInLevel;
+            batch.update(levelRef, { students_count: 0 });
+        } else {
+            // This is the new count for the current level in the loop
+            const newCountForThisLevel = studentsToPromoteFromBelow;
+            // Now, set the number of students to be promoted for the *next* iteration (the level above this one)
+            studentsToPromoteFromBelow = currentStudentsInLevel;
+            // Update the current level with the count from the level below it
+            batch.update(levelRef, { students_count: newCountForThisLevel });
+        }
       }
       
-      // Handle new intake for 100 Level
+      // Handle new intake for 100 Level, setting it to 0 as per new logic
       const firstLevel = levels.find(l => l.level === 1);
       if (firstLevel) {
         const firstLevelRef = doc(db, 'levels', firstLevel.id);
-        // The new intake becomes the count for 100L.
-        // The previous 100L students have already been promoted to 200L.
-        batch.update(firstLevelRef, { students_count: program.expected_intake || 0 });
+        batch.update(firstLevelRef, { students_count: 0 }); // Reset to 0 to await new population
       }
     }
 
     await batch.commit();
     revalidatePath('/data-creation/levels');
-    revalidatePath('/data-creation/sessions'); // Revalidate sessions page as well
+    revalidatePath('/data-creation/sessions');
+    revalidatePath('/'); // Revalidate dashboard page
 
-    return { success: true, message: 'Student promotion process completed successfully!' };
+    return { success: true, message: 'Student promotion process completed successfully! Please populate the new Level 1 batches.' };
   } catch (error) {
     console.error('Error during student promotion:', error);
     if (error instanceof Error) {

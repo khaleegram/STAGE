@@ -46,7 +46,7 @@ export async function addProgram(prevState: any, formData: FormData): Promise<{ 
       name: formattedName,
       departmentId: validatedFields.data.departmentId,
       createdAt: serverTimestamp(),
-      max_level: 4, // Default value
+      max_level: 5, // Default value set to 5
       expected_intake: 0 // Default value
     });
     revalidatePath('/data-creation/programs');
