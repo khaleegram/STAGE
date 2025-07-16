@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { db } from '@/lib/firebase';
 import { AcademicSession, Semester, Course, Staff, Venue } from '@/lib/types';
 import { collection, onSnapshot, query, orderBy, getDocs, where } from 'firebase/firestore';
@@ -123,6 +123,9 @@ function GenerationSetup({
             };
             setDateRange(range);
             onDateChange(range); // Pass date up to parent
+        } else {
+            setDateRange(undefined);
+            onDateChange(undefined);
         }
         setIsLoading(false);
     };
@@ -306,13 +309,21 @@ export default function GenerationPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [timeSlots, setTimeSlots] = useState<DailyTimeSlots[]>([]);
 
-  const handleDateChange = (range: DateRange | undefined) => {
+  const handleDateChange = useCallback((range: DateRange | undefined) => {
     if (range?.from && range.to) {
         setTimeSlots(generateAllTimeSlots(range));
     } else {
         setTimeSlots([]);
     }
-  }
+  }, []);
+
+  const handleDataLoaded = useCallback((data: GenerationData | null) => {
+      setGenerationData(data);
+  }, []);
+
+  const handleSetIsLoading = useCallback((loading: boolean) => {
+      setIsLoading(loading);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -320,7 +331,12 @@ export default function GenerationPage() {
         <h1 className="text-3xl font-bold tracking-tight">Generate Timetable</h1>
       </div>
       
-      <GenerationSetup onDataLoaded={setGenerationData} setIsLoading={setIsLoading} existingData={generationData} onDateChange={handleDateChange} />
+      <GenerationSetup 
+        onDataLoaded={handleDataLoaded} 
+        setIsLoading={handleSetIsLoading} 
+        existingData={generationData} 
+        onDateChange={handleDateChange} 
+      />
       
       <TimeSlotsDisplay dailySlots={timeSlots} isLoading={isLoading}/>
       
@@ -389,5 +405,3 @@ export default function GenerationPage() {
     </div>
   );
 }
-
-    
