@@ -63,20 +63,26 @@ const CombinedCoursesPage: React.FC = () => {
         const offeringsPromises = (data.offerings || []).map(async (offering: any) => {
             let programName = 'Unknown Program';
             let levelNumber = 0;
+            let programId = 'N/A';
+            let levelId = 'N/A';
 
-            const levelRef = doc(db, 'levels', offering.level_id);
-            const levelSnap = await getDoc(levelRef);
-            if (levelSnap.exists()) {
-                const levelData = levelSnap.data();
-                levelNumber = levelData.level || 0;
-
-                const programRef = doc(db, 'programs', levelData.programId);
-                const programSnap = await getDoc(programRef);
-                if (programSnap.exists()) {
-                    programName = programSnap.data().name || 'Unknown Program';
-                }
+            if (offering.level_id) {
+              levelId = offering.level_id;
+              const levelRef = doc(db, 'levels', offering.level_id);
+              const levelSnap = await getDoc(levelRef);
+              if (levelSnap.exists()) {
+                  const levelData = levelSnap.data();
+                  levelNumber = levelData.level || 0;
+  
+                  programId = levelData.programId;
+                  const programRef = doc(db, 'programs', levelData.programId);
+                  const programSnap = await getDoc(programRef);
+                  if (programSnap.exists()) {
+                      programName = programSnap.data().name || 'Unknown Program';
+                  }
+              }
             }
-            return { programName, level: levelNumber, programId: offering.program_id, levelId: offering.level_id };
+            return { programName, level: levelNumber, programId, levelId };
         });
 
         const resolvedOfferings = await Promise.all(offeringsPromises);
@@ -190,7 +196,7 @@ const CombinedCoursesPage: React.FC = () => {
                                     <div className="flex flex-wrap gap-1">
                                     {course.offerings.map((offering, index) => (
                                         <Badge key={index} variant="secondary">
-                                        {offering.programName} - {offering.level}00L
+                                        {offering.programName} - {offering.level}00 Level
                                         </Badge>
                                     ))}
                                     </div>

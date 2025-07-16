@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface LevelFormProps {
   level: Level | null;
@@ -27,6 +29,9 @@ export function LevelForm({ level, programs, onClose }: LevelFormProps) {
   const [programSearch, setProgramSearch] = useState(level?.programName || '');
   const [levelNumber, setLevelNumber] = useState(level?.level.toString() || '');
   const [studentCount, setStudentCount] = useState(level?.students_count.toString() || '0');
+  
+  const [existingLevels, setExistingLevels] = useState<number[]>([]);
+  const [isLoadingLevels, setIsLoadingLevels] = useState(false);
 
   useEffect(() => {
     if (level) {
@@ -41,6 +46,25 @@ export function LevelForm({ level, programs, onClose }: LevelFormProps) {
       setStudentCount('0');
     }
   }, [level]);
+
+  // Fetch existing levels for the selected program
+  useEffect(() => {
+    if (!selectedProgramId) {
+      setExistingLevels([]);
+      setLevelNumber('');
+      return;
+    }
+    setIsLoadingLevels(true);
+    const levelsQuery = query(collection(db, 'levels'), where('programId', '==', selectedProgramId));
+    const unsubscribe = onSnapshot(levelsQuery, (snapshot) => {
+      const levels = snapshot.docs.map(doc => doc.data().level as number);
+      setExistingLevels(levels);
+      setIsLoadingLevels(false);
+    });
+
+    return () => unsubscribe();
+  }, [selectedProgramId]);
+
 
   // Server action setup
   const action = level ? updateLevel.bind(null, level.id) : addLevel;
@@ -75,7 +99,6 @@ export function LevelForm({ level, programs, onClose }: LevelFormProps) {
 
   const filteredPrograms = useMemo(() => {
     if (!programSearch) return [];
-    // Don't show results if a program is already selected
     if (selectedProgramId && programs.find(p => p.id === selectedProgramId)?.name === programSearch) return [];
     return programs.filter(p => 
       p.name.toLowerCase().includes(programSearch.toLowerCase())
@@ -86,6 +109,20 @@ export function LevelForm({ level, programs, onClose }: LevelFormProps) {
     setSelectedProgramId(prog.id);
     setProgramSearch(prog.name);
   }
+
+  const availableLevels = useMemo(() => {
+    const selectedProgram = programs.find(p => p.id === selectedProgramId);
+    if (!selectedProgram) return [];
+    
+    const maxLevel = selectedProgram.max_level;
+    const allPossibleLevels = Array.from({ length: maxLevel }, (_, i) => i + 1);
+    
+    // For a new level, filter out existing ones. For an existing level, allow its own number.
+    return allPossibleLevels.filter(lvl => 
+        !existingLevels.includes(lvl) || (level && level.level === lvl)
+    );
+  }, [selectedProgramId, programs, existingLevels, level]);
+
 
   return (
     <>
@@ -102,11 +139,13 @@ export function LevelForm({ level, programs, onClose }: LevelFormProps) {
               value={programSearch}
               onChange={(e) => {
                 setProgramSearch(e.target.value);
-                setSelectedProgramId(''); // Clear selection when user types
+                setSelectedProgramId('');
               }}
               required
+              readOnly={!!level} // Don't allow changing program when editing
+              className={level ? 'bg-muted' : ''}
             />
-            {filteredPrograms.length > 0 && (
+            {!level && filteredPrograms.length > 0 && (
               <div className="border border-input rounded-md mt-1 max-h-40 overflow-y-auto z-50 bg-background">
                 {filteredPrograms.map(prog => (
                   <div
@@ -123,16 +162,18 @@ export function LevelForm({ level, programs, onClose }: LevelFormProps) {
         
         <div>
           <label htmlFor='level-number' className="block text-sm font-medium mb-1">Level</label>
-            <Select onValueChange={setLevelNumber} value={levelNumber} required>
+            <Select onValueChange={setLevelNumber} value={levelNumber} required disabled={!selectedProgramId || isLoadingLevels}>
                 <SelectTrigger id="level-number">
-                    <SelectValue placeholder="Select a level" />
+                    <SelectValue placeholder={isLoadingLevels ? "Loading..." : "Select a level"} />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="1">100 Level</SelectItem>
-                    <SelectItem value="2">200 Level</SelectItem>
-                    <SelectItem value="3">300 Level</SelectItem>
-                    <SelectItem value="4">400 Level</SelectItem>
-                    <SelectItem value="5">500 Level</SelectItem>
+                    {availableLevels.length > 0 ? (
+                        availableLevels.map(lvl => (
+                            <SelectItem key={lvl} value={lvl.toString()}>{lvl}00 Level</SelectItem>
+                        ))
+                    ) : (
+                        <div className="p-2 text-sm text-muted-foreground text-center">No available levels for this program.</div>
+                    )}
                 </SelectContent>
             </Select>
         </div>

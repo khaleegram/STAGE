@@ -158,7 +158,7 @@ export async function promoteStudents(): Promise<{ success: boolean; message: st
 
     for (const programDoc of programsSnapshot.docs) {
       const program = { id: programDoc.id, ...programDoc.data() } as Program;
-      const maxLevel = program.max_level || 5; // Default to 5 if not set
+      const maxLevel = program.max_level || 5; 
 
       const levelsQuery = query(collection(db, 'levels'), where('programId', '==', program.id));
       const levelsSnapshot = await getDocs(levelsQuery);
@@ -169,28 +169,31 @@ export async function promoteStudents(): Promise<{ success: boolean; message: st
 
       if (levels.length === 0) continue;
 
-      let studentsToPromoteFromBelow = 0;
+      let studentsFromBelow = 0;
 
-      // Iterate from the highest level down to the lowest
       for (const level of levels) {
         const levelRef = doc(db, 'levels', level.id);
-        const currentStudentsInLevel = level.students_count;
+        const currentStudentCount = level.students_count;
         
         if (level.level === maxLevel) {
-            // These are graduating students. They are "promoted" out of the system.
-            studentsToPromoteFromBelow = currentStudentsInLevel;
-            batch.update(levelRef, { students_count: 0 });
+          // Graduating students: this level will be populated by students from the level below.
+          // The current students are "graduated" out.
+          batch.update(levelRef, { students_count: studentsFromBelow });
+        } else if (level.level === 1) {
+            // New 100L students: This level gets students from below (which is 0) and we save the current count for promotion.
+            batch.update(levelRef, { students_count: studentsFromBelow });
         } else {
-            // This is the new count for the current level in the loop
-            const newCountForThisLevel = studentsToPromoteFromBelow;
-            // Now, set the number of students to be promoted for the *next* iteration (the level above this one)
-            studentsToPromoteFromBelow = currentStudentsInLevel;
-            // Update the current level with the count from the level below it
-            batch.update(levelRef, { students_count: newCountForThisLevel });
+          // Regular promotion: set current level's count to the count from the level below.
+          batch.update(levelRef, { students_count: studentsFromBelow });
         }
+
+        // The number of students to be promoted to the *next* level (which is the one before this in the loop)
+        // is the number of students that were in *this* level before we updated it.
+        studentsFromBelow = currentStudentCount;
       }
       
-      // Handle new intake for 100 Level, setting it to 0 as per new logic
+      // After the loop, `studentsFromBelow` holds the count from 100-level.
+      // This is the new intake for 100-level. We reset it to 0 as per the new logic.
       const firstLevel = levels.find(l => l.level === 1);
       if (firstLevel) {
         const firstLevelRef = doc(db, 'levels', firstLevel.id);

@@ -147,7 +147,7 @@ const LevelsPage: React.FC = () => {
                                 <tbody className="divide-y">
                                     {lvlArray.sort((a, b) => a.level - b.level).map((lvl) => (
                                         <tr key={lvl.id}>
-                                            <td className="p-4 font-medium">{lvl.level}00</td>
+                                            <td className="p-4 font-medium">{lvl.level}00 Level</td>
                                             <td className="p-4">{lvl.students_count}</td>
                                             <td className="p-4 flex space-x-2">
                                                 <Button variant="outline" size="sm" onClick={() => handleEdit(lvl)}>

@@ -201,7 +201,7 @@ const CoursesPage: React.FC = () => {
                                         <tr key={course.id}>
                                             <td className="p-4 font-medium">{course.course_code}</td>
                                             <td className="p-4">{course.course_name}</td>
-                                            <td className="p-4">{course.levelNumber}00</td>
+                                            <td className="p-4">{course.levelNumber}00 Level</td>
                                             <td className="p-4">{course.credit_unit}</td>
                                             <td className="p-4">{course.exam_type}</td>
                                             <td className="p-4 flex space-x-2">

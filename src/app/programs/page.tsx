@@ -16,7 +16,7 @@ async function getPrograms(): Promise<Program[]> {
         const program: Program = {
             id: p.id,
             name: data.name || 'Unnamed Program',
-            departmentId: data.department_id || 'N/A',
+            departmentId: data.departmentId || 'N/A',
             max_level: data.max_level || 0,
             expected_intake: data.expected_intake || 0,
         };
@@ -81,7 +81,7 @@ export default async function ProgramsPage() {
                 <TableRow key={program.id}>
                   <TableCell className="font-medium">{program.name}</TableCell>
                   <TableCell>{program.departmentName || program.departmentId}</TableCell>
-                  <TableCell>{program.max_level}</TableCell>
+                  <TableCell>{program.max_level} Years</TableCell>
                   <TableCell>{program.expected_intake}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon">
