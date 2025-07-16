@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -106,15 +105,15 @@ const ProgramsPage: React.FC = () => {
   return (
     <section className="bg-card/80 dark:bg-card/60 p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg backdrop-blur-sm">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6 text-foreground">Manage Programs</h1>
+        <h3 className="text-2xl font-bold mb-6 text-primary">Manage Programs</h3>
 
-        <div className="mb-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="mb-4 flex flex-col sm:flex-row justify-between items-center">
           <Input
             type="text"
             placeholder="Search by department..."
             value={departmentSearch}
             onChange={(e) => setDepartmentSearch(e.target.value)}
-            className="w-full sm:max-w-sm"
+            className="w-full sm:max-w-sm mb-2 sm:mb-0"
           />
           <Button
             onClick={handleAddNew}

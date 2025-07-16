@@ -1,4 +1,3 @@
-
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -126,7 +125,7 @@ const SidebarContent = () => {
       )}
     >
       <div className="p-4 h-16 shrink-0">
-         <Link href="#" onClick={toggleSidebar} className={cn("flex items-center gap-2 w-full", !isOpen && "justify-center")}>
+         <Link href="/" onClick={toggleSidebar} className={cn("flex items-center gap-2 w-full", !isOpen && "justify-center")}>
             <div className="flex items-center gap-2">
                 <svg
                     width="28"

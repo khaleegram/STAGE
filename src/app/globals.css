@@ -4,63 +4,78 @@
 
 @layer base {
   :root {
-    --background: 240 5% 96%; /* Light gray */
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --background: 30 56% 90%; /* Sandy Brown / Cream */
+    --foreground: 224 71.4% 4.1%;
+    --card: 30 56% 90%; /* Sandy Brown / Cream */
+    --card-foreground: 224 71.4% 4.1%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    
-    --primary: 45 93% 47%; /* Gold/Yellow */
-    --primary-foreground: 240 10% 3.9%;
-
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    
-    --accent: 45 93% 47%; /* Gold/Yellow for accents */
-    --accent-foreground: 240 10% 3.9%;
-
+    --popover-foreground: 224 71.4% 4.1%;
+    --primary: 0 100% 25%; /* Maroon */
+    --primary-foreground: 0 0% 98%;
+    --secondary: 220 14.3% 95.9%;
+    --secondary-foreground: 224 71.4% 4.1%;
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
+    --accent: 45 93% 47%; /* Gold/Yellow */
+    --accent-foreground: 224 71.4% 4.1%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 45 93% 47%;
-    --radius: 0.5rem;
+    --border: 220 13% 81%; /* Darker border for cream */
+    --input: 220 13% 91%;
+    --ring: 0 100% 25%; /* Maroon */
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
+
+    /* Custom colors from user's design */
+    --maroon: 0 100% 25%;
+    --maroon-dark: 0 100% 20%;
+    --cream: 30 56% 90%;
+
+    /* Sidebar specific variables */
+    --sidebar-background: 1 83% 15%; /* Dark Maroon/Almost black */
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-border: 45 93% 57%; /* Gold border */
+    --sidebar-accent: 45 93% 47%; /* Gold for active/hover */
+    --sidebar-accent-foreground: 240 10% 3.9%;
+    --sidebar-ring: 45 93% 57%;
   }
 
   .dark {
-    --background: 20 14.3% 4.1%;
+    --background: 224 71.4% 4.1%;
     --foreground: 0 0% 98%;
-    --card: 24 9.8% 10%;
+    --card: 224 71.4% 4.1%;
     --card-foreground: 0 0% 98%;
-    --popover: 20 14.3% 4.1%;
+    --popover: 224 71.4% 4.1%;
     --popover-foreground: 0 0% 98%;
-
-    --primary: 45 93% 47%; /* Gold/Yellow */
-    --primary-foreground: 240 10% 3.9%;
-
-    --secondary: 240 3.7% 15.9%;
+    --primary: 0 70% 50%; /* Brighter Maroon for dark mode */
+    --primary-foreground: 0 0% 98%;
+    --secondary: 220 13% 18%;
     --secondary-foreground: 0 0% 98%;
-
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-
+    --muted: 220 13% 18%;
+    --muted-foreground: 220 8.9% 55.9%;
     --accent: 45 93% 47%; /* Gold/Yellow */
-    --accent-foreground: 240 10% 3.9%;
-    
+    --accent-foreground: 224 71.4% 4.1%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
+    --border: 220 13% 18%;
+    --input: 220 13% 18%;
     --ring: 45 93% 47%;
+    
+    /* Custom colors from user's design */
+    --maroon: 0 100% 25%;
+    --maroon-dark: 0 100% 20%;
+    --cream: 30 56% 90%;
+    
+    /* Sidebar specific variables */
+    --sidebar-background: 240 4% 10%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-border: 45 93% 57%;
+    --sidebar-accent: 45 93% 47%;
+    --sidebar-accent-foreground: 240 10% 3.9%;
+    --sidebar-ring: 45 93% 57%;
   }
 }
 

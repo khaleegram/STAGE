@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -226,7 +225,7 @@ export default function SessionsPage() {
         <section className="bg-card/80 dark:bg-card/60 p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg backdrop-blur-sm">
             <div className="max-w-7xl mx-auto">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-                    <h1 className="text-3xl font-bold tracking-tight">Academic Sessions</h1>
+                    <h3 className="text-2xl font-bold tracking-tight text-primary">Academic Sessions</h3>
                     <div className="flex gap-2 w-full sm:w-auto">
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
