@@ -24,8 +24,9 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../ui/sheet';
 import { Button } from '../ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
 const SidebarContent = () => {
   const { open: isOpen, toggleSidebar, setOpen } = useSidebar();
@@ -59,9 +60,7 @@ const SidebarContent = () => {
   
   // Ensure the data creation menu stays open on page load if the path matches
   useEffect(() => {
-    if (pathname.startsWith('/data-creation')) {
-      setIsDataCreationOpen(true);
-    }
+    setIsDataCreationOpen(pathname.startsWith('/data-creation'));
   }, [pathname]);
 
   const linkClass = (path: string, exact: boolean = true) => {
@@ -69,8 +68,8 @@ const SidebarContent = () => {
     return cn(
       "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200",
       isActive
-        ? 'bg-primary/20 text-primary'
-        : 'text-white hover:bg-cream/10 hover:text-primary'
+        ? 'bg-primary/20 text-primary font-semibold'
+        : 'text-gray-300 hover:bg-cream/10 hover:text-primary'
     );
   }
   
@@ -79,37 +78,56 @@ const SidebarContent = () => {
      return cn(
       "flex items-center gap-3 pl-4 pr-2 py-2 text-sm rounded-lg transition-colors duration-200",
       isActive
-        ? 'bg-primary/20 text-primary'
-        : 'text-gray-300 hover:bg-cream/10 hover:text-primary'
+        ? 'text-primary font-semibold'
+        : 'text-gray-400 hover:bg-cream/10 hover:text-primary'
     );
   }
 
   const menuItems = [
-    { href: '/', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-    { href: '/generation', label: 'Generate Timetable', icon: <Sparkles size={18} /> },
-    { href: '/timetables', label: 'Timetables', icon: <CalendarDays size={18} /> },
+    { href: '/', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+    { href: '/generation', label: 'Generate Timetable', icon: <Sparkles size={20} /> },
+    { href: '/timetables', label: 'Timetables', icon: <CalendarDays size={20} /> },
   ];
 
   const dataCreationItems = [
-    { href: '/data-creation/sessions', label: 'Sessions', icon: <Clock size={18} /> },
-    { href: '/data-creation/colleges', label: 'Colleges', icon: <Building2 size={18} /> },
-    { href: '/data-creation/departments', label: 'Departments', icon: <Library size={18} /> },
-    { href: '/data-creation/programs', label: 'Programs', icon: <GraduationCap size={18} /> },
-    { href: '/data-creation/levels', label: 'Levels', icon: <Layers size={18} /> },
-    { href: '/data-creation/courses', label: 'Courses', icon: <BookOpen size={18} /> },
-    { href: '/data-creation/combined-courses', label: 'Combined Courses', icon: <BookCopy size={18} /> },
-    { href: '/data-creation/staff', label: 'Staff', icon: <BookUser size={18} /> },
-    { href: '/data-creation/venues', label: 'Venues', icon: <MapPin size={18} /> },
+    { href: '/data-creation/sessions', label: 'Sessions', icon: <Clock size={16} /> },
+    { href: '/data-creation/colleges', label: 'Colleges', icon: <Building2 size={16} /> },
+    { href: '/data-creation/departments', label: 'Departments', icon: <Library size={16} /> },
+    { href: '/data-creation/programs', label: 'Programs', icon: <GraduationCap size={16} /> },
+    { href: '/data-creation/levels', label: 'Levels', icon: <Layers size={16} /> },
+    { href: '/data-creation/courses', label: 'Courses', icon: <BookOpen size={16} /> },
+    { href: '/data-creation/combined-courses', label: 'Combined Courses', icon: <BookCopy size={16} /> },
+    { href: '/data-creation/staff', label: 'Staff', icon: <BookUser size={16} /> },
+    { href: '/data-creation/venues', label: 'Venues', icon: <MapPin size={16} /> },
   ];
+
+  const NavLink = ({ href, label, icon }: { href: string; label: string; icon: React.ReactNode }) => (
+    <li>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link href={href} onClick={handleLinkClick} className={linkClass(href)}>
+            <div className="flex-shrink-0">{icon}</div>
+            <span className={cn("truncate", !isOpen && "sm:hidden")}>{label}</span>
+          </Link>
+        </TooltipTrigger>
+        {!isOpen && (
+          <TooltipContent side="right" className="bg-background text-foreground">
+            {label}
+          </TooltipContent>
+        )}
+      </Tooltip>
+    </li>
+  );
 
   return (
     <div
       data-state={isOpen ? 'open' : 'collapsed'}
       className={cn(
-        `h-full bg-sidebar flex flex-col transition-all duration-300 ease-in-out group`
+        "h-full flex flex-col group text-sidebar-foreground",
+        "bg-black/30 backdrop-blur-xl border-r border-white/10" // Glassmorphism
       )}
     >
-      <div className="flex items-center justify-between p-4 h-16">
+      <div className="flex items-center justify-between p-4 h-16 shrink-0">
         <Link href="/" className={cn("flex items-center gap-2", !isOpen && "w-full justify-center")}>
             <svg
                 width="28"
@@ -127,7 +145,7 @@ const SidebarContent = () => {
                 strokeLinejoin="round"
                 />
             </svg>
-          <span className={cn("font-bold text-lg text-sidebar-foreground", !isOpen && "hidden")}>
+          <span className={cn("font-bold text-lg", !isOpen && "sm:hidden")}>
             Al-Qalam
           </span>
         </Link>
@@ -136,24 +154,28 @@ const SidebarContent = () => {
       <nav className="flex-1 overflow-y-auto overflow-x-hidden p-2">
         <ul className="space-y-1.5 text-sm font-medium">
           {menuItems.map((item) => (
-            <li key={item.label}>
-              <Link href={item.href} onClick={handleLinkClick} className={linkClass(item.href)}>
-                <div className="flex-shrink-0">{item.icon}</div>
-                <span className="truncate group-data-[state=collapsed]:hidden">{item.label}</span>
-              </Link>
-            </li>
+            <NavLink key={item.label} {...item} />
           ))}
            <li>
-              <button onClick={toggleDataCreationMenu} className={cn(linkClass('/data-creation', false), "w-full justify-between")}>
-                  <div className="flex items-center gap-3">
-                      <Database size={18} />
-                      <span className="truncate group-data-[state=collapsed]:hidden">Data Creation</span>
-                  </div>
-                  <ChevronDown size={18} className={cn("transition-transform group-data-[state=collapsed]:hidden", isDataCreationOpen && "rotate-180")} />
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button onClick={toggleDataCreationMenu} className={cn(linkClass('/data-creation', false), "w-full justify-between")}>
+                      <div className="flex items-center gap-3">
+                          <Database size={20} />
+                          <span className={cn("truncate", !isOpen && "sm:hidden")}>Data Creation</span>
+                      </div>
+                      <ChevronDown size={18} className={cn("transition-transform", !isOpen && "sm:hidden", isDataCreationOpen && "rotate-180")} />
+                  </button>
+                </TooltipTrigger>
+                 {!isOpen && (
+                  <TooltipContent side="right" className="bg-background text-foreground">
+                    Data Creation
+                  </TooltipContent>
+                )}
+              </Tooltip>
           </li>
           {isDataCreationOpen && (
-            <ul className="mt-1 space-y-1 pl-5 group-data-[state=collapsed]:hidden">
+            <ul className={cn("mt-1 space-y-1 pl-7 transition-all", !isOpen && "sm:hidden")}>
               {dataCreationItems.map((item) => (
                 <li key={item.label}>
                   <Link href={item.href} onClick={handleLinkClick} className={dataCreationLinkClass(item.href)}>
@@ -169,17 +191,12 @@ const SidebarContent = () => {
               <div className="border-t border-sidebar-border/50" />
           </div>
 
-           <li>
-              <Link href="#" onClick={handleLinkClick} className={linkClass('/#settings', false)}>
-                <div className="flex-shrink-0"><Settings size={18} /></div>
-                <span className="truncate group-data-[state=collapsed]:hidden">Settings</span>
-              </Link>
-            </li>
+           <NavLink href="/settings" label="Settings" icon={<Settings size={20} />} />
         </ul>
       </nav>
 
-      <div className="p-4 border-t border-sidebar-border h-16 flex items-center justify-center">
-        <Button variant="ghost" onClick={toggleSidebar} className="text-sidebar-foreground hover:text-primary hidden md:flex">
+      <div className="p-4 border-t border-sidebar-border/50 h-16 flex items-center justify-center shrink-0">
+        <Button variant="ghost" onClick={toggleSidebar} className="text-sidebar-foreground hover:text-primary hidden sm:flex">
           <Menu size={24} />
           <span className="sr-only">Toggle Sidebar</span>
         </Button>
@@ -195,7 +212,7 @@ export function AppSidebar() {
 
   if (isMobile === undefined) {
     return (
-      <div className="w-20 md:w-64 h-screen">
+      <div className="w-20 sm:w-64 h-screen">
         <Skeleton className="h-full w-full" />
       </div>
     );
@@ -203,20 +220,8 @@ export function AppSidebar() {
   
   if (isMobile) {
     return (
-      <header className="sm:hidden fixed top-0 left-0 w-full z-40 flex items-center justify-between bg-sidebar px-4 py-3 shadow-lg">
-        <Link href="/" className="flex items-center gap-2">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <span className="font-bold text-lg text-sidebar-foreground">Al-Qalam</span>
-        </Link>
         <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu className="text-sidebar-foreground" />
-                <span className="sr-only">Toggle Sidebar</span>
-              </Button>
-          </SheetTrigger>
+          {/* Trigger is in the navbar for mobile */}
           <SheetContent side="left" className="p-0 border-r-0 w-64 bg-transparent">
             <SheetHeader>
                 <SheetTitle className="sr-only">Main Menu</SheetTitle>
@@ -224,13 +229,15 @@ export function AppSidebar() {
             <SidebarContent />
           </SheetContent>
         </Sheet>
-      </header>
     )
   }
 
   // Desktop sidebar
   return (
-    <div className={cn("fixed top-0 left-0 z-40 h-screen transition-all duration-300 ease-in-out", open ? 'w-64' : 'w-20')}>
+    <div className={cn(
+        "fixed top-0 left-0 z-30 h-screen transition-all duration-300 ease-in-out hidden sm:block", 
+        open ? 'w-64' : 'w-20'
+    )}>
       <SidebarContent />
     </div>
   );

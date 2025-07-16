@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/components/layout/theme-provider';
 import ClientNavbar from '@/components/layout/client-navbar';
 import { AppSidebar } from '@/components/layout/sidebar';
 import MainContent from '@/components/layout/main-content';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 export const metadata: Metadata = {
   title: 'Al-Qalam Scheduler',
@@ -27,13 +28,17 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <ThemeProvider storageKey="al-qalam-theme">
           <SidebarProvider>
-            <div className="min-h-screen bg-light dark:bg-dark bg-cover bg-center bg-no-repeat bg-fixed overflow-x-hidden">
-              <AppSidebar />
-              <ClientNavbar />
-              <MainContent>
-                {children}
-              </MainContent>
-            </div>
+            <TooltipProvider delayDuration={0}>
+              <div className="flex min-h-screen bg-light dark:bg-dark bg-cover bg-center bg-no-repeat overflow-x-hidden">
+                <AppSidebar />
+                <div className="flex-1 flex flex-col">
+                  <ClientNavbar />
+                  <MainContent>
+                    {children}
+                  </MainContent>
+                </div>
+              </div>
+            </TooltipProvider>
           </SidebarProvider>
         </ThemeProvider>
         <Toaster />

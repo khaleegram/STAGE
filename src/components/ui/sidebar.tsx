@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { cn } from '@/lib/utils';
 
 type SidebarContextValue = {
   open: boolean;
@@ -22,9 +21,9 @@ export function useSidebar() {
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
-  // Default to closed on mobile, open on desktop
-  const [open, setOpen] = React.useState(isMobile === undefined ? true : !isMobile);
+  const [open, setOpen] = React.useState(false); // Default to closed on mobile
 
+  // Set initial state based on device type once it's known
   React.useEffect(() => {
     if (isMobile !== undefined) {
       setOpen(!isMobile);
