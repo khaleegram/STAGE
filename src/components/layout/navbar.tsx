@@ -6,20 +6,25 @@ import { useTheme } from './theme-provider';
 import Image from 'next/image';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
+import { useSidebar } from '../ui/sidebar';
 
 const user = {
   firstName: 'Admin',
   profilePicture: 'https://placehold.co/100x100.png',
 };
 
-export default function Navbar({ mobile = false, onToggleSidebar }: { mobile?: boolean, onToggleSidebar?: () => void }) {
+export default function Navbar() {
   const { theme, setTheme } = useTheme();
+  const { isMobile, onToggleSidebar } = useSidebar();
+
 
   const toggleTheme = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');
   };
 
-  if (mobile) {
+  const baseClasses = "bg-cream/80 dark:bg-black/20 text-black dark:text-white rounded-2xl shadow-lg border-b border-gray-300/50 dark:border-gray-700/50 h-12 px-4 flex items-center space-x-4 backdrop-blur-md";
+
+  if (isMobile) {
     return (
         <header className="sticky top-0 z-40 w-full bg-card/80 backdrop-blur-sm border-b">
             <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -50,11 +55,7 @@ export default function Navbar({ mobile = false, onToggleSidebar }: { mobile?: b
 
   // Desktop Navbar
   return (
-    <div className={cn(
-        "absolute top-0 right-4 z-50 rounded-lg",
-        "bg-cream dark:bg-black/20 border dark:border-gray-700",
-        "shadow-lg"
-    )}>
+    <div className={cn("fixed top-4 right-4 z-50", baseClasses)}>
         <div className="flex items-center gap-2 p-1">
           <span className="text-sm font-medium pl-2">{user.firstName}</span>
           <Image

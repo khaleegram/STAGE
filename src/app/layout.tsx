@@ -5,13 +5,14 @@ import './globals.css';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/layout/theme-provider';
-import ClientNavbar from '@/components/layout/client-navbar';
+import Navbar from '@/components/layout/navbar';
 import { AppSidebar } from '@/components/layout/sidebar';
 import MainContent from '@/components/layout/main-content';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { DashboardReloadBar } from '@/components/layout/dashboard-reload-bar';
 import { useScrollDirection } from '@/hooks/use-scroll-direction';
 import { cn } from '@/lib/utils';
+import ClientNavbar from '@/components/layout/client-navbar';
 
 // Metadata cannot be exported from a client component. 
 // We can define it here, but it won't be used by Next.js in this file.
@@ -43,12 +44,14 @@ export default function RootLayout({
             <TooltipProvider delayDuration={0}>
               <div className="flex min-h-screen bg-light dark:bg-dark bg-cover bg-center bg-no-repeat overflow-x-hidden">
                 <AppSidebar />
-                 <div className={cn(
-                    "fixed top-4 z-50 transition-transform duration-300 w-full",
+                <div
+                  className={cn(
+                    'fixed top-0 z-50 w-full transition-transform duration-300',
                     scrollDirection === 'down' ? '-translate-y-24' : 'translate-y-0'
-                 )}>
+                  )}
+                >
                     <DashboardReloadBar />
-                    <ClientNavbar />
+                    <Navbar />
                  </div>
                 <div className="flex-1 flex flex-col">
                   <MainContent>

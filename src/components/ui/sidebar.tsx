@@ -7,6 +7,8 @@ type SidebarContextValue = {
   open: boolean;
   setOpen: (open: boolean) => void;
   toggleSidebar: () => void;
+  isMobile: boolean | undefined;
+  onToggleSidebar: () => void;
 };
 
 const SidebarContext = React.createContext<SidebarContextValue | null>(null);
@@ -34,13 +36,19 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     setOpen((prev) => !prev);
   }, []);
 
+  const onToggleSidebar = React.useCallback(() => {
+    setOpen((prev) => !prev);
+  }, []);
+
   const contextValue = React.useMemo<SidebarContextValue>(
     () => ({
       open,
       setOpen,
       toggleSidebar,
+      isMobile,
+      onToggleSidebar,
     }),
-    [open, toggleSidebar]
+    [open, toggleSidebar, isMobile, onToggleSidebar]
   );
 
   return (
