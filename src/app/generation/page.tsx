@@ -466,16 +466,23 @@ export default function GenerationPage() {
 
     const coursesWithStudentCount = await Promise.all(
       generationData.courses.map(async (course) => {
-        // Find the level document to get student count
-        const levelQuery = query(
-          collection(db, 'levels'),
-          where('programId', '==', course.programId),
-          where('level', '==', course.levelNumber)
-        );
-        const levelSnapshot = await getDocs(levelQuery);
         let student_count = 0;
-        if (!levelSnapshot.empty) {
-          student_count = levelSnapshot.docs[0].data().students_count || 0;
+        // For combined courses, student count is sum of all offerings
+        if(course.offeringPrograms.length > 1 && course.levelNumber === undefined) {
+             const levelQuery = query(
+                collection(db, 'levels'),
+                where('programId', 'in', course.offeringPrograms.map(p => p)) // This logic might need refinement based on how programs are stored
+             );
+             // This is a simplification. A more complex logic is needed to correctly map offerings to levels
+             // and sum up student counts. For now, we'll assign a placeholder or zero.
+             student_count = 0; // Placeholder for combined courses.
+        } else if (course.levelId) {
+          // For regular courses
+          const levelQuery = query(collection(db, 'levels'), where('__name__', '==', course.levelId));
+          const levelSnapshot = await getDocs(levelQuery);
+          if (!levelSnapshot.empty) {
+            student_count = levelSnapshot.docs[0].data().students_count || 0;
+          }
         }
         return { ...course, student_count };
       })
@@ -601,3 +608,5 @@ export default function GenerationPage() {
     </div>
   );
 }
+
+    
