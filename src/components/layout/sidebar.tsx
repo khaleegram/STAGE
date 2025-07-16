@@ -1,3 +1,4 @@
+
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -121,11 +122,16 @@ const SidebarContent = () => {
       data-state={isOpen ? 'open' : 'collapsed'}
       className={cn(
         "h-full flex flex-col group text-sidebar-foreground",
-        "bg-sidebar backdrop-blur-xl border-r border-sidebar-border/50"
+        "bg-black/30 dark:bg-black/50 backdrop-blur-xl border-r border-white/10 shadow-xl"
       )}
     >
       <div className="p-4 h-16 shrink-0">
-         <Link href="/" onClick={toggleSidebar} className={cn("flex items-center gap-2 w-full", !isOpen && "justify-center")}>
+         <Link
+            href="/"
+            onClick={toggleSidebar}
+            className={cn("flex items-center gap-2 w-full", !isOpen && "justify-center")}
+            aria-label="Toggle Sidebar"
+          >
             <div className="flex items-center gap-2">
                 <svg
                     width="28"
