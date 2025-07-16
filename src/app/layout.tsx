@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/layout/theme-provider';
-import Navbar from '@/components/layout/navbar';
+import ClientNavbar from '@/components/layout/client-navbar';
 
 export const metadata: Metadata = {
   title: 'Al-Qalam Scheduler',
@@ -29,7 +29,7 @@ export default function RootLayout({
             <div className="flex min-h-screen">
               <AppSidebar />
               <div className="flex-1 flex flex-col bg-background/90 backdrop-blur-sm">
-                <Navbar />
+                <ClientNavbar />
                 <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-muted/40">
                   {children}
                 </main>
