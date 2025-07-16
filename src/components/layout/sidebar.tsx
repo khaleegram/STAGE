@@ -37,6 +37,7 @@ const SidebarContent = () => {
   const handleLinkClick = (e: React.MouseEvent) => {
     // For desktop view, if sidebar is collapsed, a click should expand it.
     if (!isMobile && !isOpen) {
+      e.preventDefault(); // Prevent navigation to allow sidebar to expand first
       setOpen(true);
       return;
     }
@@ -125,8 +126,8 @@ const SidebarContent = () => {
       )}
     >
       <div className="p-4 h-16 shrink-0">
-         <button onClick={toggleSidebar} className={cn("flex items-center gap-2 w-full", !isOpen && "justify-center")}>
-            <Link href="/" className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+         <Link href="#" onClick={toggleSidebar} className={cn("flex items-center gap-2 w-full", !isOpen && "justify-center")}>
+            <div className="flex items-center gap-2">
                 <svg
                     width="28"
                     height="28"
@@ -146,8 +147,8 @@ const SidebarContent = () => {
               <span className={cn("font-bold text-lg", !isOpen && "sm:hidden")}>
                 Al-Qalam
               </span>
-            </Link>
-        </button>
+            </div>
+        </Link>
       </div>
 
       <nav className="flex-1 overflow-y-auto overflow-x-hidden p-2">
