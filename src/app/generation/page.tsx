@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { db } from '@/lib/firebase';
 import { AcademicSession, Semester, Course, Staff, Venue } from '@/lib/types';
-import { collection, onSnapshot, query, orderBy, getDocs, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, getDocs, where, doc, getDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
