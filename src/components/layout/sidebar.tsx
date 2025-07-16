@@ -1,4 +1,3 @@
-
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -27,6 +26,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../ui/sheet';
 import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import Navbar from './navbar';
 
 const SidebarContent = () => {
   const { open: isOpen, toggleSidebar, setOpen } = useSidebar();
@@ -124,7 +124,7 @@ const SidebarContent = () => {
       data-state={isOpen ? 'open' : 'collapsed'}
       className={cn(
         "h-full flex flex-col group text-sidebar-foreground",
-        "bg-black/30 backdrop-blur-xl border-r border-white/10" // Glassmorphism
+        "bg-black/30 backdrop-blur-xl border-r border-white/10"
       )}
     >
       <div className="flex items-center justify-between p-4 h-16 shrink-0">
@@ -221,7 +221,7 @@ export function AppSidebar() {
   if (isMobile) {
     return (
         <Sheet open={open} onOpenChange={setOpen}>
-          {/* Trigger is in the navbar for mobile */}
+          {/* The trigger for mobile is now in the main ClientNavbar */}
           <SheetContent side="left" className="p-0 border-r-0 w-64 bg-transparent">
             <SheetHeader>
                 <SheetTitle className="sr-only">Main Menu</SheetTitle>
@@ -234,11 +234,14 @@ export function AppSidebar() {
 
   // Desktop sidebar
   return (
-    <div className={cn(
-        "fixed top-0 left-0 z-30 h-screen transition-all duration-300 ease-in-out hidden sm:block", 
-        open ? 'w-64' : 'w-20'
-    )}>
-      <SidebarContent />
-    </div>
+    <>
+      <div className={cn(
+          "fixed top-0 left-0 z-30 h-screen transition-all duration-300 ease-in-out hidden sm:block", 
+          open ? 'w-64' : 'w-20'
+      )}>
+        <SidebarContent />
+      </div>
+      <Navbar />
+    </>
   );
 }
