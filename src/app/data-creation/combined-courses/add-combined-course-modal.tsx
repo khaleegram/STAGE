@@ -7,15 +7,12 @@ import { z } from 'zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Course, Program, Level } from '@/lib/types';
-import { collection, getDocs, query, orderBy, where, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { ChevronsUpDown, Check, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { X } from 'lucide-react';
 import { addCombinedCourse } from './actions';
 
 interface AddCombinedCourseModalProps {
@@ -39,7 +36,7 @@ export function AddCombinedCourseModal({ isOpen, onClose }: AddCombinedCourseMod
   const [courses, setCourses] = useState<Course[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
   const [levels, setLevels] = useState<Level[]>([]);
-  const [isCoursePopoverOpen, setIsCoursePopoverOpen] = useState(false);
+  const [courseSearch, setCourseSearch] = useState('');
 
   // Fetch all necessary data
   useEffect(() => {
@@ -78,6 +75,20 @@ export function AddCombinedCourseModal({ isOpen, onClose }: AddCombinedCourseMod
   const selectedCourse = useMemo(() => {
     return courses.find(c => c.id === selectedCourseId);
   }, [selectedCourseId, courses]);
+  
+  const filteredCourses = useMemo(() => {
+    if (!courseSearch) return [];
+    if (selectedCourseId && courses.find(c => c.id === selectedCourseId)?.course_name === courseSearch) return [];
+    return courses.filter(c => 
+      c.course_name.toLowerCase().includes(courseSearch.toLowerCase()) ||
+      c.course_code.toLowerCase().includes(courseSearch.toLowerCase())
+    );
+  }, [courseSearch, courses, selectedCourseId]);
+
+  const handleSelectCourse = (course: Course) => {
+    form.setValue('courseId', course.id);
+    setCourseSearch(`${course.course_code} - ${course.course_name}`);
+  }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
@@ -89,6 +100,7 @@ export function AddCombinedCourseModal({ isOpen, onClose }: AddCombinedCourseMod
     });
     if (result.success) {
       form.reset();
+      setCourseSearch('');
       onClose();
     }
     setIsSubmitting(false);
@@ -111,43 +123,30 @@ export function AddCombinedCourseModal({ isOpen, onClose }: AddCombinedCourseMod
             {/* Course Selector */}
              <div>
                 <label className="block text-sm font-medium mb-1">Base Course</label>
-                <Controller
-                    control={form.control}
-                    name="courseId"
-                    render={({ field }) => (
-                         <Popover open={isCoursePopoverOpen} onOpenChange={setIsCoursePopoverOpen}>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline" role="combobox" className="w-full justify-between">
-                                    <span className="truncate">{field.value ? courses.find(c => c.id === field.value)?.course_name : "Select a course..."}</span>
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                <Command>
-                                    <CommandInput placeholder="Search courses..." />
-                                    <CommandList>
-                                        <CommandEmpty>No course found.</CommandEmpty>
-                                        <CommandGroup>
-                                            {courses.map((course) => (
-                                            <CommandItem
-                                                key={course.id}
-                                                value={`${course.course_code} ${course.course_name}`}
-                                                onSelect={() => {
-                                                    field.onChange(course.id);
-                                                    setIsCoursePopoverOpen(false);
-                                                }}
-                                            >
-                                                <Check className={cn("mr-2 h-4 w-4", field.value === course.id ? "opacity-100" : "opacity-0")} />
-                                                {course.course_code} - {course.course_name}
-                                            </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                            </PopoverContent>
-                        </Popover>
-                    )}
+                <Input
+                  id="course-search"
+                  placeholder="Search for a course by code or name"
+                  value={courseSearch}
+                  onChange={(e) => {
+                    setCourseSearch(e.target.value);
+                    form.setValue('courseId', ''); // Clear selection
+                  }}
+                  required
+                  autoComplete="off"
                 />
+                {filteredCourses.length > 0 && (
+                  <div className="border border-input rounded-md mt-1 max-h-40 overflow-y-auto z-50 bg-background">
+                    {filteredCourses.map(course => (
+                      <div
+                        key={course.id}
+                        onClick={() => handleSelectCourse(course)}
+                        className="p-2 hover:bg-accent cursor-pointer text-sm"
+                      >
+                        {course.course_code} - {course.course_name}
+                      </div>
+                    ))}
+                  </div>
+                )}
                  {form.formState.errors.courseId && <p className="text-sm text-destructive mt-1">{form.formState.errors.courseId.message}</p>}
                 {selectedCourse && (
                      <p className="text-xs text-muted-foreground mt-1">

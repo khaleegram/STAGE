@@ -8,12 +8,8 @@ import { addCourse, updateCourse, deleteCourse } from './actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { ChevronsUpDown, Check } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -29,15 +25,13 @@ export function CourseForm({ course, programs, onClose }: CourseFormProps) {
 
   // Form state
   const [selectedProgramId, setSelectedProgramId] = useState(course?.programId || '');
+  const [programSearch, setProgramSearch] = useState(course?.programName || '');
   const [selectedLevelId, setSelectedLevelId] = useState(course?.levelId || '');
   const [courseCode, setCourseCode] = useState(course?.course_code || '');
   const [courseName, setCourseName] = useState(course?.course_name || '');
   const [creditUnit, setCreditUnit] = useState(course?.credit_unit.toString() || '0');
   const [examType, setExamType] = useState<'CBT' | 'Written'>(course?.exam_type || 'Written');
   
-  // UI state for combobox
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-
   // State for dependent dropdown
   const [levelsForProgram, setLevelsForProgram] = useState<Level[]>([]);
   const [isLoadingLevels, setIsLoadingLevels] = useState(false);
@@ -45,6 +39,7 @@ export function CourseForm({ course, programs, onClose }: CourseFormProps) {
   useEffect(() => {
     if (course) {
         setSelectedProgramId(course.programId || '');
+        setProgramSearch(course.programName || '');
         setSelectedLevelId(course.levelId);
         setCourseCode(course.course_code);
         setCourseName(course.course_name);
@@ -53,6 +48,7 @@ export function CourseForm({ course, programs, onClose }: CourseFormProps) {
     } else {
         // Reset form for adding new
         setSelectedProgramId('');
+        setProgramSearch('');
         setSelectedLevelId('');
         setCourseCode('');
         setCourseName('');
@@ -132,9 +128,18 @@ export function CourseForm({ course, programs, onClose }: CourseFormProps) {
       }
   };
   
-  const selectedProgramName = useMemo(() => {
-    return programs.find(p => p.id === selectedProgramId)?.name || 'Select a program';
-  }, [selectedProgramId, programs]);
+  const filteredPrograms = useMemo(() => {
+    if (!programSearch) return [];
+    if (selectedProgramId && programs.find(p => p.id === selectedProgramId)?.name === programSearch) return [];
+    return programs.filter(p => 
+      p.name.toLowerCase().includes(programSearch.toLowerCase())
+    );
+  }, [programSearch, programs, selectedProgramId]);
+
+  const handleSelectProgram = (prog: Program) => {
+    setSelectedProgramId(prog.id);
+    setProgramSearch(prog.name);
+  }
 
   return (
     <>
@@ -149,39 +154,32 @@ export function CourseForm({ course, programs, onClose }: CourseFormProps) {
         {/* Program Selector */}
         <div>
             <label className="block text-sm font-medium mb-1">Program</label>
-            <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-                <PopoverTrigger asChild>
-                    <Button variant="outline" role="combobox" aria-expanded={isPopoverOpen} className="w-full justify-between">
-                        <span className="truncate">{selectedProgramName}</span>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                    <Command>
-                        <CommandInput placeholder="Search programs..." />
-                        <CommandList>
-                            <CommandEmpty>No program found.</CommandEmpty>
-                            <CommandGroup>
-                                {programs.map((program) => (
-                                <CommandItem
-                                    key={program.id}
-                                    value={program.name}
-                                    onSelect={() => {
-                                        setSelectedProgramId(program.id);
-                                        setSelectedLevelId(''); // Reset level when program changes
-                                        setIsPopoverOpen(false);
-                                    }}
-                                >
-                                    <Check className={cn("mr-2 h-4 w-4", selectedProgramId === program.id ? "opacity-100" : "opacity-0")} />
-                                    {program.name}
-                                </CommandItem>
-                                ))}
-                            </CommandGroup>
-                        </CommandList>
-                    </Command>
-                </PopoverContent>
-            </Popover>
+            <Input
+              id="program-search"
+              placeholder="Search for a program"
+              value={programSearch}
+              onChange={(e) => {
+                setProgramSearch(e.target.value);
+                setSelectedProgramId(''); // Clear selection when user types
+              }}
+              required
+              autoComplete="off"
+            />
+            {filteredPrograms.length > 0 && (
+              <div className="border border-input rounded-md mt-1 max-h-40 overflow-y-auto z-50 bg-background">
+                {filteredPrograms.map(prog => (
+                  <div
+                    key={prog.id}
+                    onClick={() => handleSelectProgram(prog)}
+                    className="p-2 hover:bg-accent cursor-pointer text-sm"
+                  >
+                    {prog.name}
+                  </div>
+                ))}
+              </div>
+            )}
         </div>
+
 
         {/* Level Selector (dependent on Program) */}
         <div>
