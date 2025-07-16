@@ -7,6 +7,7 @@ import ClientNavbar from '@/components/layout/client-navbar';
 import { AppSidebar } from '@/components/layout/sidebar';
 import MainContent from '@/components/layout/main-content';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { DashboardReloadBar } from '@/components/layout/dashboard-reload-bar';
 
 export const metadata: Metadata = {
   title: 'Al-Qalam Scheduler',
@@ -31,6 +32,7 @@ export default function RootLayout({
             <TooltipProvider delayDuration={0}>
               <div className="flex min-h-screen bg-light dark:bg-dark bg-cover bg-center bg-no-repeat overflow-x-hidden">
                 <AppSidebar />
+                 <DashboardReloadBar />
                 <div className="flex-1 flex flex-col">
                   <ClientNavbar />
                   <MainContent>
