@@ -156,55 +156,66 @@ export async function promoteStudents(): Promise<{ success: boolean; message: st
       return { success: false, message: 'No programs found to process.' };
     }
 
+    const allPrograms = programsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Program));
     const allLevels = allLevelsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Level));
 
-    for (const programDoc of programsSnapshot.docs) {
-      const program = { id: programDoc.id, ...programDoc.data() } as Program;
-      
-      const levelsForProgram = allLevels
-        .filter(l => l.programId === program.id)
-        .sort((a, b) => a.level - b.level); // Sort ASC: 100, 200, 300...
-
-      if (levelsForProgram.length === 0) continue;
-
-      let studentsToPromote = 0;
-      let graduatedStudents = 0;
-
-      // Loop through levels in ascending order to promote students up
-      for (const level of levelsForProgram) {
-        const levelRef = doc(db, 'levels', level.id);
-        const currentStudentCount = level.students_count;
-
-        if (level.level === 1) {
-          // For 100L, their students are the ones to be promoted to 200L
-          studentsToPromote = currentStudentCount;
-          // After promotion, 100L is empty, awaiting new intake
-          batch.update(levelRef, { students_count: 0 });
-        } else {
-          // For 200L and above, they receive students from the level below
-          // and pass their own students up.
-          const studentsFromBelow = studentsToPromote;
-          studentsToPromote = currentStudentCount;
-          batch.update(levelRef, { students_count: studentsFromBelow });
-        }
-
-        // If this is the final level for the program, the students are graduated
-        if (level.level === program.max_level) {
-          graduatedStudents = studentsToPromote;
-        }
+    const levelsByProgram = allLevels.reduce((acc, level) => {
+      if (!acc[level.programId]) {
+        acc[level.programId] = [];
       }
-      // Note: `graduatedStudents` now holds the count from the final year.
-      // This could be used for archival or reporting in a more advanced version.
+      acc[level.programId].push(level);
+      return acc;
+    }, {} as Record<string, Level[]>);
+
+
+    for (const program of allPrograms) {
+        const programLevels = levelsByProgram[program.id] || [];
+        if (programLevels.length === 0) continue;
+
+        programLevels.sort((a, b) => a.level - b.level);
+        
+        let studentsToCarryOver = 0;
+
+        for (let i = 0; i < program.max_level; i++) {
+            const currentLevelNumber = i + 1;
+            const currentLevel = programLevels.find(l => l.level === currentLevelNumber);
+
+            if (!currentLevel) {
+                 // If the current level doesn't exist, we might need to create it if there are students to promote into it.
+                 if (studentsToCarryOver > 0) {
+                    const newLevelRef = doc(collection(db, 'levels'));
+                    batch.set(newLevelRef, {
+                        programId: program.id,
+                        level: currentLevelNumber,
+                        students_count: studentsToCarryOver,
+                        createdAt: serverTimestamp(),
+                        promotion_rate: 1.00
+                    });
+                    // The students have been placed, so reset the carry-over.
+                    studentsToCarryOver = 0;
+                }
+                continue; // Move to the next level number
+            }
+
+            // We found the current level, let's process it.
+            const tempStudentCount = currentLevel.students_count;
+            const levelRef = doc(db, 'levels', currentLevel.id);
+            batch.update(levelRef, { students_count: studentsToCarryOver });
+            
+            studentsToCarryOver = tempStudentCount;
+        }
+        
+        // After the loop, `studentsToCarryOver` holds the count from the final level, who have now graduated.
     }
 
     await batch.commit();
 
     revalidatePath('/data-creation/levels');
     revalidatePath('/data-creation/sessions');
-    revalidatePath('/data-creation/programs'); // Revalidate all relevant pages
-    revalidatePath('/'); // Revalidate dashboard/home page
+    revalidatePath('/data-creation/programs'); 
+    revalidatePath('/'); 
 
-    return { success: true, message: 'Student promotion process completed successfully! Please populate the new Level 1 batches.' };
+    return { success: true, message: 'Student promotion process completed successfully! Check for any Level 1 groups that need new population.' };
   } catch (error) {
     console.error('Error during student promotion:', error);
     if (error instanceof Error) {
