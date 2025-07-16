@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { CombinedCourse, Program, Level, CombinedCourseOffering } from '@/lib/types';
+import { CombinedCourse, Program, Level } from '@/lib/types';
 import { X } from 'lucide-react';
 import { updateCombinedCourseOfferings } from './actions';
 
@@ -39,14 +39,20 @@ export function EditCombinedCourseForm({ course, allPrograms, allLevels, onClose
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, watch } = useFieldArray({
     control: form.control,
     name: 'offerings',
   });
 
+  const currentOfferings = watch('offerings');
+
+  const handleAppend = () => {
+    append({ programId: '', levelId: '' }, { shouldFocus: true });
+  }
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    // Filter out duplicates before submitting
+    // Server-side action now handles duplicate removal, but we can still check here.
     const uniqueOfferings = values.offerings.filter(
       (offering, index, self) =>
         index === self.findIndex(o => o.programId === offering.programId && o.levelId === offering.levelId)
@@ -54,8 +60,8 @@ export function EditCombinedCourseForm({ course, allPrograms, allLevels, onClose
 
     if (uniqueOfferings.length !== values.offerings.length) {
         toast({
-            title: 'Warning',
-            description: 'Duplicate offerings were removed.',
+            title: 'Notice',
+            description: 'Duplicate offerings were found and have been removed.',
             variant: 'default',
         });
     }
@@ -75,6 +81,16 @@ export function EditCombinedCourseForm({ course, allPrograms, allLevels, onClose
   const getLevelsForProgram = (programId: string) => {
     return allLevels.filter(l => l.programId === programId);
   };
+  
+  const isOfferingDuplicate = (currentIndex: number) => {
+    const current = currentOfferings[currentIndex];
+    if (!current.programId || !current.levelId) return false;
+    return currentOfferings.some((offering, index) => 
+        index !== currentIndex &&
+        offering.programId === current.programId &&
+        offering.levelId === current.levelId
+    );
+  }
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -92,15 +108,18 @@ export function EditCombinedCourseForm({ course, allPrograms, allLevels, onClose
       
       <div>
         <h3 className="text-lg font-medium mb-2">Offerings</h3>
-        <div className="space-y-4">
+        <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2">
           {fields.map((item, index) => (
-            <div key={item.id} className="flex items-start gap-2 p-3 border rounded-md">
+            <div key={item.id} className="flex items-start gap-2 p-3 border rounded-md relative">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-grow">
                 <Controller
                   control={form.control}
                   name={`offerings.${index}.programId`}
                   render={({ field }) => (
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={(value) => {
+                      field.onChange(value);
+                      form.setValue(`offerings.${index}.levelId`, ''); // Reset level on program change
+                    }} defaultValue={field.value}>
                       <SelectTrigger><SelectValue placeholder="Select Program" /></SelectTrigger>
                       <SelectContent>
                         {allPrograms.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
@@ -126,10 +145,15 @@ export function EditCombinedCourseForm({ course, allPrograms, allLevels, onClose
               <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={fields.length <= 1}>
                 <X className="h-4 w-4 text-destructive" />
               </Button>
+               {isOfferingDuplicate(index) && (
+                  <div className="absolute -bottom-5 left-3 text-xs text-destructive">
+                      This is a duplicate offering.
+                  </div>
+              )}
             </div>
           ))}
         </div>
-         <Button type="button" variant="outline" size="sm" onClick={() => append({ programId: '', levelId: '' })} className="mt-2">
+         <Button type="button" variant="outline" size="sm" onClick={handleAppend} className="mt-4">
             + Add Another Offering
         </Button>
       </div>

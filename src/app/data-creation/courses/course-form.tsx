@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, getDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 interface CourseFormProps {
@@ -29,7 +29,7 @@ export function CourseForm({ course, programs, onClose }: CourseFormProps) {
   const [selectedLevelId, setSelectedLevelId] = useState(course?.levelId || '');
   const [courseCode, setCourseCode] = useState(course?.course_code || '');
   const [courseName, setCourseName] = useState(course?.course_name || '');
-  const [creditUnit, setCreditUnit] = useState(course?.credit_unit.toString() || '0');
+  const [creditUnit, setCreditUnit] = useState(course?.credit_unit.toString() || '1');
   const [examType, setExamType] = useState<'CBT' | 'Written'>(course?.exam_type || 'Written');
   
   // State for dependent dropdown
@@ -52,7 +52,7 @@ export function CourseForm({ course, programs, onClose }: CourseFormProps) {
         setSelectedLevelId('');
         setCourseCode('');
         setCourseName('');
-        setCreditUnit('0');
+        setCreditUnit('1');
         setExamType('Written');
     }
   }, [course]);
@@ -72,9 +72,10 @@ export function CourseForm({ course, programs, onClose }: CourseFormProps) {
       setLevelsForProgram(fetchedLevels);
       setIsLoadingLevels(false);
 
-       // If we are editing, we don't want to reset the selectedLevelId unless it's not in the new list
-      if (course && !fetchedLevels.some(l => l.id === course.levelId)) {
-        setSelectedLevelId('');
+      if (course && course.programId === selectedProgramId) {
+          setSelectedLevelId(course.levelId)
+      } else {
+          setSelectedLevelId('');
       }
 
     }, (error) => {
@@ -243,7 +244,7 @@ export function CourseForm({ course, programs, onClose }: CourseFormProps) {
                             <AlertDialogHeader>
                                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete the course.
+                                    This action cannot be undone. This will permanently delete the course and any combined course configurations it belongs to.
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>

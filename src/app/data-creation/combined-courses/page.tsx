@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { db } from '@/lib/firebase';
-import { CombinedCourse, Program, Level } from '@/lib/types';
-import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
+import { CombinedCourse, Program, Level, CombinedCourseOffering } from '@/lib/types';
+import { collection, onSnapshot, query, orderBy, doc, getDoc, getDocs } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -56,12 +56,14 @@ const CombinedCoursesPage: React.FC = () => {
       setIsLoading(true);
       const coursesListPromises = snapshot.docs.map(async (ccDoc) => {
         const data = ccDoc.data();
+        const offeringsSnapshot = await getDocs(collection(db, 'combined_courses', ccDoc.id, 'offerings'));
         
-        const offeringsPromises = (data.offerings || []).map(async (offering: any) => {
+        const offeringsPromises = offeringsSnapshot.docs.map(async (offeringDoc) => {
+            const offering = offeringDoc.data();
             let programName = 'Unknown Program';
             let levelNumber = 0;
-            let programId = offering.programId || 'N/A';
-            let levelId = offering.levelId || 'N/A';
+            const programId = offering.programId || 'N/A';
+            const levelId = offering.levelId || 'N/A';
 
             if (levelId !== 'N/A') {
               const levelRef = doc(db, 'levels', levelId);
@@ -69,12 +71,11 @@ const CombinedCoursesPage: React.FC = () => {
               if (levelSnap.exists()) {
                   const levelData = levelSnap.data();
                   levelNumber = levelData.level || 0;
-  
-                  if (programId === 'N/A') programId = levelData.programId;
-                  const programRef = doc(db, 'programs', levelData.programId);
-                  const programSnap = await getDoc(programRef);
-                  if (programSnap.exists()) {
-                      programName = programSnap.data().name || 'Unknown Program';
+                  
+                  const progRef = doc(db, 'programs', levelData.programId);
+                  const progSnap = await getDoc(progRef);
+                  if (progSnap.exists()) {
+                      programName = progSnap.data().name || 'Unknown Program';
                   }
               }
             }

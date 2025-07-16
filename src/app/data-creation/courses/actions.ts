@@ -39,18 +39,30 @@ export async function addCourse(prevState: any, formData: FormData): Promise<{ s
     return { success: false, message };
   }
   
-  const { levelId, course_code } = validatedFields.data;
+  const { levelId, course_code, course_name, credit_unit, exam_type } = validatedFields.data;
 
   try {
-    // Check for duplicate course code within the same level
-    const q = query(collection(db, 'courses'), where('levelId', '==', levelId), where('course_code', '==', course_code));
+    const courseRef = doc(db, 'levels', levelId);
+    const courseSnap = await getDoc(courseRef);
+    if (!courseSnap.exists()) {
+        return { success: false, message: 'The selected level does not exist.' };
+    }
+    const programId = courseSnap.data().programId;
+
+    // Check for duplicate course code within the same program
+    const q = query(collection(db, 'courses'), where('programId', '==', programId), where('course_code', '==', course_code));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
-      return { success: false, message: 'This course code already exists for the selected level.' };
+      return { success: false, message: 'This course code already exists for the selected program.' };
     }
 
     await addDoc(collection(db, 'courses'), {
-      ...validatedFields.data,
+      levelId,
+      programId,
+      course_code,
+      course_name,
+      credit_unit,
+      exam_type,
       createdAt: serverTimestamp(),
     });
 
@@ -82,15 +94,25 @@ export async function updateCourse(courseId: string, prevState: any, formData: F
   const { levelId, course_code } = validatedFields.data;
 
   try {
+    const levelRef = doc(db, 'levels', levelId);
+    const levelSnap = await getDoc(levelRef);
+    if (!levelSnap.exists()) {
+        return { success: false, message: 'The selected level does not exist.' };
+    }
+    const programId = levelSnap.data().programId;
+
     // Check for duplicates before updating
-    const q = query(collection(db, 'courses'), where('levelId', '==', levelId), where('course_code', '==', course_code));
+    const q = query(collection(db, 'courses'), where('programId', '==', programId), where('course_code', '==', course_code));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty && querySnapshot.docs.some(doc => doc.id !== courseId)) {
-        return { success: false, message: 'This course code already exists for the selected level.' };
+        return { success: false, message: 'This course code already exists for the selected program.' };
     }
 
     const courseRef = doc(db, 'courses', courseId);
-    await updateDoc(courseRef, validatedFields.data);
+    await updateDoc(courseRef, {
+        ...validatedFields.data,
+        programId,
+    });
     revalidatePath('/data-creation/courses');
     return { success: true, message: 'Course updated successfully.' };
   } catch (error) {
@@ -113,10 +135,16 @@ export async function deleteCourse(courseId: string): Promise<{ success: boolean
         // 2. Find and delete any combined course record that uses this course as a base
         const combinedCoursesQuery = query(collection(db, 'combined_courses'), where('base_course_id', '==', courseId));
         const combinedCoursesSnapshot = await getDocs(combinedCoursesQuery);
+        
         if (!combinedCoursesSnapshot.empty) {
-            combinedCoursesSnapshot.forEach(ccDoc => {
-                batch.delete(ccDoc.ref);
-            });
+            for (const ccDoc of combinedCoursesSnapshot.docs) {
+                // Also delete the subcollection of offerings
+                 const offeringsSnapshot = await getDocs(collection(ccDoc.ref, 'offerings'));
+                 offeringsSnapshot.forEach(offeringDoc => {
+                     batch.delete(offeringDoc.ref);
+                 });
+                 batch.delete(ccDoc.ref);
+            }
         }
         
         await batch.commit();
