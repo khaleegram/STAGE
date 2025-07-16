@@ -51,7 +51,7 @@ export default function Navbar({ mobile = false, onToggleSidebar }: { mobile?: b
   // Desktop Navbar
   return (
     <div className={cn(
-        "fixed top-4 right-4 z-50 rounded-lg",
+        "absolute top-0 right-4 z-50 rounded-lg",
         "bg-cream dark:bg-black/20 border dark:border-gray-700",
         "shadow-lg"
     )}>

@@ -18,7 +18,7 @@ export function DashboardReloadBar() {
   return (
     <div
       className={cn(
-        'hidden sm:flex fixed top-4 z-50 transition-all duration-300',
+        'hidden sm:block absolute transition-all duration-300',
         isSidebarOpen ? 'left-64' : 'left-20'
       )}
     >
