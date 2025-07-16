@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Course, Program, Level } from '@/lib/types';
-import { collection, onSnapshot, query, orderBy, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { X } from 'lucide-react';
 import { addCombinedCourse } from './actions';
@@ -18,6 +18,7 @@ import { addCombinedCourse } from './actions';
 interface AddCombinedCourseModalProps {
   isOpen: boolean;
   onClose: () => void;
+  combinedCourseIds: string[]; // Pass IDs of courses already combined
 }
 
 const offeringSchema = z.object({
@@ -30,7 +31,7 @@ const formSchema = z.object({
   offerings: z.array(offeringSchema).min(1, 'At least one offering is required.'),
 });
 
-export function AddCombinedCourseModal({ isOpen, onClose }: AddCombinedCourseModalProps) {
+export function AddCombinedCourseModal({ isOpen, onClose, combinedCourseIds }: AddCombinedCourseModalProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -79,11 +80,14 @@ export function AddCombinedCourseModal({ isOpen, onClose }: AddCombinedCourseMod
   const filteredCourses = useMemo(() => {
     if (!courseSearch) return [];
     if (selectedCourseId && courses.find(c => c.id === selectedCourseId)?.course_name === courseSearch) return [];
+    
+    // Filter out courses that are already part of a combined course
     return courses.filter(c => 
-      c.course_name.toLowerCase().includes(courseSearch.toLowerCase()) ||
-      c.course_code.toLowerCase().includes(courseSearch.toLowerCase())
+      !combinedCourseIds.includes(c.id) &&
+      (c.course_name.toLowerCase().includes(courseSearch.toLowerCase()) ||
+       c.course_code.toLowerCase().includes(courseSearch.toLowerCase()))
     );
-  }, [courseSearch, courses, selectedCourseId]);
+  }, [courseSearch, courses, selectedCourseId, combinedCourseIds]);
 
   const handleSelectCourse = (course: Course) => {
     form.setValue('courseId', course.id);

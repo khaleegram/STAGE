@@ -24,7 +24,7 @@ export async function addCombinedCourse(values: z.infer<typeof addFormSchema>): 
   const { courseId, offerings } = validatedFields.data;
 
   try {
-    // Check if this course is already part of another combined course
+    // Check if this course is already used as a base for a combined course
     const q = query(collection(db, 'combined_courses'), where('base_course_id', '==', courseId));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
@@ -45,10 +45,11 @@ export async function addCombinedCourse(values: z.infer<typeof addFormSchema>): 
       course_name: courseData.course_name,
       exam_type: courseData.exam_type,
       offerings: offerings.map(o => ({
-        program_id: o.programId,
-        level_id: o.levelId,
+        programId: o.programId,
+        levelId: o.levelId,
       })),
       createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     });
 
     revalidatePath('/data-creation/combined-courses');
@@ -75,9 +76,10 @@ export async function updateCombinedCourseOfferings(
     const courseRef = doc(db, 'combined_courses', courseId);
     await updateDoc(courseRef, {
       offerings: offerings.map(o => ({
-        program_id: o.programId,
-        level_id: o.levelId,
-      }))
+        programId: o.programId,
+        levelId: o.levelId,
+      })),
+      updatedAt: serverTimestamp(),
     });
     revalidatePath('/data-creation/combined-courses');
     return { success: true, message: 'Offerings updated successfully.' };

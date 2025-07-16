@@ -1,9 +1,4 @@
 
-
-
-
-
-
 export interface TimetableEntry {
   id: string;
   date: string;
@@ -77,6 +72,7 @@ export interface CombinedCourseOffering {
 
 export interface CombinedCourse {
   id:string;
+  base_course_id: string;
   course_code: string;
   course_name: string;
   exam_type: 'CBT' | 'Written';

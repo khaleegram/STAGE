@@ -46,7 +46,21 @@ export function EditCombinedCourseForm({ course, allPrograms, allLevels, onClose
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    const result = await updateCombinedCourseOfferings(course.id, values.offerings);
+    // Filter out duplicates before submitting
+    const uniqueOfferings = values.offerings.filter(
+      (offering, index, self) =>
+        index === self.findIndex(o => o.programId === offering.programId && o.levelId === offering.levelId)
+    );
+
+    if (uniqueOfferings.length !== values.offerings.length) {
+        toast({
+            title: 'Warning',
+            description: 'Duplicate offerings were removed.',
+            variant: 'default',
+        });
+    }
+
+    const result = await updateCombinedCourseOfferings(course.id, uniqueOfferings);
     toast({
       title: result.success ? 'Success' : 'Error',
       description: result.message,

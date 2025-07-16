@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { db } from '@/lib/firebase';
-import { CombinedCourse, Program, Level, CombinedCourseOffering } from '@/lib/types';
+import { CombinedCourse, Program, Level } from '@/lib/types';
 import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -41,19 +41,16 @@ const CombinedCoursesPage: React.FC = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Fetch Programs
     const progsQuery = query(collection(db, 'programs'), orderBy('name'));
     const unsubscribeProgs = onSnapshot(progsQuery, (snapshot) => {
       setPrograms(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Program)));
     });
 
-    // Fetch all Levels
     const levelsQuery = query(collection(db, 'levels'), orderBy('level'));
     const unsubscribeLevels = onSnapshot(levelsQuery, (snapshot) => {
         setLevels(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Level)));
     });
 
-    // Fetch Combined Courses
     const ccQuery = query(collection(db, 'combined_courses'), orderBy('course_code'));
     const unsubscribeCC = onSnapshot(ccQuery, async (snapshot) => {
       setIsLoading(true);
@@ -63,18 +60,17 @@ const CombinedCoursesPage: React.FC = () => {
         const offeringsPromises = (data.offerings || []).map(async (offering: any) => {
             let programName = 'Unknown Program';
             let levelNumber = 0;
-            let programId = 'N/A';
-            let levelId = 'N/A';
+            let programId = offering.programId || 'N/A';
+            let levelId = offering.levelId || 'N/A';
 
-            if (offering.level_id) {
-              levelId = offering.level_id;
-              const levelRef = doc(db, 'levels', offering.level_id);
+            if (levelId !== 'N/A') {
+              const levelRef = doc(db, 'levels', levelId);
               const levelSnap = await getDoc(levelRef);
               if (levelSnap.exists()) {
                   const levelData = levelSnap.data();
                   levelNumber = levelData.level || 0;
   
-                  programId = levelData.programId;
+                  if (programId === 'N/A') programId = levelData.programId;
                   const programRef = doc(db, 'programs', levelData.programId);
                   const programSnap = await getDoc(programRef);
                   if (programSnap.exists()) {
@@ -89,6 +85,7 @@ const CombinedCoursesPage: React.FC = () => {
 
         return {
           id: ccDoc.id,
+          base_course_id: data.base_course_id,
           course_code: data.course_code,
           course_name: data.course_name,
           exam_type: data.exam_type,
@@ -142,6 +139,10 @@ const CombinedCoursesPage: React.FC = () => {
       return true;
     });
   }, [combinedCourses, selectedProgram, selectedLevel]);
+
+  const combinedCourseBaseIds = useMemo(() => {
+    return combinedCourses.map(c => c.base_course_id);
+  }, [combinedCourses]);
 
   return (
     <section className="p-4 sm:p-6 lg:p-8 rounded-lg">
@@ -239,6 +240,7 @@ const CombinedCoursesPage: React.FC = () => {
       <AddCombinedCourseModal 
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
+        combinedCourseIds={combinedCourseBaseIds}
       />
 
       <Dialog open={!!editingCourse} onOpenChange={(isOpen) => !isOpen && setEditingCourse(null)}>

@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 
@@ -104,9 +104,26 @@ export async function deleteCourse(courseId: string): Promise<{ success: boolean
         return { success: false, message: 'Course ID is missing.' };
     }
     try {
-        await deleteDoc(doc(db, 'courses', courseId));
+        const batch = writeBatch(db);
+
+        // 1. Delete the course itself
+        const courseRef = doc(db, 'courses', courseId);
+        batch.delete(courseRef);
+
+        // 2. Find and delete any combined course record that uses this course as a base
+        const combinedCoursesQuery = query(collection(db, 'combined_courses'), where('base_course_id', '==', courseId));
+        const combinedCoursesSnapshot = await getDocs(combinedCoursesQuery);
+        if (!combinedCoursesSnapshot.empty) {
+            combinedCoursesSnapshot.forEach(ccDoc => {
+                batch.delete(ccDoc.ref);
+            });
+        }
+        
+        await batch.commit();
+
         revalidatePath('/data-creation/courses');
-        return { success: true, message: 'Course deleted successfully.' };
+        revalidatePath('/data-creation/combined-courses');
+        return { success: true, message: 'Course and its combination records deleted successfully.' };
     } catch (error) {
         console.error('Error deleting course:', error);
         return { success: false, message: 'An unexpected error occurred.' };
