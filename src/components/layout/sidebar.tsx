@@ -1,3 +1,4 @@
+
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -24,7 +25,7 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 import { Button } from '../ui/button';
 
 const SidebarContent = () => {
@@ -34,7 +35,10 @@ const SidebarContent = () => {
 
   const handleLinkClick = () => {
     // This will be called by mobile sidebar to close on navigation
-    setOpen(false);
+    const isMobile = window.innerWidth < 768;
+    if(isMobile) {
+      setOpen(false);
+    }
   };
 
   const toggleDataCreationMenu = (e: React.MouseEvent) => {
@@ -48,7 +52,7 @@ const SidebarContent = () => {
       "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200",
       isActive
         ? 'bg-primary/20 text-primary'
-        : 'text-white hover:bg-white/10 hover:text-primary'
+        : 'text-sidebar-foreground hover:bg-sidebar-accent/10'
     );
   }
   
@@ -58,7 +62,7 @@ const SidebarContent = () => {
       "flex items-center gap-3 pl-4 pr-2 py-2 text-sm rounded-lg transition-colors duration-200",
       isActive
         ? 'bg-primary/20 text-primary'
-        : 'text-gray-300 hover:bg-white/10 hover:text-primary'
+        : 'text-gray-300 hover:bg-sidebar-accent/10'
     );
   }
 
@@ -82,8 +86,9 @@ const SidebarContent = () => {
 
   return (
     <div
+      data-state={isOpen ? 'open' : 'collapsed'}
       className={cn(
-        `h-full bg-sidebar backdrop-blur-xl border-r border-sidebar-border shadow-xl flex flex-col transition-all duration-300 ease-in-out`,
+        `h-full bg-sidebar backdrop-blur-xl border-r border-sidebar-border shadow-xl flex flex-col transition-all duration-300 ease-in-out group`,
         isOpen ? 'w-64' : 'w-20'
       )}
     >
@@ -117,7 +122,7 @@ const SidebarContent = () => {
             <li key={item.label}>
               <Link href={item.href} onClick={handleLinkClick} className={linkClass(item.href)}>
                 <div className="flex-shrink-0">{item.icon}</div>
-                {isOpen && <span className="truncate">{item.label}</span>}
+                <span className="truncate group-data-[state=collapsed]:hidden">{item.label}</span>
               </Link>
             </li>
           ))}
@@ -125,15 +130,13 @@ const SidebarContent = () => {
               <button onClick={toggleDataCreationMenu} className={cn(linkClass('/data-creation', false), "w-full justify-between")}>
                   <div className="flex items-center gap-3">
                       <Database size={18} />
-                      {isOpen && <span className="truncate">Data Creation</span>}
+                      <span className="truncate group-data-[state=collapsed]:hidden">Data Creation</span>
                   </div>
-                  {isOpen && (
-                    <ChevronDown size={18} className={cn("transition-transform", isDataCreationOpen && "rotate-180")} />
-                  )}
+                  <ChevronDown size={18} className={cn("transition-transform group-data-[state=collapsed]:hidden", isDataCreationOpen && "rotate-180")} />
               </button>
           </li>
-          {isOpen && isDataCreationOpen && (
-            <ul className="mt-1 space-y-1 pl-5">
+          {isDataCreationOpen && (
+            <ul className="mt-1 space-y-1 pl-5 group-data-[state=collapsed]:hidden">
               {dataCreationItems.map((item) => (
                 <li key={item.label}>
                   <Link href={item.href} onClick={handleLinkClick} className={dataCreationLinkClass(item.href)}>
@@ -152,7 +155,7 @@ const SidebarContent = () => {
            <li>
               <Link href="#" onClick={handleLinkClick} className={linkClass('/#settings', false)}>
                 <div className="flex-shrink-0"><Settings size={18} /></div>
-                {isOpen && <span className="truncate">Settings</span>}
+                <span className="truncate group-data-[state=collapsed]:hidden">Settings</span>
               </Link>
             </li>
         </ul>
@@ -174,7 +177,11 @@ export function AppSidebar() {
   const { open, setOpen } = useSidebar();
 
   if (isMobile === undefined) {
-    return null; // Don't render anything on the server to avoid hydration mismatch
+    return (
+        <div className="w-20 md:w-64 h-screen">
+             <Skeleton className="h-full w-full" />
+        </div>
+    );
   }
   
   if (isMobile) {
@@ -187,6 +194,9 @@ export function AppSidebar() {
             </Button>
         </SheetTrigger>
         <SheetContent side="left" className="p-0 border-r-0 w-64 bg-transparent">
+          <SheetHeader>
+            <SheetTitle className="sr-only">Main Menu</SheetTitle>
+          </SheetHeader>
           <SidebarContent />
         </SheetContent>
       </Sheet>
