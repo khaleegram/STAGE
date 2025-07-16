@@ -144,11 +144,11 @@ const CoursesPage: React.FC = () => {
 
 
   return (
-    <section className="p-4 sm:p-6 lg:p-8 rounded-lg">
+    <section className="bg-card/80 dark:bg-card/60 p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg backdrop-blur-sm">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-6 text-foreground">Manage Courses</h1>
 
-        <div className="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 bg-card p-4 rounded-lg border">
+        <div className="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 bg-card/50 p-4 rounded-lg border">
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                  <Select onValueChange={handleProgramFilterChange} value={selectedProgram}>
                     <SelectTrigger className="w-full sm:w-[250px]">
@@ -186,7 +186,7 @@ const CoursesPage: React.FC = () => {
                         <h2 className="text-xl font-semibold mb-2 text-primary">{progName}</h2>
                          <div className="overflow-x-auto rounded-lg border">
                             <table className="min-w-full table-auto">
-                                <thead className="bg-muted">
+                                <thead className="bg-muted/50">
                                     <tr>
                                         <th className="p-4 text-left font-semibold">Code</th>
                                         <th className="p-4 text-left font-semibold">Name</th>
@@ -196,7 +196,7 @@ const CoursesPage: React.FC = () => {
                                         <th className="p-4 text-left font-semibold">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y">
+                                <tbody className="divide-y divide-border/50">
                                     {courseArray.map((course) => (
                                         <tr key={course.id}>
                                             <td className="p-4 font-medium">{course.course_code}</td>
@@ -216,7 +216,7 @@ const CoursesPage: React.FC = () => {
                         </div>
                     </div>
                 )) : (
-                    <div className="text-center p-8 text-muted-foreground bg-card rounded-lg border">
+                    <div className="text-center p-8 text-muted-foreground bg-card/50 rounded-lg border">
                         No courses found for the selected filters.
                     </div>
                 )}

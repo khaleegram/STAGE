@@ -103,7 +103,7 @@ const LevelsPage: React.FC = () => {
   );
 
   return (
-    <section className="p-4 sm:p-6 lg:p-8 rounded-lg">
+    <section className="bg-card/80 dark:bg-card/60 p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg backdrop-blur-sm">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-6 text-foreground">Manage Levels</h1>
 
@@ -137,14 +137,14 @@ const LevelsPage: React.FC = () => {
                         <h2 className="text-xl font-semibold mb-2 text-primary">{progName}</h2>
                          <div className="overflow-x-auto rounded-lg border">
                             <table className="min-w-full table-auto">
-                                <thead className="bg-muted">
+                                <thead className="bg-muted/50">
                                     <tr>
                                         <th className="p-4 text-left font-semibold">Level</th>
                                         <th className="p-4 text-left font-semibold">Student Count</th>
                                         <th className="p-4 text-left font-semibold">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y">
+                                <tbody className="divide-y divide-border/50">
                                     {lvlArray.sort((a, b) => a.level - b.level).map((lvl) => (
                                         <tr key={lvl.id}>
                                             <td className="p-4 font-medium">{lvl.level}00 Level</td>
@@ -161,7 +161,7 @@ const LevelsPage: React.FC = () => {
                         </div>
                     </div>
                 )) : (
-                    <div className="text-center p-8 text-muted-foreground bg-card rounded-lg border">
+                    <div className="text-center p-8 text-muted-foreground bg-card/50 rounded-lg border">
                         No levels found for your search criteria.
                     </div>
                 )}
