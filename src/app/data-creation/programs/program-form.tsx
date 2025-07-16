@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -98,8 +99,13 @@ export function ProgramForm({ program, departments, onClose }: ProgramFormProps)
                                 <CommandItem
                                     key={department.id}
                                     value={department.name}
-                                    onSelect={() => {
-                                        setSelectedDepartmentId(department.id);
+                                    onSelect={(currentValue) => {
+                                        // Find the department that was selected
+                                        const selectedDept = departments.find(d => d.name.toLowerCase() === currentValue.toLowerCase());
+                                        if (selectedDept) {
+                                            // If it's already selected, unselect it. Otherwise, select it.
+                                            setSelectedDepartmentId(selectedDept.id === selectedDepartmentId ? '' : selectedDept.id);
+                                        }
                                         setIsPopoverOpen(false);
                                     }}
                                 >
