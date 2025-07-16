@@ -145,6 +145,7 @@ export async function deleteSemester(semesterId: string, sessionId: string) {
     }
 }
 
+
 export async function promoteStudents(): Promise<{ success: boolean; message: string }> {
   try {
     const batch = writeBatch(db);
@@ -162,36 +163,45 @@ export async function promoteStudents(): Promise<{ success: boolean; message: st
       
       const levelsForProgram = allLevels
         .filter(l => l.programId === program.id)
-        .sort((a, b) => b.level - a.level); // Sort descending: 500, 400, 300...
+        .sort((a, b) => a.level - b.level); // Sort ASC: 100, 200, 300...
 
       if (levelsForProgram.length === 0) continue;
 
-      let studentsFromBelow = 0; // Starts at 0, representing graduating students for the top level.
-      
+      let studentsToPromote = 0;
+      let graduatedStudents = 0;
+
+      // Loop through levels in ascending order to promote students up
       for (const level of levelsForProgram) {
-        const currentStudentCount = level.students_count;
         const levelRef = doc(db, 'levels', level.id);
-        
-        // Update the current level with the count from the level below it
-        batch.update(levelRef, { students_count: studentsFromBelow });
-        
-        // Pass the current level's original count down to the next iteration
-        studentsFromBelow = currentStudentCount;
+        const currentStudentCount = level.students_count;
+
+        if (level.level === 1) {
+          // For 100L, their students are the ones to be promoted to 200L
+          studentsToPromote = currentStudentCount;
+          // After promotion, 100L is empty, awaiting new intake
+          batch.update(levelRef, { students_count: 0 });
+        } else {
+          // For 200L and above, they receive students from the level below
+          // and pass their own students up.
+          const studentsFromBelow = studentsToPromote;
+          studentsToPromote = currentStudentCount;
+          batch.update(levelRef, { students_count: studentsFromBelow });
+        }
+
+        // If this is the final level for the program, the students are graduated
+        if (level.level === program.max_level) {
+          graduatedStudents = studentsToPromote;
+        }
       }
-      
-      // After loop, studentsFromBelow holds the original 100L count.
-      // Now, we find the new Level 1 and set its count to 0 for new intake.
-      const levelOne = levelsForProgram.find(l => l.level === 1);
-      if(levelOne) {
-          const levelOneRef = doc(db, 'levels', levelOne.id);
-          batch.update(levelOneRef, { students_count: 0 });
-      }
+      // Note: `graduatedStudents` now holds the count from the final year.
+      // This could be used for archival or reporting in a more advanced version.
     }
 
     await batch.commit();
 
     revalidatePath('/data-creation/levels');
     revalidatePath('/data-creation/sessions');
+    revalidatePath('/data-creation/programs'); // Revalidate all relevant pages
     revalidatePath('/'); // Revalidate dashboard/home page
 
     return { success: true, message: 'Student promotion process completed successfully! Please populate the new Level 1 batches.' };

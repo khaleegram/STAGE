@@ -30,7 +30,7 @@ export function LevelForm({ level, programs, onClose }: LevelFormProps) {
   const [levelNumber, setLevelNumber] = useState(level?.level.toString() || '');
   const [studentCount, setStudentCount] = useState(level?.students_count.toString() || '0');
   
-  const [existingLevels, setExistingLevels] = useState<number[]>([]);
+  const [existingLevelsForProgram, setExistingLevelsForProgram] = useState<number[]>([]);
   const [isLoadingLevels, setIsLoadingLevels] = useState(false);
 
   useEffect(() => {
@@ -50,7 +50,7 @@ export function LevelForm({ level, programs, onClose }: LevelFormProps) {
   // Fetch existing levels for the selected program
   useEffect(() => {
     if (!selectedProgramId) {
-      setExistingLevels([]);
+      setExistingLevelsForProgram([]);
       setLevelNumber('');
       return;
     }
@@ -58,7 +58,7 @@ export function LevelForm({ level, programs, onClose }: LevelFormProps) {
     const levelsQuery = query(collection(db, 'levels'), where('programId', '==', selectedProgramId));
     const unsubscribe = onSnapshot(levelsQuery, (snapshot) => {
       const levels = snapshot.docs.map(doc => doc.data().level as number);
-      setExistingLevels(levels);
+      setExistingLevelsForProgram(levels);
       setIsLoadingLevels(false);
     });
 
@@ -119,9 +119,9 @@ export function LevelForm({ level, programs, onClose }: LevelFormProps) {
     
     // For a new level, filter out existing ones. For an existing level, allow its own number.
     return allPossibleLevels.filter(lvl => 
-        !existingLevels.includes(lvl) || (level && level.level === lvl)
+        !existingLevelsForProgram.includes(lvl) || (level && level.level === lvl)
     );
-  }, [selectedProgramId, programs, existingLevels, level]);
+  }, [selectedProgramId, programs, existingLevelsForProgram, level]);
 
 
   return (
@@ -144,6 +144,7 @@ export function LevelForm({ level, programs, onClose }: LevelFormProps) {
               required
               readOnly={!!level} // Don't allow changing program when editing
               className={level ? 'bg-muted' : ''}
+              autoComplete="off"
             />
             {!level && filteredPrograms.length > 0 && (
               <div className="border border-input rounded-md mt-1 max-h-40 overflow-y-auto z-50 bg-background">
@@ -172,7 +173,9 @@ export function LevelForm({ level, programs, onClose }: LevelFormProps) {
                             <SelectItem key={lvl} value={lvl.toString()}>{lvl}00 Level</SelectItem>
                         ))
                     ) : (
-                        <div className="p-2 text-sm text-muted-foreground text-center">No available levels for this program.</div>
+                        <div className="p-2 text-sm text-muted-foreground text-center">
+                            {selectedProgramId ? "All levels for this program are created." : "Select a program first."}
+                        </div>
                     )}
                 </SelectContent>
             </Select>
@@ -215,7 +218,7 @@ export function LevelForm({ level, programs, onClose }: LevelFormProps) {
             </div>
             <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                <SubmitButton label={level ? 'Update' : 'Add'} disabled={!selectedProgramId} />
+                <SubmitButton label={level ? 'Update' : 'Add'} disabled={!selectedProgramId || !levelNumber} />
             </div>
         </div>
       </form>
