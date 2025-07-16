@@ -7,14 +7,15 @@ import { TimetableDisplay } from '@/components/timetable/timetable-display';
 import type { GenerateExamTimetableOutput } from '@/ai/flows/generate-exam-timetable';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, getDocs, doc, where, orderBy, getDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, getDocs, doc, where, orderBy, getDoc, limit } from 'firebase/firestore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Program, Level } from '@/lib/types';
+import { Program, Level, Timetable } from '@/lib/types';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, BookOpen, Building2, Calendar, Eye, GraduationCap, Users, User, School, Clock, Library, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { format } from 'date-fns';
 
 interface StudentPopulationData {
   name: string;
@@ -25,6 +26,136 @@ interface StudentPopulationData {
   '500L'?: number;
   '600L'?: number;
   '700L'?: number;
+}
+
+function StatCard({ title, value, icon: Icon, isLoading }: { title: string, value: string | number, icon: React.ElementType, isLoading: boolean }) {
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{title}</CardTitle>
+                <Icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                {isLoading ? (
+                    <Skeleton className="h-8 w-1/2" />
+                ) : (
+                    <div className="text-2xl font-bold">{value}</div>
+                )}
+            </CardContent>
+        </Card>
+    )
+}
+
+function StatsOverview() {
+    const [stats, setStats] = useState({ students: 0, programs: 0, courses: 0, venues: 0 });
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const levelsQuery = query(collection(db, 'levels'));
+                const programsQuery = query(collection(db, 'programs'));
+                const coursesQuery = query(collection(db, 'courses'));
+                const venuesQuery = query(collection(db, 'venues'));
+
+                const [levelsSnap, programsSnap, coursesSnap, venuesSnap] = await Promise.all([
+                    getDocs(levelsQuery),
+                    getDocs(programsQuery),
+                    getDocs(coursesQuery),
+                    getDocs(venuesQuery),
+                ]);
+
+                const totalStudents = levelsSnap.docs.reduce((sum, doc) => sum + (doc.data().students_count || 0), 0);
+
+                setStats({
+                    students: totalStudents,
+                    programs: programsSnap.size,
+                    courses: coursesSnap.size,
+                    venues: venuesSnap.size,
+                });
+            } catch (error) {
+                console.error("Failed to fetch stats:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchStats();
+    }, []);
+
+    return (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <StatCard title="Total Students" value={stats.students} icon={Users} isLoading={isLoading} />
+            <StatCard title="Programs" value={stats.programs} icon={GraduationCap} isLoading={isLoading} />
+            <StatCard title="Courses" value={stats.courses} icon={BookOpen} isLoading={isLoading} />
+            <StatCard title="Venues" value={stats.venues} icon={MapPin} isLoading={isLoading} />
+        </div>
+    );
+}
+
+function RecentTimetables() {
+    const [timetables, setTimetables] = useState<Timetable[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const q = query(collection(db, 'timetables'), orderBy('createdAt', 'desc'), limit(5));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const data = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            } as Timetable));
+            setTimetables(data);
+            setIsLoading(false);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Recent Timetables</CardTitle>
+                <CardDescription>A list of the most recently generated timetables.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {isLoading ? (
+                    <div className="space-y-2">
+                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-8 w-full" />
+                    </div>
+                ) : (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead className="text-right">Conflicts</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {timetables.length > 0 ? timetables.map(t => (
+                                <TableRow key={t.id}>
+                                    <TableCell className="font-medium">{t.name}</TableCell>
+                                    <TableCell>{t.createdAt ? format(t.createdAt.seconds * 1000, 'PPP') : 'N/A'}</TableCell>
+                                    <TableCell className="text-right">
+                                        {t.conflicts ? (
+                                            <span className="text-destructive font-bold">Yes</span>
+                                        ) : (
+                                            <span className="text-green-600">No</span>
+                                        )}
+                                    </TableCell>
+                                </TableRow>
+                            )) : (
+                                <TableRow>
+                                    <TableCell colSpan={3} className="text-center">No timetables generated yet.</TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                )}
+            </CardContent>
+        </Card>
+    );
 }
 
 
@@ -194,7 +325,9 @@ export default function Home() {
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
       </div>
       
+      <StatsOverview />
       <UnresolvedPromotionsCard />
+      <RecentTimetables />
       <StudentPopulationChart />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
