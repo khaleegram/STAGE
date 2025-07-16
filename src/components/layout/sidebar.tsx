@@ -17,7 +17,6 @@ import {
   Clock,
   CalendarDays,
   Settings,
-  Users,
   Sparkles,
   ChevronDown,
 } from 'lucide-react';
@@ -32,18 +31,38 @@ const SidebarContent = () => {
   const { open: isOpen, toggleSidebar, setOpen } = useSidebar();
   const pathname = usePathname();
   const [isDataCreationOpen, setIsDataCreationOpen] = useState(pathname.startsWith('/data-creation'));
+  const isMobile = useIsMobile();
 
-  const handleLinkClick = () => {
-    const isMobile = window.innerWidth < 768;
-    if(isMobile) {
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // On desktop, if the sidebar is collapsed, the first click should expand it.
+    if (!isMobile && !isOpen) {
+      e.preventDefault();
+      setOpen(true);
+      return;
+    }
+    // On mobile, clicking a link should close the sheet.
+    if (isMobile) {
       setOpen(false);
     }
   };
 
   const toggleDataCreationMenu = (e: React.MouseEvent) => {
     e.stopPropagation();
+    // If collapsed on desktop, expand first.
+    if (!isOpen && !isMobile) {
+        setOpen(true);
+        setIsDataCreationOpen(true);
+        return;
+    }
     setIsDataCreationOpen(!isDataCreationOpen);
   }
+  
+  // Ensure the data creation menu stays open on page load if the path matches
+  useEffect(() => {
+    if (pathname.startsWith('/data-creation')) {
+      setIsDataCreationOpen(true);
+    }
+  }, [pathname]);
 
   const linkClass = (path: string, exact: boolean = true) => {
     const isActive = exact ? pathname === path : pathname.startsWith(path);
