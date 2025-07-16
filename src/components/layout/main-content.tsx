@@ -10,8 +10,8 @@ export default function MainContent({ children }: { children: React.ReactNode })
     return (
         <main
           className={cn(
-            'transition-all duration-300 w-full p-6 pt-16',
-            'sm:pt-6 sm:px-6', // Adjust padding for desktop
+            'transition-all duration-300 w-full pt-16',
+            'sm:pt-6', 
             isSidebarOpen ? 'sm:ml-64' : 'sm:ml-20',
             'max-sm:ml-0 max-sm:px-4 max-sm:pt-20'
           )}

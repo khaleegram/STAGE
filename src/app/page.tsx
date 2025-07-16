@@ -216,24 +216,26 @@ function StudentPopulationChart() {
 
 export default function Home() {
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-      </div>
-      
-      <UnresolvedPromotions />
-      <StatsOverview />
-      <RecentTimetables />
-      <StudentPopulationChart />
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="space-y-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+            </div>
+            
+            <UnresolvedPromotions />
+            <StatsOverview />
+            <RecentTimetables />
+            <StudentPopulationChart />
 
-      <div className="fixed bottom-6 right-6 z-50">
-        <Button asChild size="lg">
-          <Link href="/generation">
-            <Sparkles className="mr-2 h-5 w-5" />
-            Generate New Timetable
-          </Link>
-        </Button>
-      </div>
+            <div className="fixed bottom-6 right-6 z-50">
+                <Button asChild size="lg" className="rounded-full shadow-lg">
+                <Link href="/generation">
+                    <Sparkles className="mr-2 h-5 w-5" />
+                    Generate New Timetable
+                </Link>
+                </Button>
+            </div>
+        </div>
     </div>
   );
 }
