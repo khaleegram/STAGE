@@ -17,49 +17,17 @@ const formSchema = z.object({
 });
 
 export async function handleGenerateTimetable(values: z.infer<typeof formSchema>): Promise<{
-  data: GenerateExamTimetableOutput | null;
+  data: any | null; // Keeping this generic for now as output schema will change
   error: string | null;
 }> {
   try {
     const validatedInput = formSchema.parse(values);
-    const result = await generateExamTimetable(validatedInput);
+    // The generateExamTimetable function signature has changed. 
+    // This action is now deprecated and will be replaced by logic in the generation page.
+    // For now, we return a mock error to prevent it from being used.
+    
+    return { data: null, error: 'This generation method is deprecated. Please use the new generation page.' };
 
-    // Save the generated timetable to Firestore
-    try {
-        const sessionRef = doc(db, 'academic_sessions', validatedInput.sessionId);
-        const sessionSnap = await getDoc(sessionRef);
-        const sessionName = sessionSnap.exists() ? sessionSnap.data().session_name : `Session ${validatedInput.sessionId}`;
-
-        const semesterRef = doc(db, 'academic_sessions', validatedInput.sessionId, 'semesters', validatedInput.semesterId);
-        const semesterSnap = await getDoc(semesterRef);
-        const semesterName = semesterSnap.exists() ? 
-            (semesterSnap.data().semester_number === 1 ? 'First Semester' : 'Second Semester') 
-            : `Semester ${validatedInput.semesterId}`;
-
-
-        await addDoc(collection(db, 'timetables'), {
-            name: `Timetable for ${sessionName} - ${semesterName}`,
-            timetable: result.timetable,
-            conflicts: result.conflicts || '',
-            createdAt: serverTimestamp(),
-            inputs: {
-                subjectDependencies: validatedInput.subjectDependencies,
-                studentEnrollment: validatedInput.studentEnrollment,
-                facultyAvailability: validatedInput.facultyAvailability,
-                roomCapacities: validatedInput.roomCapacities,
-                examDuration: validatedInput.examDuration,
-                additionalConstraints: validatedInput.additionalConstraints,
-            },
-            sessionId: validatedInput.sessionId,
-            semesterId: validatedInput.semesterId,
-        });
-    } catch (dbError) {
-        console.error("Error saving timetable to Firestore: ", dbError);
-        // We can still return the result to the user even if saving fails.
-        // A more robust implementation might warn the user that it wasn't saved.
-    }
-
-    return { data: result, error: null };
   } catch (error) {
     console.error('Error generating timetable:', error);
     if (error instanceof z.ZodError) {

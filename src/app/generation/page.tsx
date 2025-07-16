@@ -18,7 +18,9 @@ import { format, differenceInWeeks, eachDayOfInterval, getDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { DateRange } from 'react-day-picker';
 import { compileAndStoreGenerationData, getExistingGenerationData, GenerationData } from './actions';
+import { generateExamTimetable, GenerateExamTimetableInput, GenerateExamTimetableOutput } from '@/ai/flows/generate-exam-timetable';
 import { Badge } from '@/components/ui/badge';
+import { TimetableDisplay } from '@/components/timetable/timetable-display';
 
 // --- Time Slot Logic ---
 interface TimeSlot {
@@ -49,7 +51,6 @@ const generateAllTimeSlots = (range: DateRange): DailyTimeSlots[] => {
             day,
             slots: defaultTimeSlots.map(slot => ({
                 ...slot,
-                // Mark all slots on Sunday as overflow
                 type: isSunday ? 'overflow' : slot.type,
             })),
         };
@@ -307,7 +308,11 @@ const DataTable = ({ title, description, headers, children, isLoading, stepNumbe
 export default function GenerationPage() {
   const [generationData, setGenerationData] = useState<GenerationData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [timeSlots, setTimeSlots] = useState<DailyTimeSlots[]>([]);
+  const [timetableResult, setTimetableResult] = useState<GenerateExamTimetableOutput | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleDateChange = useCallback((range: DateRange | undefined) => {
     if (range?.from && range.to) {
@@ -324,6 +329,67 @@ export default function GenerationPage() {
   const handleSetIsLoading = useCallback((loading: boolean) => {
       setIsLoading(loading);
   }, []);
+
+  const handleGenerateTimetable = async () => {
+    if (!generationData) {
+        toast({ title: 'Error', description: 'No compiled data available to generate a timetable.', variant: 'destructive' });
+        return;
+    }
+
+    setIsGenerating(true);
+    setTimetableResult(null);
+    setGenerationError(null);
+
+    // Get student count for each course
+    const coursesWithStudentCount = await Promise.all(generationData.courses.map(async course => {
+        let student_count = 0;
+        if (course.levelId) {
+            const levelRef = (await getDocs(query(collection(db, 'levels'), where('levelId', '==', course.levelId)))).docs[0];
+            if(levelRef && levelRef.exists()) {
+                 const levelDoc = (await getDocs(query(collection(db, 'levels'), where('programId', '==', levelRef.data().programId), where('level', '==', levelRef.data().level)))).docs[0];
+                 if(levelDoc && levelDoc.exists()){
+                    student_count = levelDoc.data().students_count;
+                 }
+            }
+        }
+        return { ...course, student_count };
+    }));
+
+
+    const aiInput: GenerateExamTimetableInput = {
+        courses: coursesWithStudentCount.map(c => ({
+            id: c.id,
+            course_code: c.course_code,
+            course_name: c.course_name,
+            exam_type: c.exam_type,
+            offeringPrograms: c.offeringPrograms,
+            student_count: c.student_count || 0
+        })),
+        venues: generationData.venues,
+        staff: generationData.staff.map(s => ({
+            id: s.id,
+            name: s.name,
+            collegeName: s.collegeName || 'N/A',
+            departmentName: s.departmentName || 'N/A'
+        })),
+        timeSlots: timeSlots.map(ts => ({
+            day: format(ts.day, 'yyyy-MM-dd'),
+            slots: ts.slots
+        }))
+    };
+
+    try {
+        const result = await generateExamTimetable(aiInput);
+        setTimetableResult(result);
+        toast({ title: "Success", description: "Timetable generated successfully!"});
+    } catch (e: any) {
+        console.error("Timetable generation failed:", e);
+        setGenerationError(e.message || "An unknown error occurred during AI generation.");
+        toast({ title: "Generation Failed", description: e.message || "An unknown error occurred.", variant: 'destructive' });
+    } finally {
+        setIsGenerating(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -343,11 +409,16 @@ export default function GenerationPage() {
       {generationData && (
           <>
             <div className="flex items-center justify-end">
-                <Button size="lg" className="bg-green-600 hover:bg-green-700">
+                <Button size="lg" className="bg-green-600 hover:bg-green-700" onClick={handleGenerateTimetable} disabled={isGenerating}>
                     <Sparkles className="mr-2 h-5 w-5" />
-                    Proceed to Generate Timetable
+                    {isGenerating ? 'Generating with AI...' : 'Proceed to Generate Timetable'}
                 </Button>
             </div>
+
+            { (isGenerating || timetableResult || generationError) &&
+                <TimetableDisplay result={timetableResult} isLoading={isGenerating} error={generationError} />
+            }
+
             <DataTable
                 stepNumber={3}
                 title="Course Details"

@@ -2,9 +2,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { GeneratorForm } from '@/components/timetable/generator-form';
-import { TimetableDisplay } from '@/components/timetable/timetable-display';
-import type { GenerateExamTimetableOutput } from '@/ai/flows/generate-exam-timetable';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, getDocs, doc, where, orderBy, limit } from 'firebase/firestore';
@@ -12,7 +9,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { Skeleton } from '@/components/ui/skeleton';
 import { Program, Level, Timetable } from '@/lib/types';
 import Link from 'next/link';
-import { ArrowRight, BookOpen, Building2, Calendar, Eye, GraduationCap, Users, User, School, Clock, Library, MapPin } from 'lucide-react';
+import { ArrowRight, BookOpen, Building2, Calendar, Eye, GraduationCap, Users, User, School, Clock, Library, MapPin, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
@@ -219,8 +216,14 @@ function StudentPopulationChart() {
 export default function Home() {
   return (
     <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <Button asChild>
+          <Link href="/generation">
+            <Sparkles className="mr-2 h-4 w-4" />
+            Generate New Timetable
+          </Link>
+        </Button>
       </div>
       
       <StatsOverview />
