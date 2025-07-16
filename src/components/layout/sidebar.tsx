@@ -26,7 +26,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../ui/sheet';
 import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
-import Navbar from './navbar';
+import { Skeleton } from '../ui/skeleton';
 
 const SidebarContent = () => {
   const { open: isOpen, toggleSidebar, setOpen } = useSidebar();
@@ -34,7 +34,7 @@ const SidebarContent = () => {
   const [isDataCreationOpen, setIsDataCreationOpen] = useState(pathname.startsWith('/data-creation'));
   const isMobile = useIsMobile();
 
-  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleLinkClick = (e: React.MouseEvent) => {
     // For desktop view, if sidebar is collapsed, a click should expand it.
     if (!isMobile && !isOpen) {
       setOpen(true);
@@ -200,7 +200,7 @@ const SidebarContent = () => {
 
 export function AppSidebar() {
   const isMobile = useIsMobile();
-  const { open, setOpen, toggleSidebar } = useSidebar();
+  const { open, setOpen } = useSidebar();
 
   if (isMobile === undefined) {
     return (
@@ -224,13 +224,11 @@ export function AppSidebar() {
   }
 
   return (
-    <>
-      <div className={cn(
-          "fixed top-0 left-0 z-30 h-screen transition-all duration-300 ease-in-out hidden sm:block", 
-          open ? 'w-64' : 'w-20'
-      )}>
-        <SidebarContent />
-      </div>
-    </>
+    <div className={cn(
+        "fixed top-0 left-0 z-30 h-screen transition-all duration-300 ease-in-out hidden sm:block", 
+        open ? 'w-64' : 'w-20'
+    )}>
+      <SidebarContent />
+    </div>
   );
 }
