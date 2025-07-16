@@ -142,6 +142,7 @@ const ProgramsPage: React.FC = () => {
                                     <tr>
                                         <th className="p-4 text-left font-semibold">#</th>
                                         <th className="p-4 text-left font-semibold">Program Name</th>
+                                        <th className="p-4 text-left font-semibold">Max Level</th>
                                         <th className="p-4 text-left font-semibold">Actions</th>
                                     </tr>
                                 </thead>
@@ -150,6 +151,7 @@ const ProgramsPage: React.FC = () => {
                                         <tr key={prog.id}>
                                             <td className="p-4">{index + 1}</td>
                                             <td className="p-4 font-medium">{prog.name}</td>
+                                            <td className="p-4">{prog.max_level} Years</td>
                                             <td className="p-4 flex space-x-2">
                                                 <Button variant="outline" size="sm" onClick={() => handleEdit(prog)}>
                                                 Edit
