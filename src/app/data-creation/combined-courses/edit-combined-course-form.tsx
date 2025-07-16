@@ -39,12 +39,12 @@ export function EditCombinedCourseForm({ course, allPrograms, allLevels, onClose
     },
   });
 
-  const { fields, append, remove, watch } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: 'offerings',
   });
 
-  const currentOfferings = watch('offerings');
+  const currentOfferings = form.watch('offerings');
 
   const handleAppend = () => {
     append({ programId: '', levelId: '' }, { shouldFocus: true });
