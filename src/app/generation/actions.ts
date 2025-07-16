@@ -47,7 +47,10 @@ export async function getGenerationData(semesterId: string): Promise<{ data: Gen
         // 1. Fetch all Venues
         const venuesQuery = query(collection(db, 'venues'), orderBy('name'));
         const venuesSnapshot = await getDocs(venuesQuery);
-        const venues: Venue[] = venuesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Venue));
+        const venues: Venue[] = venuesSnapshot.docs.map(doc => {
+            const { createdAt, ...serializableData } = doc.data();
+            return { id: doc.id, ...serializableData } as Venue;
+        });
 
         // 2. Fetch all Staff
         const staffQuery = query(collection(db, 'staffs'), orderBy('name'));
