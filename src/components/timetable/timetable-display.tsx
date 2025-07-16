@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, Download, Printer, FileWarning, CalendarCheck2, ListX } from 'lucide-react';
+import { AlertTriangle, Download, Printer, FileWarning, CalendarCheck2, ListX, Save } from 'lucide-react';
 import type { GenerateExamTimetableOutput } from '@/ai/flows/generate-exam-timetable';
 import { Badge } from '../ui/badge';
 
@@ -29,10 +29,11 @@ type TimetableDisplayProps = {
   result: GenerateExamTimetableOutput | null;
   isLoading: boolean;
   error: string | null;
+  onSave: () => void;
 };
 
 
-export function TimetableDisplay({ result, isLoading, error }: TimetableDisplayProps) {
+export function TimetableDisplay({ result, isLoading, error, onSave }: TimetableDisplayProps) {
   
   const handlePrint = () => {
     window.print();
@@ -187,6 +188,10 @@ export function TimetableDisplay({ result, isLoading, error }: TimetableDisplayP
       </CardContent>
       {result && !error && (
         <CardFooter className="border-t pt-6 justify-end gap-2">
+          <Button variant="outline" onClick={onSave}>
+            <Save className="mr-2 h-4 w-4" />
+            Save
+          </Button>
           <Button variant="outline" onClick={handlePrint}>
             <Printer className="mr-2 h-4 w-4" />
             Print

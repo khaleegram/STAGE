@@ -21,9 +21,11 @@ import { compileAndStoreGenerationData, getExistingGenerationData, GenerationDat
 import { generateExamTimetable, GenerateExamTimetableInput, GenerateExamTimetableOutput } from '@/ai/flows/generate-exam-timetable';
 import { Badge } from '@/components/ui/badge';
 import { TimetableDisplay } from '@/components/timetable/timetable-display';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { saveTimetable } from '@/app/timetables/actions';
+import { Label } from '@/components/ui/label';
 
 // --- Time Slot Logic & Components ---
 interface TimeSlot {
@@ -449,6 +451,8 @@ export default function GenerationPage() {
   const [timetableResult, setTimetableResult] = useState<GenerateExamTimetableOutput | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [additionalConstraints, setAdditionalConstraints] = useState('');
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [timetableName, setTimetableName] = useState('');
   const { toast } = useToast();
 
   const handleDateChange = useCallback((range: DateRange | undefined) => {
@@ -536,6 +540,33 @@ export default function GenerationPage() {
         setIsGenerating(false);
     }
   }
+  
+  const handleSave = async () => {
+    if (!timetableResult) {
+        toast({ title: 'Error', description: 'No timetable result to save.', variant: 'destructive' });
+        return;
+    }
+    if (!timetableName) {
+        toast({ title: 'Error', description: 'Please provide a name for the timetable.', variant: 'destructive' });
+        return;
+    }
+
+    const result = await saveTimetable({
+      name: timetableName,
+      ...timetableResult
+    });
+
+    toast({
+      title: result.success ? 'Success' : 'Error',
+      description: result.message,
+      variant: result.success ? 'default' : 'destructive'
+    });
+    
+    if (result.success) {
+      setShowSaveDialog(false);
+      setTimetableName('');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -564,7 +595,7 @@ export default function GenerationPage() {
             </div>
 
             { (isGenerating || timetableResult || generationError) &&
-                <TimetableDisplay result={timetableResult} isLoading={isGenerating} error={generationError} />
+                <TimetableDisplay result={timetableResult} isLoading={isGenerating} error={generationError} onSave={() => setShowSaveDialog(true)} />
             }
 
             <DataTable
@@ -620,6 +651,35 @@ export default function GenerationPage() {
             </DataTable>
           </>
       )}
+      
+       <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Timetable</DialogTitle>
+            <DialogDescription>
+              Give this generated timetable a unique name for future reference.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="name"
+                value={timetableName}
+                onChange={(e) => setTimetableName(e.target.value)}
+                className="col-span-3"
+                placeholder="e.g., 2024/25 First Semester Final Draft"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setShowSaveDialog(false)}>Cancel</Button>
+            <Button type="button" onClick={handleSave}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

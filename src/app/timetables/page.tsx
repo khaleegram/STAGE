@@ -1,60 +1,53 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { db } from '@/lib/firebase';
 import { Timetable } from '@/lib/types';
-import { collection, getDocs, QueryDocumentSnapshot, DocumentData, orderBy, query } from 'firebase/firestore';
-import { PlusCircle, Eye } from 'lucide-react';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { PlusCircle, Eye, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
-async function getTimetables(): Promise<Timetable[]> {
-  try {
-    const timetablesCollection = collection(db, 'timetables');
-    const q = query(timetablesCollection, orderBy('createdAt', 'desc'));
-    const timetableSnapshot = await getDocs(q);
-    
-    if (timetableSnapshot.empty) {
-        console.log("No timetables found, returning mock data.");
-        return mockTimetables();
-    }
 
-    const timetablesList = timetableSnapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
-        const data = doc.data();
-        return {
-            id: doc.id,
-            name: data.name || 'Untitled Timetable',
-            createdAt: data.createdAt,
-            timetable: data.timetable,
-            conflicts: data.conflicts,
-        }
+export default function TimetablesPage() {
+  const [timetables, setTimetables] = useState<Timetable[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const q = query(collection(db, 'timetables'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Timetable));
+      setTimetables(data);
+      setIsLoading(false);
+    }, (error) => {
+        console.error("Error fetching timetables: ", error);
+        toast({
+            title: 'Error',
+            description: 'Could not fetch timetables. Please try again later.',
+            variant: 'destructive',
+        });
+        setIsLoading(false);
     });
-    return timetablesList;
-  } catch (error) {
-    console.error("Error fetching timetables: ", error);
-    return mockTimetables();
-  }
-}
+    return () => unsubscribe();
+  }, [toast]);
 
-function mockTimetables(): Timetable[] {
-    const now = new Date();
-    return [
-        { id: 'mock1', name: 'Mock Timetable 1 - Fall 2024 Final Exams', createdAt: { seconds: Math.floor(now.getTime() / 1000) - 86400, nanoseconds: 0 }, timetable: '...', conflicts: 'Conflict A vs B' },
-        { id: 'mock2', name: 'Mock Timetable 2 - Spring 2025 Midterms', createdAt: { seconds: Math.floor(now.getTime() / 1000) - 172800, nanoseconds: 0 }, timetable: '...', conflicts: '' },
-    ];
-}
-
-
-export default async function TimetablesPage() {
-  const timetables = await getTimetables();
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Saved Timetables</h1>
-         <Link href="/" passHref>
+         <Link href="/generation" passHref>
           <Button>
-            <PlusCircle className="mr-2" />
+            <Sparkles className="mr-2" />
             Generate New Timetable
           </Button>
         </Link>
@@ -66,40 +59,54 @@ export default async function TimetablesPage() {
           <CardDescription>Manage and view previously generated timetables.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Creation Date</TableHead>
-                <TableHead>Conflicts</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {timetables.map((timetable) => (
-                <TableRow key={timetable.id}>
-                  <TableCell className="font-medium">{timetable.name}</TableCell>
-                  <TableCell>
-                    {timetable.createdAt ? format(new Date(timetable.createdAt.seconds * 1000), 'PPP p') : 'N/A'}
-                  </TableCell>
-                  <TableCell>
-                    {timetable.conflicts ? (
-                      <span className="text-destructive font-medium">Yes</span>
-                    ) : (
-                      <span>No</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                     {/* This could link to a detailed view page in the future */}
-                    <Button variant="outline" size="sm">
-                       <Eye className="mr-2 h-4 w-4" />
-                       View
-                    </Button>
-                  </TableCell>
+           {isLoading ? (
+            <div className="space-y-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+           ) : (
+            <Table>
+                <TableHeader>
+                <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Creation Date</TableHead>
+                    <TableHead>Conflicts</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                </TableHeader>
+                <TableBody>
+                {timetables.length > 0 ? timetables.map((timetable) => (
+                    <TableRow key={timetable.id}>
+                    <TableCell className="font-medium">{timetable.name}</TableCell>
+                    <TableCell>
+                        {timetable.createdAt ? format(new Date(timetable.createdAt.seconds * 1000), 'PPP p') : 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                        {timetable.conflicts ? (
+                        <span className="text-destructive font-medium">Yes</span>
+                        ) : (
+                        <span>No</span>
+                        )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                        {/* This could link to a detailed view page in the future */}
+                        <Button variant="outline" size="sm">
+                        <Eye className="mr-2 h-4 w-4" />
+                        View
+                        </Button>
+                    </TableCell>
+                    </TableRow>
+                )) : (
+                    <TableRow>
+                        <TableCell colSpan={4} className="text-center p-8 text-muted-foreground">
+                            No timetables have been saved yet.
+                        </TableCell>
+                    </TableRow>
+                )}
+                </TableBody>
+            </Table>
+           )}
         </CardContent>
       </Card>
     </div>
