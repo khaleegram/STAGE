@@ -13,7 +13,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarIcon, Sparkles, Clock, AlertTriangle } from 'lucide-react';
+import { CalendarIcon, Sparkles, Clock, AlertTriangle, PlusCircle, X } from 'lucide-react';
 import { format, differenceInWeeks, eachDayOfInterval, getDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { DateRange } from 'react-day-picker';
@@ -21,8 +21,10 @@ import { compileAndStoreGenerationData, getExistingGenerationData, GenerationDat
 import { generateExamTimetable, GenerateExamTimetableInput, GenerateExamTimetableOutput } from '@/ai/flows/generate-exam-timetable';
 import { Badge } from '@/components/ui/badge';
 import { TimetableDisplay } from '@/components/timetable/timetable-display';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 
-// --- Time Slot Logic ---
+// --- Time Slot Logic & Components ---
 interface TimeSlot {
     time: string;
     type: 'standard' | 'overflow';
@@ -56,7 +58,49 @@ const generateAllTimeSlots = (range: DateRange): DailyTimeSlots[] => {
         };
     });
 };
-// --- End Time Slot Logic ---
+
+function AddSlotModal({ isOpen, onClose, onAddSlot }: { isOpen: boolean, onClose: () => void, onAddSlot: (slot: TimeSlot) => void }) {
+    const [time, setTime] = useState('');
+    const [type, setType] = useState<'standard' | 'overflow'>('standard');
+
+    const handleAdd = () => {
+        if (time.trim()) {
+            onAddSlot({ time, type });
+            setTime('');
+            onClose();
+        }
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add Custom Time Slot</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <Input 
+                        placeholder="e.g., 6:00 PM - 8:00 PM"
+                        value={time}
+                        onChange={(e) => setTime(e.target.value)}
+                    />
+                    <Select onValueChange={(v: 'standard' | 'overflow') => setType(v)} defaultValue={type}>
+                        <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="standard">Standard</SelectItem>
+                            <SelectItem value="overflow">Overflow</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex justify-end gap-2">
+                    <Button variant="ghost" onClick={onClose}>Cancel</Button>
+                    <Button onClick={handleAdd}>Add Slot</Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+// --- End Time Slot Logic & Components ---
 
 
 function GenerationSetup({ 
@@ -236,41 +280,79 @@ function GenerationSetup({
   );
 }
 
-const TimeSlotsDisplay = ({ dailySlots, isLoading }: { dailySlots: DailyTimeSlots[], isLoading: boolean }) => (
-    <Card>
-        <CardHeader>
-            <CardTitle>2. Time Slots</CardTitle>
-            <CardDescription>Default daily time slots for the selected examination period.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            {isLoading ? (
-                <div className="space-y-2">
-                    <Skeleton className="h-20 w-full" />
-                </div>
-            ) : dailySlots.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {dailySlots.map(({ day, slots }) => (
-                        <div key={day.toISOString()} className={cn("rounded-lg p-3", getDay(day) === 0 ? "bg-amber-100 border border-amber-300" : "bg-muted/60")}>
-                            <h4 className={cn("font-semibold mb-2", getDay(day) === 0 && "text-amber-800")}>{format(day, 'eeee, MMM d')}</h4>
-                            <div className="space-y-1">
-                                {slots.map(slot => (
-                                    <div key={slot.time} className="flex items-center justify-between text-xs p-1 rounded">
-                                        <span>{slot.time}</span>
-                                        <Badge variant={slot.type === 'overflow' ? 'destructive' : 'secondary'} className="capitalize">{slot.type}</Badge>
-                                    </div>
-                                ))}
+const TimeSlotsDisplay = ({ dailySlots, isLoading, setDailySlots }: { dailySlots: DailyTimeSlots[], isLoading: boolean, setDailySlots: (slots: DailyTimeSlots[]) => void }) => {
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [dayToEdit, setDayToEdit] = useState<Date | null>(null);
+
+    const handleRemoveSlot = (day: Date, slotToRemove: TimeSlot) => {
+        setDailySlots(dailySlots.map(d => {
+            if (d.day.getTime() === day.getTime()) {
+                return { ...d, slots: d.slots.filter(s => s.time !== slotToRemove.time) };
+            }
+            return d;
+        }));
+    };
+
+    const handleOpenAddModal = (day: Date) => {
+        setDayToEdit(day);
+        setIsAddModalOpen(true);
+    };
+
+    const handleAddSlot = (newSlot: TimeSlot) => {
+        if (!dayToEdit) return;
+        setDailySlots(dailySlots.map(d => {
+            if (d.day.getTime() === dayToEdit.getTime()) {
+                return { ...d, slots: [...d.slots, newSlot] };
+            }
+            return d;
+        }));
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>2. Time Slots Editor</CardTitle>
+                <CardDescription>Default daily time slots for the selected examination period. You can add or remove slots for each day.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {isLoading ? (
+                    <div className="space-y-2">
+                        <Skeleton className="h-20 w-full" />
+                    </div>
+                ) : dailySlots.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {dailySlots.map(({ day, slots }) => (
+                            <div key={day.toISOString()} className={cn("rounded-lg p-3 flex flex-col", getDay(day) === 0 ? "bg-amber-100 border border-amber-300" : "bg-muted/60")}>
+                                <h4 className={cn("font-semibold mb-2", getDay(day) === 0 && "text-amber-800")}>{format(day, 'eeee, MMM d')}</h4>
+                                <div className="space-y-1 flex-grow">
+                                    {slots.map(slot => (
+                                        <div key={slot.time} className="flex items-center justify-between text-xs p-1 rounded group hover:bg-black/5">
+                                            <span>{slot.time}</span>
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant={slot.type === 'overflow' ? 'destructive' : 'secondary'} className="capitalize">{slot.type}</Badge>
+                                                <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100" onClick={() => handleRemoveSlot(day, slot)}>
+                                                    <X className="h-3 w-3 text-destructive" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <Button size="sm" variant="outline" className="mt-2 w-full" onClick={() => handleOpenAddModal(day)}>
+                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Slot
+                                </Button>
                             </div>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                 <div className="text-center py-8 text-muted-foreground">
-                    <p>Select a date range to see the default time slots.</p>
-                </div>
-            )}
-        </CardContent>
-    </Card>
-);
+                        ))}
+                    </div>
+                ) : (
+                     <div className="text-center py-8 text-muted-foreground">
+                        <p>Select a date range to see and edit the default time slots.</p>
+                    </div>
+                )}
+            </CardContent>
+            <AddSlotModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onAddSlot={handleAddSlot} />
+        </Card>
+    );
+};
 
 
 const DataTable = ({ title, description, headers, children, isLoading, stepNumber }: { title: string, description: string, headers: string[], children: React.ReactNode, isLoading: boolean, stepNumber: number }) => (
@@ -404,7 +486,7 @@ export default function GenerationPage() {
         onDateChange={handleDateChange} 
       />
       
-      <TimeSlotsDisplay dailySlots={timeSlots} isLoading={isLoading}/>
+      <TimeSlotsDisplay dailySlots={timeSlots} isLoading={isLoading} setDailySlots={setTimeSlots}/>
       
       {generationData && (
           <>
