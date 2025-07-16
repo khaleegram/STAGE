@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, writeBatch, query, where, getDocs } from 'firebase/firestore';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 
@@ -49,7 +49,6 @@ export async function addProgram(prevState: any, formData: FormData): Promise<{ 
       name: formattedName,
       departmentId: validatedFields.data.departmentId,
       max_level: validatedFields.data.max_level,
-      createdAt: serverTimestamp(),
       expected_intake: 0 // Default value
     });
     revalidatePath('/data-creation/programs');
@@ -108,9 +107,24 @@ export async function deleteProgram(programId: string): Promise<{ success: boole
         return { success: false, message: 'Program ID is missing.' };
     }
     try {
-        await deleteDoc(doc(db, 'programs', programId));
+        const batch = writeBatch(db);
+        
+        // 1. Delete program document
+        const programRef = doc(db, 'programs', programId);
+        batch.delete(programRef);
+        
+        // 2. Find and delete associated levels
+        const levelsQuery = query(collection(db, 'levels'), where('programId', '==', programId));
+        const levelsSnapshot = await getDocs(levelsQuery);
+        levelsSnapshot.forEach(levelDoc => {
+            batch.delete(levelDoc.ref);
+        });
+
+        await batch.commit();
+
         revalidatePath('/data-creation/programs');
-        return { success: true, message: 'Program deleted successfully.' };
+        revalidatePath('/data-creation/levels');
+        return { success: true, message: 'Program and all its levels deleted successfully.' };
     } catch (error) {
         console.error('Error deleting program:', error);
         if (error instanceof Error) {
@@ -119,3 +133,5 @@ export async function deleteProgram(programId: string): Promise<{ success: boole
         return { success: false, message: 'An unexpected error occurred.' };
     }
 }
+
+    

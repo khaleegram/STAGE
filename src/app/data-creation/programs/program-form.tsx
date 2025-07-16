@@ -83,7 +83,7 @@ export function ProgramForm({ program, departments, onClose }: ProgramFormProps)
 
   const filteredDepartments = useMemo(() => {
     if (!departmentSearch) return [];
-    // Don't show results if a department is already selected
+    // Don't show results if a department is already selected and the search term matches its name
     if (selectedDepartmentId && departments.find(d => d.id === selectedDepartmentId)?.name === departmentSearch) return [];
 
     return departments.filter(d => 
@@ -115,6 +115,7 @@ export function ProgramForm({ program, departments, onClose }: ProgramFormProps)
             setSelectedDepartmentId(''); // Clear selection when user types
           }}
           required
+          autoComplete="off"
         />
         {filteredDepartments.length > 0 && (
           <div className="border border-input rounded-md mt-1 max-h-40 overflow-y-auto z-50 bg-background">
@@ -167,7 +168,7 @@ export function ProgramForm({ program, departments, onClose }: ProgramFormProps)
           {program && (
             <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
               <AlertDialogTrigger asChild>
-                <Button type="button" variant="destructive" onClick={(e) => e.stopPropagation()}>
+                <Button type="button" variant="destructive" onClick={(e) => {e.stopPropagation(); setIsDeleteDialogOpen(true);}}>
                   Delete
                 </Button>
               </AlertDialogTrigger>
@@ -205,3 +206,5 @@ function SubmitButton({ label, disabled }: { label: string; disabled?: boolean }
     </Button>
   );
 }
+
+    

@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -5,9 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { db } from '@/lib/firebase';
-import { AcademicSession, Semester } from '@/lib/types';
-import { collection, onSnapshot, query, orderBy, getDocs } from 'firebase/firestore';
-import { PlusCircle, CheckCircle, Lock, PlayCircle, Trash2, Edit, Users } from 'lucide-react';
+import { AcademicSession, Semester, Level } from '@/lib/types';
+import { collection, onSnapshot, query, orderBy, getDocs, where, doc } from 'firebase/firestore';
+import { PlusCircle, CheckCircle, Lock, PlayCircle, Trash2, Edit, Users, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { format, isValid } from 'date-fns';
@@ -17,6 +18,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { SessionForm } from './session-form';
 import { SemesterForm } from './semester-form';
+import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
 
 const statusIcons: { [key: string]: React.ReactElement } = {
     open: <PlayCircle className="h-4 w-4 text-green-500" />,
@@ -29,6 +32,86 @@ const statusColors: { [key: string]: string } = {
     closed: 'bg-gray-100 text-gray-800',
     locked: 'bg-red-100 text-red-800',
 };
+
+function UnresolvedPromotionsCard() {
+    const [emptyLevels, setEmptyLevels] = useState<Level[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const q = query(
+            collection(db, 'levels'),
+            where('level', '==', 1),
+            where('students_count', '==', 0)
+        );
+
+        const unsubscribe = onSnapshot(q, async (snapshot) => {
+            if (snapshot.empty) {
+                setEmptyLevels([]);
+                setIsLoading(false);
+                return;
+            }
+            const levelsWithProgramNames = await Promise.all(
+                snapshot.docs.map(async (levelDoc) => {
+                    const levelData = { id: levelDoc.id, ...levelDoc.data() } as Level;
+                    if (levelData.programId) {
+                        const programDoc = await getDoc(doc(db, 'programs', levelData.programId));
+                        if (programDoc.exists()) {
+                            levelData.programName = programDoc.data()?.name || 'Unknown Program';
+                        }
+                    }
+                    return levelData;
+                })
+            );
+            setEmptyLevels(levelsWithProgramNames);
+            setIsLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    if (isLoading) {
+        return <Skeleton className="h-40 w-full" />;
+    }
+
+    if (emptyLevels.length === 0) {
+        return null;
+    }
+
+    return (
+        <Card className="mt-6 border-amber-500 bg-amber-50/50">
+            <CardHeader>
+                <CardTitle className="text-amber-800">Pending Level 1 Population</CardTitle>
+                <CardDescription className="text-amber-700">
+                    The following programs require new student populations for Level 1 after promotion.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Program Name</TableHead>
+                            <TableHead className="text-right">Action</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {emptyLevels.map((level) => (
+                            <TableRow key={level.id}>
+                                <TableCell className="font-medium">{level.programName}</TableCell>
+                                <TableCell className="text-right">
+                                    <Button asChild variant="outline" size="sm">
+                                        <Link href="/data-creation/levels">
+                                            Set Population <ArrowRight className="ml-2 h-4 w-4" />
+                                        </Link>
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+    );
+}
 
 export default function SessionsPage() {
     const { toast } = useToast();
@@ -166,7 +249,9 @@ export default function SessionsPage() {
                     </div>
                 </div>
 
-                <Card>
+                <UnresolvedPromotionsCard />
+
+                <Card className="mt-6">
                     <CardHeader>
                         <CardTitle>Manage Sessions & Semesters</CardTitle>
                         <CardDescription>Manage academic years and their corresponding semesters.</CardDescription>
@@ -299,3 +384,5 @@ export default function SessionsPage() {
         </section>
     );
 }
+
+    

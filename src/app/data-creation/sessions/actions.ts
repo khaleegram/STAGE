@@ -13,7 +13,8 @@ import {
   updateDoc,
   deleteDoc,
   serverTimestamp,
-  where
+  where,
+  getDoc
 } from 'firebase/firestore';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
@@ -158,7 +159,7 @@ export async function promoteStudents(): Promise<{ success: boolean; message: st
 
     for (const programDoc of programsSnapshot.docs) {
       const program = { id: programDoc.id, ...programDoc.data() } as Program;
-      const maxLevel = program.max_level || 5; 
+      const maxLevel = program.max_level || 4; 
 
       const levelsQuery = query(collection(db, 'levels'), where('programId', '==', program.id));
       const levelsSnapshot = await getDocs(levelsQuery);
@@ -169,7 +170,7 @@ export async function promoteStudents(): Promise<{ success: boolean; message: st
 
       if (levels.length === 0) continue;
 
-      let studentsFromBelow = 0;
+      let studentsFromBelow = 0; // Represents the count of students being promoted into the current level
 
       for (const level of levels) {
         const levelRef = doc(db, 'levels', level.id);
@@ -179,21 +180,18 @@ export async function promoteStudents(): Promise<{ success: boolean; message: st
           // Graduating students: this level will be populated by students from the level below.
           // The current students are "graduated" out.
           batch.update(levelRef, { students_count: studentsFromBelow });
-        } else if (level.level === 1) {
-            // New 100L students: This level gets students from below (which is 0) and we save the current count for promotion.
-            batch.update(levelRef, { students_count: studentsFromBelow });
         } else {
           // Regular promotion: set current level's count to the count from the level below.
           batch.update(levelRef, { students_count: studentsFromBelow });
         }
-
-        // The number of students to be promoted to the *next* level (which is the one before this in the loop)
-        // is the number of students that were in *this* level before we updated it.
+        
+        // For the next iteration (the level below this one), the number of students
+        // coming from "below" is the original count of the current level.
         studentsFromBelow = currentStudentCount;
       }
       
-      // After the loop, `studentsFromBelow` holds the count from 100-level.
-      // This is the new intake for 100-level. We reset it to 0 as per the new logic.
+      // After iterating through all levels, `studentsFromBelow` holds the count from 100-level.
+      // This is now the new intake for 100-level. We reset it to 0 as per the new logic.
       const firstLevel = levels.find(l => l.level === 1);
       if (firstLevel) {
         const firstLevelRef = doc(db, 'levels', firstLevel.id);
@@ -215,3 +213,5 @@ export async function promoteStudents(): Promise<{ success: boolean; message: st
     return { success: false, message: 'An unknown error occurred during promotion.' };
   }
 }
+
+    
