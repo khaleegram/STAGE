@@ -1,3 +1,4 @@
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -80,13 +81,17 @@ export async function getGenerationData(semesterId: string): Promise<{ data: Gen
         const coursesQuery = query(collection(db, 'courses'), orderBy('course_code'));
         const regularCoursesSnapshot = await getDocs(coursesQuery);
         for (const courseDoc of regularCoursesSnapshot.docs) {
-            const courseData = { id: courseDoc.id, ...courseDoc.data() } as Course;
+            const courseData = courseDoc.data();
+            // Omit the non-serializable 'createdAt' field
+            const { createdAt, ...serializableData } = courseData;
+            
             const { programName } = await getProgramAndLevelDetails(courseData.levelId);
             
             coursesMap.set(courseDoc.id, {
-                ...courseData,
+                id: courseDoc.id,
+                ...serializableData,
                 offeringPrograms: [programName]
-            });
+            } as Course & { offeringPrograms: string[] });
         }
 
         // Process combined courses and update map
@@ -110,11 +115,13 @@ export async function getGenerationData(semesterId: string): Promise<{ data: Gen
                  // This case is unlikely if data is consistent, but as a fallback:
                  const baseCourseSnap = await getDoc(doc(db, 'courses', ccData.base_course_id));
                  if (baseCourseSnap.exists()) {
-                     const courseData = { id: baseCourseSnap.id, ...baseCourseSnap.data() } as Course;
+                     const courseData = baseCourseSnap.data();
+                     const { createdAt, ...serializableData } = courseData;
                      coursesMap.set(baseCourseSnap.id, {
-                         ...courseData,
+                         id: baseCourseSnap.id,
+                         ...serializableData,
                          offeringPrograms: offeringPrograms
-                     });
+                     } as Course & { offeringPrograms: string[] });
                  }
             }
         }
