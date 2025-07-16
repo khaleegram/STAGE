@@ -133,7 +133,7 @@ const SidebarContent = () => {
                     viewBox="0 0 24 24"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
-                    className="text-primary flex-shrink-0"
+                    className="text-sidebar-foreground flex-shrink-0"
                 >
                     <path
                     d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
