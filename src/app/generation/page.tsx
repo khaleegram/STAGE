@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { TimetableDisplay } from '@/components/timetable/timetable-display';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 // --- Time Slot Logic & Components ---
 interface TimeSlot {
@@ -146,12 +147,16 @@ function GenerationSetup({
     onDataLoaded, 
     setIsLoading, 
     existingData,
-    onDateChange
+    onDateChange,
+    additionalConstraints,
+    setAdditionalConstraints
 }: { 
     onDataLoaded: (data: GenerationData | null) => void, 
     setIsLoading: (loading: boolean) => void,
     existingData: GenerationData | null,
-    onDateChange: (range: DateRange | undefined) => void
+    onDateChange: (range: DateRange | undefined) => void,
+    additionalConstraints: string,
+    setAdditionalConstraints: (value: string) => void
 }) {
   const [sessions, setSessions] = useState<AcademicSession[]>([]);
   const [semesters, setSemesters] = useState<Semester[]>([]);
@@ -306,6 +311,13 @@ function GenerationSetup({
             </PopoverContent>
           </Popover>
         </div>
+        <div>
+            <Textarea 
+                placeholder="Enter any additional high-level constraints here... e.g., 'No exams on Fridays for LAW students.'"
+                value={additionalConstraints}
+                onChange={(e) => setAdditionalConstraints(e.target.value)}
+            />
+        </div>
         <div className="flex items-center justify-between">
            <div className="text-sm text-muted-foreground">
              {weeks > 0 && `Total available weeks: ${weeks}`}
@@ -436,6 +448,7 @@ export default function GenerationPage() {
   const [timeSlots, setTimeSlots] = useState<DailyTimeSlots[]>([]);
   const [timetableResult, setTimetableResult] = useState<GenerateExamTimetableOutput | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [additionalConstraints, setAdditionalConstraints] = useState('');
   const { toast } = useToast();
 
   const handleDateChange = useCallback((range: DateRange | undefined) => {
@@ -507,7 +520,8 @@ export default function GenerationPage() {
         timeSlots: timeSlots.map(ts => ({
             day: format(ts.day, 'yyyy-MM-dd'),
             slots: ts.slots
-        }))
+        })),
+        additionalConstraints: additionalConstraints,
     };
 
     try {
@@ -533,7 +547,9 @@ export default function GenerationPage() {
         onDataLoaded={handleDataLoaded} 
         setIsLoading={handleSetIsLoading} 
         existingData={generationData} 
-        onDateChange={handleDateChange} 
+        onDateChange={handleDateChange}
+        additionalConstraints={additionalConstraints}
+        setAdditionalConstraints={setAdditionalConstraints}
       />
       
       <TimeSlotsDisplay dailySlots={timeSlots} isLoading={isLoading} setDailySlots={setTimeSlots}/>
@@ -608,5 +624,3 @@ export default function GenerationPage() {
     </div>
   );
 }
-
-    
