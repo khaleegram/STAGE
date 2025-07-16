@@ -35,11 +35,12 @@ const SidebarContent = () => {
   const isMobile = useIsMobile();
 
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // For desktop view, if sidebar is collapsed, a click should expand it.
     if (!isMobile && !isOpen) {
-      e.preventDefault();
       setOpen(true);
       return;
     }
+    // For mobile view, a click should close the sidebar.
     if (isMobile) {
       setOpen(false);
     }
@@ -125,25 +126,27 @@ const SidebarContent = () => {
     >
       <div className="p-4 h-16 shrink-0">
          <button onClick={toggleSidebar} className={cn("flex items-center gap-2 w-full", !isOpen && "justify-center")}>
-            <svg
-                width="28"
-                height="28"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="text-primary flex-shrink-0"
-            >
-                <path
-                d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                />
-            </svg>
-          <span className={cn("font-bold text-lg", !isOpen && "sm:hidden")}>
-            Al-Qalam
-          </span>
+            <Link href="/" className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                <svg
+                    width="28"
+                    height="28"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="text-primary flex-shrink-0"
+                >
+                    <path
+                    d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    />
+                </svg>
+              <span className={cn("font-bold text-lg", !isOpen && "sm:hidden")}>
+                Al-Qalam
+              </span>
+            </Link>
         </button>
       </div>
 
@@ -228,7 +231,6 @@ export function AppSidebar() {
       )}>
         <SidebarContent />
       </div>
-      <Navbar onToggleSidebar={toggleSidebar} />
     </>
   );
 }
