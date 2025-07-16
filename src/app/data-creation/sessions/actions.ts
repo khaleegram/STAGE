@@ -87,7 +87,7 @@ const semesterSchema = z.object({
     semester_number: z.coerce.number().min(1).max(2),
     start_date: z.string().min(1, 'Start date is required.'),
     end_date: z.string().optional(),
-    status: z.enum(['open', 'closed']),
+    status: z.enum(['open', 'closed', 'locked']),
 });
 
 export async function addSemester(sessionId: string, prevState: any, formData: FormData) {
@@ -134,6 +134,21 @@ export async function updateSemester(semesterId: string, sessionId: string, prev
     }
 }
 
+export async function updateSemesterStatus(semesterId: string, sessionId: string, status: 'open' | 'closed' | 'locked') {
+    if (!semesterId || !sessionId || !status) {
+        return { success: false, message: 'Missing required fields.' };
+    }
+    try {
+        const semesterRef = doc(db, 'academic_sessions', sessionId, 'semesters', semesterId);
+        await updateDoc(semesterRef, { status });
+        revalidatePath('/data-creation/sessions');
+        return { success: true, message: `Semester status updated to ${status}.` };
+    } catch (error) {
+        console.error('Error updating semester status:', error);
+        return { success: false, message: 'Failed to update semester status.' };
+    }
+}
+
 
 export async function deleteSemester(semesterId: string, sessionId: string) {
     try {
@@ -152,60 +167,60 @@ export async function promoteStudents(): Promise<{ success: boolean; message: st
     const programsSnapshot = await getDocs(collection(db, 'programs'));
     const allLevelsSnapshot = await getDocs(collection(db, 'levels'));
 
-    if (programsSnapshot.empty) {
-      return { success: false, message: 'No programs found to process.' };
-    }
-
     const allPrograms = programsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Program));
     const allLevels = allLevelsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Level));
 
-    const levelsByProgram = allLevels.reduce((acc, level) => {
-      if (!acc[level.programId]) {
-        acc[level.programId] = [];
-      }
-      acc[level.programId].push(level);
-      return acc;
-    }, {} as Record<string, Level[]>);
-
-
     for (const program of allPrograms) {
-        const programLevels = levelsByProgram[program.id] || [];
-        if (programLevels.length === 0) continue;
+      const programLevels = allLevels
+        .filter(l => l.programId === program.id)
+        .sort((a, b) => a.level - b.level);
+      
+      let promotionQueue = 0; // Starts with new students for level 1
+      let graduatedCount = 0;
 
-        programLevels.sort((a, b) => a.level - b.level);
-        
-        let studentsToCarryOver = 0;
+      for (let i = 0; i < program.max_level; i++) {
+        const currentLevelNumber = i + 1;
+        const currentLevel = programLevels.find(l => l.level === currentLevelNumber);
 
-        for (let i = 0; i < program.max_level; i++) {
-            const currentLevelNumber = i + 1;
-            const currentLevel = programLevels.find(l => l.level === currentLevelNumber);
+        if (currentLevel) {
+          // This is the level we are moving students FROM
+          const studentsToPromote = currentLevel.students_count;
+          
+          // The current level will receive students from the queue (from the level below)
+          const levelRef = doc(db, 'levels', currentLevel.id);
+          batch.update(levelRef, { students_count: promotionQueue });
+          
+          // The students from the current level are now in the queue for the next level
+          promotionQueue = studentsToPromote;
+          
+          // If this is the final level, these students graduate
+          if (currentLevel.level === program.max_level) {
+            graduatedCount += studentsToPromote;
+          }
 
-            if (!currentLevel) {
-                 // If the current level doesn't exist, we might need to create it if there are students to promote into it.
-                 if (studentsToCarryOver > 0) {
-                    const newLevelRef = doc(collection(db, 'levels'));
-                    batch.set(newLevelRef, {
-                        programId: program.id,
-                        level: currentLevelNumber,
-                        students_count: studentsToCarryOver,
-                        createdAt: serverTimestamp(),
-                        promotion_rate: 1.00
-                    });
-                    // The students have been placed, so reset the carry-over.
-                    studentsToCarryOver = 0;
-                }
-                continue; // Move to the next level number
-            }
-
-            // We found the current level, let's process it.
-            const tempStudentCount = currentLevel.students_count;
-            const levelRef = doc(db, 'levels', currentLevel.id);
-            batch.update(levelRef, { students_count: studentsToCarryOver });
-            
-            studentsToCarryOver = tempStudentCount;
+        } else {
+          // The level doesn't exist, we might need to create it
+          const nextLevelNumber = currentLevelNumber;
+          if (promotionQueue > 0 && nextLevelNumber <= program.max_level) {
+              const newLevelRef = doc(collection(db, 'levels'));
+              batch.set(newLevelRef, {
+                  programId: program.id,
+                  level: nextLevelNumber,
+                  students_count: promotionQueue,
+                  createdAt: serverTimestamp(),
+                  promotion_rate: 1.00
+              });
+              // Students are placed, so reset queue for the next (non-existent) level.
+              promotionQueue = 0;
+          }
         }
-        
-        // After the loop, `studentsToCarryOver` holds the count from the final level, who have now graduated.
+      }
+      // After looping through all levels of a program, reset the 100-level for new intake
+       const levelOne = programLevels.find(l => l.level === 1);
+       if (levelOne) {
+           const levelOneRef = doc(db, 'levels', levelOne.id);
+           batch.update(levelOneRef, { students_count: 0 });
+       }
     }
 
     await batch.commit();
@@ -215,7 +230,7 @@ export async function promoteStudents(): Promise<{ success: boolean; message: st
     revalidatePath('/data-creation/programs'); 
     revalidatePath('/'); 
 
-    return { success: true, message: 'Student promotion process completed successfully! Check for any Level 1 groups that need new population.' };
+    return { success: true, message: 'Student promotion process completed successfully! Level 1 groups are now empty and require new population.' };
   } catch (error) {
     console.error('Error during student promotion:', error);
     if (error instanceof Error) {

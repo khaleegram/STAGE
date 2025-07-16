@@ -8,11 +8,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { db } from '@/lib/firebase';
 import { AcademicSession, Semester, Level } from '@/lib/types';
 import { collection, onSnapshot, query, orderBy, getDocs, where, doc, getDoc } from 'firebase/firestore';
-import { PlusCircle, CheckCircle, Lock, PlayCircle, Trash2, Edit, Users, ArrowRight } from 'lucide-react';
+import { PlusCircle, CheckCircle, Lock, PlayCircle, Trash2, Edit, Users, ArrowRight, MoreVertical } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { format, isValid } from 'date-fns';
-import { promoteStudents, deleteSession, deleteSemester } from './actions';
+import { promoteStudents, deleteSession, deleteSemester, updateSemesterStatus } from './actions';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -20,6 +20,7 @@ import { SessionForm } from './session-form';
 import { SemesterForm } from './semester-form';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const statusIcons: { [key: string]: React.ReactElement } = {
     open: <PlayCircle className="h-4 w-4 text-green-500" />,
@@ -174,12 +175,22 @@ export default function SessionsPage() {
             title: result.success ? 'Success' : 'Error',
             description: result.message,
             variant: result.success ? 'default' : 'destructive',
+            duration: result.success ? 5000 : 9000
         });
         setIsPromoting(false);
     };
 
     const handleDeleteSession = async (sessionId: string) => {
         const result = await deleteSession(sessionId);
+        toast({
+            title: result.success ? 'Success' : 'Error',
+            description: result.message,
+            variant: result.success ? 'default' : 'destructive',
+        });
+    }
+    
+    const handleSemesterStatusChange = async (semester: Semester, status: 'open' | 'closed' | 'locked') => {
+        const result = await updateSemesterStatus(semester.id, semester.sessionId, status);
         toast({
             title: result.success ? 'Success' : 'Error',
             description: result.message,
@@ -318,23 +329,48 @@ export default function SessionsPage() {
                                                                 <TableCell>{semester.start_date}</TableCell>
                                                                 <TableCell>{semester.end_date ?? 'N/A'}</TableCell>
                                                                 <TableCell>
-                                                                    <Badge variant={semester.status === 'open' ? 'default' : 'secondary'} className="capitalize">{semester.status}</Badge>
+                                                                    <Badge className={`${statusColors[semester.status]} hover:${statusColors[semester.status]}`}>
+                                                                        {statusIcons[semester.status]}
+                                                                        <span className="ml-1 capitalize">{semester.status}</span>
+                                                                    </Badge>
                                                                 </TableCell>
                                                                 <td className="p-4 flex justify-end space-x-2">
-                                                                    <Button variant="outline" size="sm" onClick={() => handleEditSemester(semester)}><Edit className="h-4 w-4 mr-1" /> Edit</Button>
-                                                                     <AlertDialog>
-                                                                        <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="h-4 w-4 mr-1" /> Delete</Button></AlertDialogTrigger>
-                                                                        <AlertDialogContent>
-                                                                            <AlertDialogHeader>
-                                                                                <AlertDialogTitle>Delete Semester?</AlertDialogTitle>
-                                                                                <AlertDialogDescription>This will permanently delete this semester. Are you sure?</AlertDialogDescription>
-                                                                            </AlertDialogHeader>
-                                                                            <AlertDialogFooter>
-                                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                                <AlertDialogAction onClick={() => handleDeleteSemester(semester.id, session.id)}>Delete</AlertDialogAction>
-                                                                            </AlertDialogFooter>
-                                                                        </AlertDialogContent>
-                                                                    </AlertDialog>
+                                                                     <DropdownMenu>
+                                                                        <DropdownMenuTrigger asChild>
+                                                                            <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
+                                                                        </DropdownMenuTrigger>
+                                                                        <DropdownMenuContent align="end">
+                                                                            <DropdownMenuItem onClick={() => handleEditSemester(semester)}>
+                                                                                <Edit className="mr-2 h-4 w-4" /> Edit Details
+                                                                            </DropdownMenuItem>
+                                                                            {semester.status !== 'open' && <DropdownMenuItem onClick={() => handleSemesterStatusChange(semester, 'open')}>
+                                                                                <PlayCircle className="mr-2 h-4 w-4 text-green-500" /> Mark as Open
+                                                                            </DropdownMenuItem>}
+                                                                            {semester.status !== 'closed' && <DropdownMenuItem onClick={() => handleSemesterStatusChange(semester, 'closed')}>
+                                                                                <CheckCircle className="mr-2 h-4 w-4 text-gray-500" /> Mark as Closed
+                                                                            </DropdownMenuItem>}
+                                                                            {semester.status !== 'locked' && <DropdownMenuItem onClick={() => handleSemesterStatusChange(semester, 'locked')}>
+                                                                                <Lock className="mr-2 h-4 w-4 text-red-500" /> Mark as Locked
+                                                                            </DropdownMenuItem>}
+                                                                            <AlertDialog>
+                                                                                <AlertDialogTrigger asChild>
+                                                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                                                        <Trash2 className="mr-2 h-4 w-4" /> Delete Semester
+                                                                                    </DropdownMenuItem>
+                                                                                </AlertDialogTrigger>
+                                                                                <AlertDialogContent>
+                                                                                    <AlertDialogHeader>
+                                                                                        <AlertDialogTitle>Delete Semester?</AlertDialogTitle>
+                                                                                        <AlertDialogDescription>This will permanently delete this semester. Are you sure?</AlertDialogDescription>
+                                                                                    </AlertDialogHeader>
+                                                                                    <AlertDialogFooter>
+                                                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                                        <AlertDialogAction onClick={() => handleDeleteSemester(semester.id, session.id)}>Delete</AlertDialogAction>
+                                                                                    </AlertDialogFooter>
+                                                                                </AlertDialogContent>
+                                                                            </AlertDialog>
+                                                                        </DropdownMenuContent>
+                                                                    </DropdownMenu>
                                                                 </td>
                                                             </TableRow>
                                                         ))

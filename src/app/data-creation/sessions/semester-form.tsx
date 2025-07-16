@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { CalendarIcon } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 
 interface SemesterFormProps {
@@ -27,7 +28,7 @@ export function SemesterForm({ semester, sessionId, onClose }: SemesterFormProps
   const { toast } = useToast();
 
   const [semesterNumber, setSemesterNumber] = useState(semester?.semester_number?.toString() || '1');
-  const [status, setStatus] = useState<'open' | 'closed'>(semester?.status || 'open');
+  const [status, setStatus] = useState<'open' | 'closed' | 'locked'>(semester?.status || 'open');
   const [startDate, setStartDate] = useState<Date | undefined>(
     semester?.start_date ? new Date(semester.start_date) : undefined
   );
@@ -113,17 +114,15 @@ export function SemesterForm({ semester, sessionId, onClose }: SemesterFormProps
         </div>
 
         <div>
-            <Label>Status</Label>
-             <RadioGroup value={status} onValueChange={(v: 'open' | 'closed') => setStatus(v)} className="flex gap-4 mt-2">
-                <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="open" id="status-open" />
-                    <Label htmlFor="status-open">Open</Label>
-                </div>
-                 <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="closed" id="status-closed" />
-                    <Label htmlFor="status-closed">Closed</Label>
-                </div>
-            </RadioGroup>
+             <Label htmlFor="status">Status</Label>
+             <Select onValueChange={(value: 'open' | 'closed' | 'locked') => setStatus(value)} value={status}>
+                <SelectTrigger id="status"><SelectValue placeholder="Select status" /></SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="open">Open</SelectItem>
+                    <SelectItem value="closed">Closed</SelectItem>
+                    <SelectItem value="locked">Locked</SelectItem>
+                </SelectContent>
+            </Select>
         </div>
         
         <div className="flex justify-end gap-2 pt-4">
