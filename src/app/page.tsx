@@ -6,11 +6,13 @@ import { TimetableDisplay } from '@/components/timetable/timetable-display';
 import type { GenerateExamTimetableOutput } from '@/ai/flows/generate-exam-timetable';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, getDocs, doc, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, getDocs, doc, where, orderBy, getDoc } from 'firebase/firestore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Program } from '@/lib/types';
-
+import { Program, Level } from '@/lib/types';
+import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface StudentPopulationData {
   name: string;
@@ -23,6 +25,95 @@ interface StudentPopulationData {
   '700L'?: number;
 }
 
+
+function UnresolvedPromotionsCard() {
+    const [emptyLevels, setEmptyLevels] = useState<Level[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const q = query(
+            collection(db, 'levels'),
+            where('level', '==', 1),
+            where('students_count', '==', 0)
+        );
+
+        const unsubscribe = onSnapshot(q, async (snapshot) => {
+            if (snapshot.empty) {
+                setEmptyLevels([]);
+                setIsLoading(false);
+                return;
+            }
+            const levelsWithProgramNames = await Promise.all(
+                snapshot.docs.map(async (levelDoc) => {
+                    const levelData = { id: levelDoc.id, ...levelDoc.data() } as Level;
+                    if (levelData.programId) {
+                        const programDoc = await getDoc(doc(db, 'programs', levelData.programId));
+                        if (programDoc.exists()) {
+                            levelData.programName = programDoc.data()?.name || 'Unknown Program';
+                        }
+                    }
+                    return levelData;
+                })
+            );
+            setEmptyLevels(levelsWithProgramNames);
+            setIsLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    if (isLoading) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Unresolved Promotions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-20 w-full" />
+                </CardContent>
+            </Card>
+        )
+    }
+
+    if (emptyLevels.length === 0) {
+        return null;
+    }
+
+    return (
+        <Card className="mt-6 border-amber-500 bg-amber-50/50">
+            <CardHeader>
+                <CardTitle className="text-amber-800">Pending Level 1 Population</CardTitle>
+                <CardDescription className="text-amber-700">
+                    The following programs require new student populations for Level 1 after promotion.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Program Name</TableHead>
+                            <TableHead className="text-right">Action</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {emptyLevels.map((level) => (
+                            <TableRow key={level.id}>
+                                <TableCell className="font-medium">{level.programName}</TableCell>
+                                <TableCell className="text-right">
+                                    <Button asChild variant="outline" size="sm">
+                                        <Link href="/data-creation/levels">
+                                            Set Population <ArrowRight className="ml-2 h-4 w-4" />
+                                        </Link>
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+    );
+}
 
 function StudentPopulationChart() {
     const [chartData, setChartData] = useState<StudentPopulationData[]>([]);
@@ -101,6 +192,7 @@ export default function Home() {
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
       </div>
       
+      <UnresolvedPromotionsCard />
       <StudentPopulationChart />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
@@ -122,5 +214,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
