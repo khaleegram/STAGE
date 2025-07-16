@@ -431,7 +431,7 @@ const DataTable = ({ title, description, headers, children, isLoading, stepNumbe
 
 export default function GenerationPage() {
   const [generationData, setGenerationData] = useState<GenerationData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [timeSlots, setTimeSlots] = useState<DailyTimeSlots[]>([]);
   const [timetableResult, setTimetableResult] = useState<GenerateExamTimetableOutput | null>(null);
@@ -464,22 +464,23 @@ export default function GenerationPage() {
     setTimetableResult(null);
     setGenerationError(null);
 
-    // Get student count for each course
-    const coursesWithStudentCount = await Promise.all(generationData.courses.map(async course => {
+    const coursesWithStudentCount = await Promise.all(
+      generationData.courses.map(async (course) => {
+        // Find the level document to get student count
+        const levelQuery = query(
+          collection(db, 'levels'),
+          where('programId', '==', course.programId),
+          where('level', '==', course.levelNumber)
+        );
+        const levelSnapshot = await getDocs(levelQuery);
         let student_count = 0;
-        if (course.levelId) {
-            const levelRef = (await getDocs(query(collection(db, 'levels'), where('levelId', '==', course.levelId)))).docs[0];
-            if(levelRef && levelRef.exists()) {
-                 const levelDoc = (await getDocs(query(collection(db, 'levels'), where('programId', '==', levelRef.data().programId), where('level', '==', levelRef.data().level)))).docs[0];
-                 if(levelDoc && levelDoc.exists()){
-                    student_count = levelDoc.data().students_count;
-                 }
-            }
+        if (!levelSnapshot.empty) {
+          student_count = levelSnapshot.docs[0].data().students_count || 0;
         }
         return { ...course, student_count };
-    }));
-
-
+      })
+    );
+    
     const aiInput: GenerateExamTimetableInput = {
         courses: coursesWithStudentCount.map(c => ({
             id: c.id,

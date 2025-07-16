@@ -39,12 +39,12 @@ const formSchema = z.object({
 });
 
 type GeneratorFormProps = {
-  onGeneration: (result: GenerateExamTimetableOutput | null, error?: string) => void;
+  onGenerationComplete: (result: GenerateExamTimetableOutput | null, error?: string) => void;
   setIsLoading: (loading: boolean) => void;
   isLoading: boolean;
 };
 
-export function GeneratorForm({ onGeneration, setIsLoading, isLoading }: GeneratorFormProps) {
+export function GeneratorForm({ onGenerationComplete, setIsLoading, isLoading }: GeneratorFormProps) {
   const { toast } = useToast();
   const [sessions, setSessions] = useState<AcademicSession[]>([]);
   const [semesters, setSemesters] = useState<Semester[]>([]);
@@ -127,7 +127,7 @@ export function GeneratorForm({ onGeneration, setIsLoading, isLoading }: Generat
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    onGeneration(null);
+    onGenerationComplete(null);
     const { data, error } = await handleGenerateTimetable(values);
     if (error) {
       toast({
@@ -135,13 +135,13 @@ export function GeneratorForm({ onGeneration, setIsLoading, isLoading }: Generat
         description: error,
         variant: 'destructive',
       });
-      onGeneration(null, error);
+      onGenerationComplete(null, error);
     } else {
       toast({
         title: 'Success!',
         description: 'Your timetable has been generated.',
       });
-      onGeneration(data);
+      onGenerationComplete(data);
     }
     setIsLoading(false);
   }
