@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProgramForm } from './program-form';
+import { Card } from '@/components/ui/card';
 
 const ProgramsPage: React.FC = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -103,7 +104,7 @@ const ProgramsPage: React.FC = () => {
   );
 
   return (
-    <section className="bg-card p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg">
+    <Card className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         <h3 className="text-2xl font-bold mb-6 text-primary">Manage Programs</h3>
 
@@ -135,7 +136,7 @@ const ProgramsPage: React.FC = () => {
                 {filteredGroups.length > 0 ? filteredGroups.map(([deptName, progArray]) => (
                     <div key={deptName}>
                         <h2 className="text-xl font-semibold mb-2 text-primary">{deptName}</h2>
-                         <div className="overflow-x-auto rounded-lg border">
+                         <div className="overflow-x-auto rounded-lg">
                             <table className="min-w-full table-auto">
                                 <thead className="bg-muted/50">
                                     <tr>
@@ -163,7 +164,7 @@ const ProgramsPage: React.FC = () => {
                         </div>
                     </div>
                 )) : (
-                    <div className="text-center p-8 text-muted-foreground bg-card rounded-lg border">
+                    <div className="text-center p-8 text-muted-foreground bg-card/50 rounded-lg">
                         No programs found for your search criteria.
                     </div>
                 )}
@@ -183,7 +184,7 @@ const ProgramsPage: React.FC = () => {
           />
         </DialogContent>
       </Dialog>
-    </section>
+    </Card>
   );
 };
 

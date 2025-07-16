@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StaffForm } from './staff-form';
+import { Card } from '@/components/ui/card';
 
 const StaffPage: React.FC = () => {
   const [staffList, setStaffList] = useState<Staff[]>([]);
@@ -93,7 +94,7 @@ const StaffPage: React.FC = () => {
 
 
   return (
-    <section className="bg-card p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg">
+    <Card className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         <h3 className="text-2xl font-bold mb-6 text-primary">Manage Staff</h3>
 
@@ -118,7 +119,7 @@ const StaffPage: React.FC = () => {
         ) : (
             <>
                 {/* Desktop Table View */}
-                <div className="overflow-x-auto hidden sm:block rounded-lg border">
+                <div className="overflow-x-auto hidden sm:block rounded-lg">
                   <table className="min-w-full table-auto">
                     <thead className="bg-muted/50">
                       <tr>
@@ -162,7 +163,7 @@ const StaffPage: React.FC = () => {
                 {/* Mobile Card View */}
                 <div className="space-y-4 block sm:hidden">
                   {filteredStaff.map((s) => (
-                    <div key={s.id} className="bg-card p-4 rounded-lg shadow-sm border space-y-2">
+                    <Card key={s.id} className="p-4 space-y-2">
                         <div className="flex justify-between items-start">
                             <h4 className="font-bold text-primary">{s.name}</h4>
                             <Button variant="outline" size="sm" onClick={() => handleEdit(s)}>Edit</Button>
@@ -172,7 +173,7 @@ const StaffPage: React.FC = () => {
                         <p className="text-sm"><strong>Phone:</strong> {s.phone}</p>
                         <p className="text-sm"><strong>College:</strong> {s.collegeName || 'N/A'}</p>
                         <p className="text-sm"><strong>Department:</strong> {s.departmentName || 'N/A'}</p>
-                    </div>
+                    </Card>
                   ))}
                   {filteredStaff.length === 0 && (
                     <div className="text-center p-4 text-muted-foreground">
@@ -196,7 +197,7 @@ const StaffPage: React.FC = () => {
           />
         </DialogContent>
       </Dialog>
-    </section>
+    </Card>
   );
 };
 

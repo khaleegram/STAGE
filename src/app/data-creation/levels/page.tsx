@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LevelForm } from './level-form';
+import { Card } from '@/components/ui/card';
 
 const LevelsPage: React.FC = () => {
   const [levels, setLevels] = useState<Level[]>([]);
@@ -102,7 +103,7 @@ const LevelsPage: React.FC = () => {
   );
 
   return (
-    <section className="bg-card p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg">
+    <Card className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         <h3 className="text-2xl font-bold mb-6 text-primary">Manage Levels</h3>
 
@@ -134,7 +135,7 @@ const LevelsPage: React.FC = () => {
                 {filteredGroups.length > 0 ? filteredGroups.map(([progName, lvlArray]) => (
                     <div key={progName}>
                         <h2 className="text-xl font-semibold mb-2 text-primary">{progName}</h2>
-                         <div className="overflow-x-auto rounded-lg border">
+                         <div className="overflow-x-auto rounded-lg">
                             <table className="min-w-full table-auto">
                                 <thead className="bg-muted/50">
                                     <tr>
@@ -160,7 +161,7 @@ const LevelsPage: React.FC = () => {
                         </div>
                     </div>
                 )) : (
-                    <div className="text-center p-8 text-muted-foreground bg-card rounded-lg border">
+                    <div className="text-center p-8 text-muted-foreground bg-card/50 rounded-lg">
                         No levels found for your search criteria.
                     </div>
                 )}
@@ -180,7 +181,7 @@ const LevelsPage: React.FC = () => {
           />
         </DialogContent>
       </Dialog>
-    </section>
+    </Card>
   );
 };
 

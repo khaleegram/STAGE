@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CollegeForm } from './college-form';
+import { Card } from '@/components/ui/card';
 
 const CollegesPage: React.FC = () => {
   const [colleges, setColleges] = useState<College[]>([]);
@@ -55,7 +56,7 @@ const CollegesPage: React.FC = () => {
   );
 
   return (
-    <section className="bg-card p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg">
+    <Card className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         <h3 className="text-2xl font-bold mb-6 text-primary">Manage Colleges</h3>
 
@@ -84,7 +85,7 @@ const CollegesPage: React.FC = () => {
         ) : (
             <>
                 {/* Desktop Table View */}
-                <div className="overflow-x-auto hidden sm:block rounded-lg border">
+                <div className="overflow-x-auto hidden sm:block rounded-lg">
                   <table className="min-w-full table-auto">
                     <thead className="bg-muted/50">
                       <tr>
@@ -121,7 +122,7 @@ const CollegesPage: React.FC = () => {
                 {/* Mobile Card View */}
                 <div className="space-y-4 block sm:hidden">
                   {filteredColleges.map((college, index) => (
-                    <div key={college.id} className="bg-card p-4 rounded-lg shadow-sm border">
+                    <Card key={college.id} className="p-4">
                       <div className="flex justify-between items-start">
                         <div>
                           <h4 className="font-bold text-primary">#{index + 1}</h4>
@@ -134,7 +135,7 @@ const CollegesPage: React.FC = () => {
                           </Button>
                         </div>
                       </div>
-                    </div>
+                    </Card>
                   ))}
                   {filteredColleges.length === 0 && (
                     <div className="text-center p-4 text-muted-foreground">
@@ -157,7 +158,7 @@ const CollegesPage: React.FC = () => {
           />
         </DialogContent>
       </Dialog>
-    </section>
+    </Card>
   );
 };
 

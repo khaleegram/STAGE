@@ -222,7 +222,7 @@ function StudentPopulationChart() {
 
 export default function Home() {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+     <section className="bg-card p-4 sm:p-6 lg:p-8 rounded-lg">
         <div className="space-y-8">
             <UnresolvedPromotions />
             <StatsOverview />
@@ -238,6 +238,6 @@ export default function Home() {
                 </Button>
             </div>
         </div>
-    </div>
+    </section>
   );
 }

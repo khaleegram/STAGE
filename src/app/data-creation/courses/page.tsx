@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CourseForm } from './course-form';
+import { Card } from '@/components/ui/card';
 
 const CoursesPage: React.FC = () => {
   // Data state
@@ -144,11 +145,11 @@ const CoursesPage: React.FC = () => {
 
 
   return (
-    <section className="bg-card p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg">
+    <Card className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         <h3 className="text-2xl font-bold mb-6 text-primary">Manage Courses</h3>
 
-        <div className="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 bg-background/50 p-4 rounded-lg border">
+        <div className="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 p-4 rounded-lg">
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                  <Select onValueChange={handleProgramFilterChange} value={selectedProgram}>
                     <SelectTrigger className="w-full sm:w-[250px]">
@@ -184,7 +185,7 @@ const CoursesPage: React.FC = () => {
                 {Object.keys(groupedCourses).length > 0 ? Object.entries(groupedCourses).map(([progName, courseArray]) => (
                     <div key={progName}>
                         <h2 className="text-xl font-semibold mb-2 text-primary">{progName}</h2>
-                         <div className="overflow-x-auto rounded-lg border">
+                         <div className="overflow-x-auto rounded-lg">
                             <table className="min-w-full table-auto">
                                 <thead className="bg-muted/50">
                                     <tr>
@@ -216,7 +217,7 @@ const CoursesPage: React.FC = () => {
                         </div>
                     </div>
                 )) : (
-                    <div className="text-center p-8 text-muted-foreground bg-card/50 rounded-lg border">
+                    <div className="text-center p-8 text-muted-foreground bg-card/50 rounded-lg">
                         No courses found for the selected filters.
                     </div>
                 )}
@@ -236,7 +237,7 @@ const CoursesPage: React.FC = () => {
           />
         </DialogContent>
       </Dialog>
-    </section>
+    </Card>
   );
 };
 

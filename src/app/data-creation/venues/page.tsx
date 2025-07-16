@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { VenueForm } from './venue-form';
 import Link from 'next/link';
 import { MapPin } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 
 const VenuesPage: React.FC = () => {
   const [venues, setVenues] = useState<Venue[]>([]);
@@ -57,7 +58,7 @@ const VenuesPage: React.FC = () => {
   }, [venues, searchTerm]);
 
   return (
-    <section className="bg-card p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg">
+    <Card className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         <h3 className="text-2xl font-bold mb-6 text-primary">Manage Venues</h3>
 
@@ -86,7 +87,7 @@ const VenuesPage: React.FC = () => {
         ) : (
             <>
                 {/* Desktop Table View */}
-                <div className="overflow-x-auto hidden sm:block rounded-lg border">
+                <div className="overflow-x-auto hidden sm:block rounded-lg">
                   <table className="min-w-full table-auto">
                     <thead className="bg-muted/50">
                       <tr>
@@ -137,7 +138,7 @@ const VenuesPage: React.FC = () => {
                 {/* Mobile Card View */}
                 <div className="space-y-4 block sm:hidden">
                   {filteredVenues.map((venue, index) => (
-                    <div key={venue.id} className="bg-card p-4 rounded-lg shadow-sm border">
+                    <Card key={venue.id} className="p-4">
                         <div className="flex justify-between items-start mb-2">
                              <h4 className="font-bold text-primary">#{index + 1} - {venue.name}</h4>
                              <Button variant="outline" size="sm" onClick={() => handleEdit(venue)}>
@@ -155,7 +156,7 @@ const VenuesPage: React.FC = () => {
                               ) : 'N/A'}
                             </p>
                          </div>
-                    </div>
+                    </Card>
                   ))}
                   {filteredVenues.length === 0 && (
                     <div className="text-center p-4 text-muted-foreground">
@@ -178,7 +179,7 @@ const VenuesPage: React.FC = () => {
           />
         </DialogContent>
       </Dialog>
-    </section>
+    </Card>
   );
 };
 
