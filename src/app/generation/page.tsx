@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -12,21 +13,61 @@ import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarIcon, Sparkles } from 'lucide-react';
-import { format, differenceInWeeks } from 'date-fns';
+import { CalendarIcon, Sparkles, Clock, AlertTriangle } from 'lucide-react';
+import { format, differenceInWeeks, eachDayOfInterval, getDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { DateRange } from 'react-day-picker';
 import { compileAndStoreGenerationData, getExistingGenerationData, GenerationData } from './actions';
 import { Badge } from '@/components/ui/badge';
 
+// --- Time Slot Logic ---
+interface TimeSlot {
+    time: string;
+    type: 'standard' | 'overflow';
+}
+
+interface DailyTimeSlots {
+    day: Date;
+    slots: TimeSlot[];
+}
+
+const defaultTimeSlots: TimeSlot[] = [
+    { time: '8:00 AM – 10:00 AM', type: 'standard' },
+    { time: '10:00 AM – 12:00 PM', type: 'standard' },
+    { time: '2:00 PM – 4:00 PM', type: 'standard' },
+    { time: '4:00 PM – 6:00 PM', type: 'overflow' },
+];
+
+const generateAllTimeSlots = (range: DateRange): DailyTimeSlots[] => {
+    if (!range.from || !range.to) return [];
+
+    const days = eachDayOfInterval({ start: range.from, end: range.to });
+
+    return days.map(day => {
+        const isSunday = getDay(day) === 0;
+        return {
+            day,
+            slots: defaultTimeSlots.map(slot => ({
+                ...slot,
+                // Mark all slots on Sunday as overflow
+                type: isSunday ? 'overflow' : slot.type,
+            })),
+        };
+    });
+};
+// --- End Time Slot Logic ---
+
+
 function GenerationSetup({ 
     onDataLoaded, 
     setIsLoading, 
-    existingData 
+    existingData,
+    onDateChange
 }: { 
     onDataLoaded: (data: GenerationData | null) => void, 
     setIsLoading: (loading: boolean) => void,
-    existingData: GenerationData | null
+    existingData: GenerationData | null,
+    onDateChange: (range: DateRange | undefined) => void
 }) {
   const [sessions, setSessions] = useState<AcademicSession[]>([]);
   const [semesters, setSemesters] = useState<Semester[]>([]);
@@ -64,6 +105,7 @@ function GenerationSetup({
     if (!selectedSemester) {
         onDataLoaded(null);
         setDateRange(undefined);
+        onDateChange(undefined);
         return;
     };
     
@@ -75,16 +117,23 @@ function GenerationSetup({
         }
         onDataLoaded(data);
         if(data?.dateRange) {
-             setDateRange({
+            const range = {
                 from: new Date(data.dateRange.from!),
                 to: new Date(data.dateRange.to!),
-            });
+            };
+            setDateRange(range);
+            onDateChange(range); // Pass date up to parent
         }
         setIsLoading(false);
     };
 
     fetchExistingData();
-  }, [selectedSemester, onDataLoaded, setIsLoading, toast]);
+  }, [selectedSemester, onDataLoaded, setIsLoading, toast, onDateChange]);
+
+  const handleDateSelect = (range: DateRange | undefined) => {
+      setDateRange(range);
+      onDateChange(range);
+  }
 
   const handleCompileData = async () => {
     if (!selectedSemester || !selectedSession || !dateRange?.from || !dateRange?.to) {
@@ -164,7 +213,7 @@ function GenerationSetup({
                 mode="range"
                 defaultMonth={dateRange?.from}
                 selected={dateRange}
-                onSelect={setDateRange}
+                onSelect={handleDateSelect}
                 numberOfMonths={2}
               />
             </PopoverContent>
@@ -183,10 +232,47 @@ function GenerationSetup({
   );
 }
 
-const DataTable = ({ title, description, headers, children, isLoading }: { title: string, description: string, headers: string[], children: React.ReactNode, isLoading: boolean }) => (
+const TimeSlotsDisplay = ({ dailySlots, isLoading }: { dailySlots: DailyTimeSlots[], isLoading: boolean }) => (
     <Card>
         <CardHeader>
-            <CardTitle>{title}</CardTitle>
+            <CardTitle>2. Time Slots</CardTitle>
+            <CardDescription>Default daily time slots for the selected examination period.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            {isLoading ? (
+                <div className="space-y-2">
+                    <Skeleton className="h-20 w-full" />
+                </div>
+            ) : dailySlots.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {dailySlots.map(({ day, slots }) => (
+                        <div key={day.toISOString()} className={cn("rounded-lg p-3", getDay(day) === 0 ? "bg-amber-100 border border-amber-300" : "bg-muted/60")}>
+                            <h4 className={cn("font-semibold mb-2", getDay(day) === 0 && "text-amber-800")}>{format(day, 'eeee, MMM d')}</h4>
+                            <div className="space-y-1">
+                                {slots.map(slot => (
+                                    <div key={slot.time} className="flex items-center justify-between text-xs p-1 rounded">
+                                        <span>{slot.time}</span>
+                                        <Badge variant={slot.type === 'overflow' ? 'destructive' : 'secondary'} className="capitalize">{slot.type}</Badge>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                 <div className="text-center py-8 text-muted-foreground">
+                    <p>Select a date range to see the default time slots.</p>
+                </div>
+            )}
+        </CardContent>
+    </Card>
+);
+
+
+const DataTable = ({ title, description, headers, children, isLoading, stepNumber }: { title: string, description: string, headers: string[], children: React.ReactNode, isLoading: boolean, stepNumber: number }) => (
+    <Card>
+        <CardHeader>
+            <CardTitle>{stepNumber}. {title}</CardTitle>
             <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -218,6 +304,15 @@ const DataTable = ({ title, description, headers, children, isLoading }: { title
 export default function GenerationPage() {
   const [generationData, setGenerationData] = useState<GenerationData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [timeSlots, setTimeSlots] = useState<DailyTimeSlots[]>([]);
+
+  const handleDateChange = (range: DateRange | undefined) => {
+    if (range?.from && range.to) {
+        setTimeSlots(generateAllTimeSlots(range));
+    } else {
+        setTimeSlots([]);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -225,7 +320,9 @@ export default function GenerationPage() {
         <h1 className="text-3xl font-bold tracking-tight">Generate Timetable</h1>
       </div>
       
-      <GenerationSetup onDataLoaded={setGenerationData} setIsLoading={setIsLoading} existingData={generationData} />
+      <GenerationSetup onDataLoaded={setGenerationData} setIsLoading={setIsLoading} existingData={generationData} onDateChange={handleDateChange} />
+      
+      <TimeSlotsDisplay dailySlots={timeSlots} isLoading={isLoading}/>
       
       {generationData && (
           <>
@@ -236,7 +333,8 @@ export default function GenerationPage() {
                 </Button>
             </div>
             <DataTable
-                title="2. Course Details"
+                stepNumber={3}
+                title="Course Details"
                 description="All courses to be scheduled for the examination."
                 headers={['Course Code', 'Offering Programs', 'Exam Type']}
                 isLoading={isLoading}
@@ -254,7 +352,8 @@ export default function GenerationPage() {
                 )) : <TableRow><TableCell colSpan={3} className="text-center">No courses found.</TableCell></TableRow>}
             </DataTable>
             <DataTable
-                title="3. Staff List"
+                stepNumber={4}
+                title="Staff List"
                 description="All available staff for invigilation duties."
                 headers={['S/N', 'Name', 'College', 'Department', 'Phone Number']}
                 isLoading={isLoading}
@@ -270,7 +369,8 @@ export default function GenerationPage() {
                 )) : <TableRow><TableCell colSpan={5} className="text-center">No staff found.</TableCell></TableRow>}
             </DataTable>
             <DataTable
-                title="4. Venue Information"
+                stepNumber={5}
+                title="Venue Information"
                 description="All available venues for the examination."
                 headers={['Hall Name', 'Venue Code', 'Exam Capacity']}
                 isLoading={isLoading}
@@ -289,3 +389,5 @@ export default function GenerationPage() {
     </div>
   );
 }
+
+    
