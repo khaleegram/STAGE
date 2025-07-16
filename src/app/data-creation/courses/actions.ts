@@ -13,11 +13,20 @@ const courseSchema = z.object({
   exam_type: z.enum(['CBT', 'Written']),
 });
 
+function toTitleCase(str: string): string {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 export async function addCourse(prevState: any, formData: FormData): Promise<{ success: boolean; message: string }> {
   const values = {
     levelId: formData.get('levelId') as string,
     course_code: (formData.get('course_code') as string).toUpperCase(),
-    course_name: formData.get('course_name') as string,
+    course_name: toTitleCase(formData.get('course_name') as string),
     credit_unit: formData.get('credit_unit') as string,
     exam_type: formData.get('exam_type') as 'CBT' | 'Written',
   };
@@ -57,7 +66,7 @@ export async function updateCourse(courseId: string, prevState: any, formData: F
   const values = {
     levelId: formData.get('levelId') as string,
     course_code: (formData.get('course_code') as string).toUpperCase(),
-    course_name: formData.get('course_name') as string,
+    course_name: toTitleCase(formData.get('course_name') as string),
     credit_unit: formData.get('credit_unit') as string,
     exam_type: formData.get('exam_type') as 'CBT' | 'Written',
   };
