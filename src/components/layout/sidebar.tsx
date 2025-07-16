@@ -65,8 +65,8 @@ const SidebarContent = () => {
     return cn(
       "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200",
       isActive
-        ? 'bg-primary/20 text-primary font-semibold'
-        : 'text-gray-300 hover:bg-cream/10 hover:text-primary'
+        ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
+        : 'text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground'
     );
   }
   
@@ -75,8 +75,8 @@ const SidebarContent = () => {
      return cn(
       "flex items-center gap-3 pl-4 pr-2 py-2 text-sm rounded-lg transition-colors duration-200",
       isActive
-        ? 'text-primary font-semibold'
-        : 'text-gray-400 hover:bg-cream/10 hover:text-primary'
+        ? 'text-sidebar-accent-foreground font-semibold'
+        : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground'
     );
   }
 
@@ -121,7 +121,7 @@ const SidebarContent = () => {
       data-state={isOpen ? 'open' : 'collapsed'}
       className={cn(
         "h-full flex flex-col group text-sidebar-foreground",
-        "bg-black/30 backdrop-blur-xl border-r border-white/10"
+        "bg-sidebar backdrop-blur-xl border-r border-sidebar-border/50"
       )}
     >
       <div className="p-4 h-16 shrink-0">
@@ -205,7 +205,7 @@ export function AppSidebar() {
   if (isMobile === undefined) {
     return (
       <div className="w-20 sm:w-64 h-screen">
-        <Skeleton className="h-full w-full" />
+        <Skeleton className="h-full w-full bg-muted" />
       </div>
     );
   }

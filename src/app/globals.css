@@ -36,10 +36,10 @@
 
     /* Sidebar specific variables */
     --sidebar-background: 1 83% 15%; /* Dark Maroon/Almost black */
-    --sidebar-foreground: 0 0% 98%;
+    --sidebar-foreground: 30 56% 90%; /* Sandy Brown / Cream */
     --sidebar-border: 45 93% 57%; /* Gold border */
-    --sidebar-accent: 45 93% 47%; /* Gold for active/hover */
-    --sidebar-accent-foreground: 240 10% 3.9%;
+    --sidebar-accent: 0 100% 25%; /* Maroon for active/hover */
+    --sidebar-accent-foreground: 30 56% 90%; /* Sandy Brown for active text */
     --sidebar-ring: 45 93% 57%;
   }
 
@@ -71,10 +71,10 @@
     
     /* Sidebar specific variables */
     --sidebar-background: 240 4% 10%;
-    --sidebar-foreground: 0 0% 98%;
+    --sidebar-foreground: 30 56% 90%; /* Sandy Brown / Cream */
     --sidebar-border: 45 93% 57%;
-    --sidebar-accent: 45 93% 47%;
-    --sidebar-accent-foreground: 240 10% 3.9%;
+    --sidebar-accent: 0 70% 50%; /* Brighter Maroon for active/hover */
+    --sidebar-accent-foreground: 30 56% 90%; /* Sandy Brown for active text */
     --sidebar-ring: 45 93% 57%;
   }
 }
