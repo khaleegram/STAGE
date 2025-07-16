@@ -75,8 +75,6 @@ export async function updateSession(sessionId: string, prevState: any, formData:
 export async function deleteSession(sessionId: string) {
     try {
         await deleteDoc(doc(db, 'academic_sessions', sessionId));
-        // Note: In a real app, you'd also want to delete subcollections like semesters.
-        // This is a simplified deletion for now.
         revalidatePath('/data-creation/sessions');
         return { success: true, message: 'Session deleted successfully.' };
     } catch (error) {
@@ -147,62 +145,56 @@ export async function deleteSemester(semesterId: string, sessionId: string) {
     }
 }
 
-
 export async function promoteStudents(): Promise<{ success: boolean; message: string }> {
   try {
+    const batch = writeBatch(db);
     const programsSnapshot = await getDocs(collection(db, 'programs'));
+    const levelsSnapshot = await getDocs(collection(db, 'levels'));
+
     if (programsSnapshot.empty) {
       return { success: false, message: 'No programs found to process.' };
     }
 
-    const batch = writeBatch(db);
+    const allLevels = levelsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Level));
 
     for (const programDoc of programsSnapshot.docs) {
       const program = { id: programDoc.id, ...programDoc.data() } as Program;
-      const maxLevel = program.max_level || 4; 
-
-      const levelsQuery = query(collection(db, 'levels'), where('programId', '==', program.id));
-      const levelsSnapshot = await getDocs(levelsQuery);
       
-      const levels = levelsSnapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() } as Level))
-        .sort((a, b) => b.level - a.level); // Sort descending (500L, 400L, etc.)
+      const levelsForProgram = allLevels
+        .filter(l => l.programId === program.id)
+        .sort((a, b) => b.level - a.level); // Sort descending: 500, 400, 300...
 
-      if (levels.length === 0) continue;
+      if (levelsForProgram.length === 0) continue;
 
-      let studentsFromBelow = 0; // Represents the count of students being promoted into the current level
+      let studentsFromBelow = 0; // Starts at 0 for the graduating class.
 
-      for (const level of levels) {
+      for (const level of levelsForProgram) {
         const levelRef = doc(db, 'levels', level.id);
         const currentStudentCount = level.students_count;
         
-        if (level.level === maxLevel) {
-          // Graduating students: this level will be populated by students from the level below.
-          // The current students are "graduated" out.
-          batch.update(levelRef, { students_count: studentsFromBelow });
-        } else {
-          // Regular promotion: set current level's count to the count from the level below.
-          batch.update(levelRef, { students_count: studentsFromBelow });
-        }
+        // The new count for this level is the count of students from the level below.
+        batch.update(levelRef, { students_count: studentsFromBelow });
         
         // For the next iteration (the level below this one), the number of students
-        // coming from "below" is the original count of the current level.
+        // being promoted *is* the original count of the current level.
         studentsFromBelow = currentStudentCount;
       }
-      
-      // After iterating through all levels, `studentsFromBelow` holds the count from 100-level.
-      // This is now the new intake for 100-level. We reset it to 0 as per the new logic.
-      const firstLevel = levels.find(l => l.level === 1);
+
+      // After the loop, `studentsFromBelow` holds the count from the original Level 1.
+      // Now we must find and reset the *new* Level 1 to 0 for the new intake.
+      const firstLevel = levelsForProgram.find(l => l.level === 1);
       if (firstLevel) {
-        const firstLevelRef = doc(db, 'levels', firstLevel.id);
-        batch.update(firstLevelRef, { students_count: 0 }); // Reset to 0 to await new population
+          const firstLevelRef = doc(db, 'levels', firstLevel.id);
+          // This promotion logic moves the L1 students to L2. Now we clear L1 for new intake.
+          batch.update(firstLevelRef, { students_count: 0 });
       }
     }
 
     await batch.commit();
+
     revalidatePath('/data-creation/levels');
     revalidatePath('/data-creation/sessions');
-    revalidatePath('/'); // Revalidate dashboard page
+    revalidatePath('/'); // Revalidate dashboard/home page
 
     return { success: true, message: 'Student promotion process completed successfully! Please populate the new Level 1 batches.' };
   } catch (error) {
@@ -213,5 +205,3 @@ export async function promoteStudents(): Promise<{ success: boolean; message: st
     return { success: false, message: 'An unknown error occurred during promotion.' };
   }
 }
-
-    
