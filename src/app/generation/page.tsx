@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarIcon, Sparkles, Clock, AlertTriangle, PlusCircle, X } from 'lucide-react';
-import { format, differenceInWeeks, eachDayOfInterval, getDay } from 'date-fns';
+import { format, differenceInWeeks, eachDayOfInterval, getDay, parse } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { DateRange } from 'react-day-picker';
 import { compileAndStoreGenerationData, getExistingGenerationData, GenerationData } from './actions';
@@ -59,17 +59,46 @@ const generateAllTimeSlots = (range: DateRange): DailyTimeSlots[] => {
     });
 };
 
+const timeOptions = Array.from({ length: 32 }, (_, i) => { // 7:00 AM to 10:30 PM
+  const hour = Math.floor(i / 2) + 7;
+  const minute = (i % 2) * 30;
+  const date = new Date(2000, 0, 1, hour, minute);
+  return format(date, 'h:mm a');
+});
+
 function AddSlotModal({ isOpen, onClose, onAddSlot }: { isOpen: boolean, onClose: () => void, onAddSlot: (slot: TimeSlot) => void }) {
-    const [time, setTime] = useState('');
+    const [startTime, setStartTime] = useState('');
+    const [endTime, setEndTime] = useState('');
     const [type, setType] = useState<'standard' | 'overflow'>('standard');
+    const [error, setError] = useState<string | null>(null);
 
     const handleAdd = () => {
-        if (time.trim()) {
-            onAddSlot({ time, type });
-            setTime('');
-            onClose();
+        setError(null);
+        if (!startTime || !endTime) {
+            setError('Please select a start and end time.');
+            return;
         }
+
+        const startDate = parse(startTime, 'h:mm a', new Date());
+        const endDate = parse(endTime, 'h:mm a', new Date());
+
+        if (startDate >= endDate) {
+            setError('End time must be after start time.');
+            return;
+        }
+        
+        const timeString = `${startTime} – ${endTime}`;
+        onAddSlot({ time: timeString, type });
+        setStartTime('');
+        setEndTime('');
+        onClose();
     };
+    
+    const filteredEndTimeOptions = useMemo(() => {
+        if (!startTime) return timeOptions;
+        const startDate = parse(startTime, 'h:mm a', new Date());
+        return timeOptions.filter(time => parse(time, 'h:mm a', new Date()) > startDate);
+    }, [startTime]);
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -78,11 +107,20 @@ function AddSlotModal({ isOpen, onClose, onAddSlot }: { isOpen: boolean, onClose
                     <DialogTitle>Add Custom Time Slot</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
-                    <Input 
-                        placeholder="e.g., 6:00 PM - 8:00 PM"
-                        value={time}
-                        onChange={(e) => setTime(e.target.value)}
-                    />
+                     <div className="grid grid-cols-2 gap-4">
+                        <Select onValueChange={setStartTime} value={startTime}>
+                            <SelectTrigger><SelectValue placeholder="Start Time" /></SelectTrigger>
+                            <SelectContent>
+                                {timeOptions.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <Select onValueChange={setEndTime} value={endTime} disabled={!startTime}>
+                            <SelectTrigger><SelectValue placeholder="End Time" /></SelectTrigger>
+                            <SelectContent>
+                                {filteredEndTimeOptions.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
                     <Select onValueChange={(v: 'standard' | 'overflow') => setType(v)} defaultValue={type}>
                         <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
                         <SelectContent>
@@ -90,6 +128,7 @@ function AddSlotModal({ isOpen, onClose, onAddSlot }: { isOpen: boolean, onClose
                             <SelectItem value="overflow">Overflow</SelectItem>
                         </SelectContent>
                     </Select>
+                    {error && <p className="text-sm text-destructive">{error}</p>}
                 </div>
                 <div className="flex justify-end gap-2">
                     <Button variant="ghost" onClick={onClose}>Cancel</Button>
@@ -302,7 +341,10 @@ const TimeSlotsDisplay = ({ dailySlots, isLoading, setDailySlots }: { dailySlots
         if (!dayToEdit) return;
         setDailySlots(dailySlots.map(d => {
             if (d.day.getTime() === dayToEdit.getTime()) {
-                return { ...d, slots: [...d.slots, newSlot] };
+                // Check for duplicates before adding
+                if (!d.slots.some(s => s.time === newSlot.time)) {
+                    return { ...d, slots: [...d.slots, newSlot].sort((a,b) => a.time.localeCompare(b.time)) };
+                }
             }
             return d;
         }));
