@@ -35,7 +35,7 @@
     --cream: 30 56% 90%;
 
     /* Sidebar specific variables */
-    --sidebar-background: 0 83% 15% / 0.8; /* Semi-transparent Dark Maroon/Almost black */
+    --sidebar-background: 1 83% 15%; /* Dark Maroon/Almost black */
     --sidebar-foreground: 30 56% 90%; /* Sandy Brown / Cream */
     --sidebar-border: 45 93% 57%; /* Gold border */
     --sidebar-accent: 0 100% 25%; /* Maroon for active/hover */
@@ -70,7 +70,7 @@
     --cream: 30 56% 90%;
     
     /* Sidebar specific variables */
-    --sidebar-background: 224 71.4% 4.1% / 0.6; /* Semi-transparent dark navy blue */
+    --sidebar-background: 240 4% 10%;
     --sidebar-foreground: 30 56% 90%; /* Sandy Brown / Cream */
     --sidebar-border: 45 93% 57%;
     --sidebar-accent: 0 70% 50%; /* Brighter Maroon for active/hover */
