@@ -26,15 +26,15 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <ThemeProvider storageKey="al-qalam-theme">
           <SidebarProvider>
-            <AppSidebar />
-            <SidebarInset>
-              <div className="flex flex-col h-full">
+            <div className="flex min-h-screen">
+              <AppSidebar />
+              <div className="flex-1 flex flex-col bg-background">
                 <Navbar />
-                <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-light dark:bg-dark bg-cover bg-center">
+                <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-muted/40">
                   {children}
                 </main>
               </div>
-            </SidebarInset>
+            </div>
           </SidebarProvider>
         </ThemeProvider>
         <Toaster />
