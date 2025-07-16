@@ -44,9 +44,9 @@
   }
 
   .dark {
-    --background: 224 71.4% 4.1%;
+    --background: 221 27% 14%; /* New dark color: #1a202c */
     --foreground: 0 0% 98%;
-    --card: 224 71.4% 4.1%;
+    --card: 221 27% 14%;
     --card-foreground: 0 0% 98%;
     --popover: 224 71.4% 4.1%;
     --popover-foreground: 0 0% 98%;
