@@ -132,7 +132,7 @@ const DepartmentsPage: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-border/50">
                       {filteredDepartments.map((dept, index) => (
-                        <tr key={dept.id}>
+                        <tr key={dept.id} className="hover:bg-muted/30">
                           <td className="p-4">{index + 1}</td>
                           <td className="p-4">{dept.name}</td>
                           <td className="p-4">{dept.collegeName || 'N/A'}</td>

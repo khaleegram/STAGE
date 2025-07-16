@@ -96,7 +96,7 @@ const CollegesPage: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-border/50">
                       {filteredColleges.map((college, index) => (
-                        <tr key={college.id}>
+                        <tr key={college.id} className="hover:bg-muted/30">
                           <td className="p-4">{index + 1}</td>
                           <td className="p-4">{college.code}</td>
                           <td className="p-4">{college.name}</td>

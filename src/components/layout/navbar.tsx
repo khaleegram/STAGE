@@ -5,9 +5,7 @@ import { Moon, Sun, Menu } from 'lucide-react';
 import { useTheme } from './theme-provider';
 import Image from 'next/image';
 import { Button } from '../ui/button';
-import { useSidebar } from '../ui/sidebar';
 import { cn } from '@/lib/utils';
-import { AppSidebar } from './sidebar';
 
 const user = {
   firstName: 'Admin',

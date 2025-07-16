@@ -147,7 +147,7 @@ const ProgramsPage: React.FC = () => {
                                 </thead>
                                 <tbody className="divide-y divide-border/50">
                                     {progArray.sort((a, b) => a.name.localeCompare(b.name)).map((prog, index) => (
-                                        <tr key={prog.id}>
+                                        <tr key={prog.id} className="hover:bg-muted/30">
                                             <td className="p-4">{index + 1}</td>
                                             <td className="p-4 font-medium">{prog.name}</td>
                                             <td className="p-4">{prog.max_level} Years</td>

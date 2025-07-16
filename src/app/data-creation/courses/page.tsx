@@ -198,7 +198,7 @@ const CoursesPage: React.FC = () => {
                                 </thead>
                                 <tbody className="divide-y divide-border/50">
                                     {courseArray.map((course) => (
-                                        <tr key={course.id}>
+                                        <tr key={course.id} className="hover:bg-muted/30">
                                             <td className="p-4 font-medium">{course.course_code}</td>
                                             <td className="p-4">{course.course_name}</td>
                                             <td className="p-4">{course.levelNumber}00 Level</td>

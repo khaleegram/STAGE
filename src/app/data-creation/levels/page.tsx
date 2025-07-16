@@ -145,7 +145,7 @@ const LevelsPage: React.FC = () => {
                                 </thead>
                                 <tbody className="divide-y divide-border/50">
                                     {lvlArray.sort((a, b) => a.level - b.level).map((lvl) => (
-                                        <tr key={lvl.id}>
+                                        <tr key={lvl.id} className="hover:bg-muted/30">
                                             <td className="p-4 font-medium">{lvl.level}00 Level</td>
                                             <td className="p-4">{lvl.students_count}</td>
                                             <td className="p-4 flex space-x-2">
@@ -160,7 +160,7 @@ const LevelsPage: React.FC = () => {
                         </div>
                     </div>
                 )) : (
-                    <div className="text-center p-8 text-muted-foreground bg-card/50 rounded-lg border">
+                    <div className="text-center p-8 text-muted-foreground bg-card rounded-lg border">
                         No levels found for your search criteria.
                     </div>
                 )}

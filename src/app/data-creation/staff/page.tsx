@@ -132,7 +132,7 @@ const StaffPage: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-border/50">
                       {filteredStaff.map((s) => (
-                        <tr key={s.id}>
+                        <tr key={s.id} className="hover:bg-muted/30">
                           <td className="p-4 font-medium">{s.name}</td>
                           <td className="p-4 text-sm">
                             <div>{s.email}</div>

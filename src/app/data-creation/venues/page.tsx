@@ -101,7 +101,7 @@ const VenuesPage: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-border/50">
                       {filteredVenues.map((venue, index) => (
-                        <tr key={venue.id}>
+                        <tr key={venue.id} className="hover:bg-muted/30">
                           <td className="p-4">{index + 1}</td>
                           <td className="p-4 font-medium">{venue.name}</td>
                           <td className="p-4">{venue.code}</td>
