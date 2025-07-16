@@ -27,19 +27,19 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../ui/sheet';
 import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Skeleton } from '../ui/skeleton';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 
 const SidebarContent = () => {
   const { open: isOpen, toggleSidebar, setOpen } = useSidebar();
   const pathname = usePathname();
   const isMobile = useIsMobile();
+  const [isDataCreationOpen, setIsDataCreationOpen] = useState(pathname.startsWith('/data-creation'));
+
+  useEffect(() => {
+    setIsDataCreationOpen(pathname.startsWith('/data-creation'));
+  }, [pathname]);
 
   const handleLinkClick = (e: React.MouseEvent) => {
-    // For desktop view, if sidebar is collapsed, a click should expand it.
-    if (!isMobile && !isOpen) {
-      setOpen(true);
-      return;
-    }
-    // For mobile view, a click should close the sidebar.
     if (isMobile) {
       setOpen(false);
     }
@@ -60,7 +60,17 @@ const SidebarContent = () => {
     { href: '/generation', label: 'Generate Timetable', icon: <Sparkles size={20} /> },
     { href: '/timetables', label: 'Timetables', icon: <CalendarDays size={20} /> },
     { href: '/data-creation/sessions', label: 'Sessions', icon: <Clock size={20} /> },
-    { href: '/data-creation', label: 'Data Creation', icon: <Database size={20} /> },
+  ];
+  
+  const dataCreationLinks = [
+    { href: '/data-creation/colleges', title: 'Colleges', icon: <Building2 size={18} /> },
+    { href: '/data-creation/departments', title: 'Departments', icon: <Library size={18} /> },
+    { href: '/data-creation/programs', title: 'Programs', icon: <GraduationCap size={18} /> },
+    { href: '/data-creation/levels', title: 'Levels', icon: <Layers size={18} /> },
+    { href: '/data-creation/courses', title: 'Courses', icon: <BookOpen size={18} /> },
+    { href: '/data-creation/combined-courses', title: 'Combined Courses', icon: <BookCopy size={18} /> },
+    { href: '/data-creation/staff', title: 'Staff', icon: <BookUser size={18} /> },
+    { href: '/data-creation/venues', title: 'Venues', icon: <MapPin size={18} /> },
   ];
 
   const NavLink = ({ href, label, icon, exact = true }: { href: string; label: string; icon: React.ReactNode; exact?: boolean; }) => (
@@ -92,7 +102,6 @@ const SidebarContent = () => {
       <div className="p-4 h-16 shrink-0">
          <Link
             href="/"
-            onClick={handleLinkClick}
             className={cn("flex items-center gap-2 w-full", !isOpen && "justify-center")}
             aria-label="Toggle Sidebar"
           >
@@ -103,7 +112,7 @@ const SidebarContent = () => {
                     viewBox="0 0 24 24"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
-                    className="flex-shrink-0"
+                    className="flex-shrink-0 text-sidebar-foreground"
                     stroke="currentColor"
                 >
                     <path
@@ -125,6 +134,33 @@ const SidebarContent = () => {
           {menuItems.map((item) => (
             <NavLink key={item.label} {...item} exact={item.href !== '/data-creation'} />
           ))}
+
+          <Collapsible open={isDataCreationOpen} onOpenChange={setIsDataCreationOpen}>
+              <CollapsibleTrigger
+                className={cn(linkClass('/data-creation', false), 'w-full justify-between')}
+                disabled={!isOpen}
+                onClick={(e) => {
+                    if (!isOpen) {
+                        e.preventDefault();
+                        setOpen(true);
+                    }
+                }}
+              >
+                  <div className="flex items-center gap-3">
+                    <Database size={20} />
+                    <span className={cn("truncate", !isOpen && "sm:hidden")}>Data Creation</span>
+                  </div>
+                  {isOpen && <ChevronDown className={cn("h-4 w-4 transition-transform", isDataCreationOpen && "rotate-180")} />}
+              </CollapsibleTrigger>
+             <CollapsibleContent className="py-1 pl-7 pr-2 space-y-1.5 data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+                {dataCreationLinks.map(link => (
+                    <Link key={link.href} href={link.href} onClick={handleLinkClick} className={linkClass(link.href)}>
+                        {link.icon}
+                        <span className="truncate">{link.title}</span>
+                    </Link>
+                ))}
+             </CollapsibleContent>
+          </Collapsible>
            
            <div className="px-3 pt-4">
               <div className="border-t border-sidebar-border/50" />
