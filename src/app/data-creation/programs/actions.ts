@@ -13,6 +13,7 @@ const programSchema = z.object({
 
 // Utility to convert a string to Title Case
 function toTitleCase(str: string): string {
+    if (!str) return '';
     return str
       .toLowerCase()
       .split(' ')
