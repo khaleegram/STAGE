@@ -74,7 +74,7 @@ export async function updateUserPassword(prevState: any, formData: FormData): Pr
     return { success: false, message };
   }
 
-  return { success: true, message: 'Password updated successfully. You will be logged out.' };
+  return { success: true, message: 'Password updated successfully. You will be logged out shortly.' };
 }
 
 const profileSchema = z.object({

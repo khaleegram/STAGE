@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { signOut } from '@/lib/firebase/auth';
 import { useRouter } from 'next/navigation';
 import { updateUserPassword } from '@/app/settings/actions';
+import { signOut } from '@/lib/firebase/auth';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -34,27 +34,24 @@ export function PasswordForm() {
         variant: state.success ? 'default' : 'destructive',
       });
       if (state.success) {
-        // Sign out and redirect after successful password change
-        const handleSignOut = async () => {
+        // After showing the toast, sign out and redirect.
+        setTimeout(async () => {
           await signOut();
           router.push('/login');
-        };
-        handleSignOut();
+        }, 2000); // Delay to allow user to see the toast message
       }
     }
-  }, [state, toast, router]);
+  }, [state, router, toast]);
 
 
   return (
     <form action={formAction} className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="currentPassword">Current Password</Label>
-        <Input id="currentPassword" name="currentPassword" type="password" required disabled />
-        <p className="text-xs text-muted-foreground">Verification of current password is not yet implemented.</p>
-      </div>
-      <div className="space-y-2">
         <Label htmlFor="newPassword">New Password</Label>
         <Input id="newPassword" name="newPassword" type="password" required />
+         <p className="text-xs text-muted-foreground">
+          Password must be at least 6 characters. You will be logged out after a successful change.
+        </p>
       </div>
       <div className="flex justify-end">
         <SubmitButton />
