@@ -10,6 +10,8 @@ import {
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { z } from 'zod';
+import { revalidatePath } from 'next/cache';
 
 export async function signUpWithEmail(name: string, email: string, password: string, accessCode: string): Promise<{ result?: any; error?: Error }> {
   try {
@@ -49,28 +51,35 @@ export async function signOut(): Promise<{ error?: Error }> {
   }
 }
 
-export async function updateUserProfile(name: string, photoURL?: string): Promise<{ error?: Error }> {
-    const user = auth.currentUser;
-    if (!user) {
-        return { error: new Error('No user is currently signed in.') };
-    }
-    try {
-        await updateProfile(user, { displayName: name, photoURL });
-        return {};
-    } catch (error) {
-        return { error: error as Error };
-    }
-}
+const profileSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters.'),
+  // photoURL validation can be added here if file uploads are implemented
+});
 
-export async function updateUserPassword(newPassword: string): Promise<{ error?: Error }> {
+
+export async function updateUserProfile(prevState: any, formData: FormData): Promise<{ success: boolean; message: string }> {
     const user = auth.currentUser;
     if (!user) {
-        return { error: new Error('No user is currently signed in.') };
+        return { success: false, message: 'No user is currently signed in.' };
     }
+    
+    const validatedFields = profileSchema.safeParse({
+        name: formData.get('name')
+    });
+
+    if (!validatedFields.success) {
+        return {
+            success: false,
+            message: validatedFields.error.flatten().fieldErrors.name?.[0] || 'Invalid input.',
+        };
+    }
+
     try {
-        await firebaseUpdatePassword(user, newPassword);
-        return {};
+        await updateProfile(user, { displayName: validatedFields.data.name });
+        revalidatePath('/settings'); // Revalidate to show updated info if needed elsewhere
+        return { success: true, message: 'Profile updated successfully.' };
     } catch (error) {
-        return { error: error as Error };
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return { success: false, message: `Failed to update profile: ${errorMessage}` };
     }
 }

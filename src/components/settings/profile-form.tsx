@@ -24,34 +24,20 @@ export function ProfileForm() {
   const { toast } = useToast();
   const { user } = useAuth();
   
-  const [name, setName] = useState('');
+  const [state, formAction] = useActionState(updateUserProfile, { success: false, message: '' });
 
   useEffect(() => {
-      if (user?.displayName) {
-          setName(user.displayName);
-      }
-  }, [user]);
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const { error } = await updateUserProfile(name);
-    if (error) {
+    if (state.message) {
          toast({
-            title: 'Error',
-            description: error.message,
-            variant: 'destructive',
-        });
-    } else {
-        toast({
-            title: 'Success',
-            description: 'Profile updated successfully.',
+            title: state.success ? 'Success' : 'Error',
+            description: state.message,
+            variant: state.success ? 'default' : 'destructive',
         });
     }
-  };
-
+  }, [state]);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form action={formAction} className="space-y-6">
        <div className="flex items-center gap-4">
             <Image
                 src={user?.photoURL || 'https://placehold.co/100x100.png'}
@@ -63,14 +49,14 @@ export function ProfileForm() {
             />
             <div>
                 <Label htmlFor="picture">Profile Picture</Label>
-                <Input id="picture" type="file" className="mt-1" disabled/>
+                <Input id="picture" name="photoURL" type="file" className="mt-1" disabled/>
                 <p className="text-xs text-muted-foreground mt-1">Feature coming soon.</p>
             </div>
        </div>
 
       <div className="space-y-2">
         <Label htmlFor="name">Name</Label>
-        <Input id="name" name="name" value={name} onChange={e => setName(e.target.value)} />
+        <Input id="name" name="name" defaultValue={user?.displayName || ''} />
       </div>
 
       <div className="space-y-2">
