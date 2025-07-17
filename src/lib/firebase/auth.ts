@@ -53,33 +53,31 @@ export async function signOut(): Promise<{ error?: Error }> {
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
-  // photoURL validation can be added here if file uploads are implemented
 });
 
+export async function updateUserProfile(formData: FormData): Promise<{ success: boolean; message: string }> {
+  const user = auth.currentUser;
+  if (!user) {
+    return { success: false, message: 'No user is currently signed in.' };
+  }
+  
+  const validatedFields = profileSchema.safeParse({
+    name: formData.get('name')
+  });
 
-export async function updateUserProfile(prevState: any, formData: FormData): Promise<{ success: boolean; message: string }> {
-    const user = auth.currentUser;
-    if (!user) {
-        return { success: false, message: 'No user is currently signed in.' };
-    }
-    
-    const validatedFields = profileSchema.safeParse({
-        name: formData.get('name')
-    });
+  if (!validatedFields.success) {
+    return {
+      success: false,
+      message: validatedFields.error.flatten().fieldErrors.name?.[0] || 'Invalid input.',
+    };
+  }
 
-    if (!validatedFields.success) {
-        return {
-            success: false,
-            message: validatedFields.error.flatten().fieldErrors.name?.[0] || 'Invalid input.',
-        };
-    }
-
-    try {
-        await updateProfile(user, { displayName: validatedFields.data.name });
-        revalidatePath('/settings'); // Revalidate to show updated info if needed elsewhere
-        return { success: true, message: 'Profile updated successfully.' };
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
-        return { success: false, message: `Failed to update profile: ${errorMessage}` };
-    }
+  try {
+    await updateProfile(user, { displayName: validatedFields.data.name });
+    revalidatePath('/settings'); // Revalidate to show updated info
+    return { success: true, message: 'Profile updated successfully.' };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    return { success: false, message: `Failed to update profile: ${errorMessage}` };
+  }
 }

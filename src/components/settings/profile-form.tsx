@@ -1,8 +1,7 @@
 
 'use client';
 
-import { useActionState, useEffect, useState } from 'react';
-import { useFormStatus } from 'react-dom';
+import { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,33 +10,27 @@ import { updateUserProfile } from '@/lib/firebase/auth';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/use-auth';
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending}>
-      {pending ? 'Saving...' : 'Save Changes'}
-    </Button>
-  );
-}
-
 export function ProfileForm() {
   const { toast } = useToast();
   const { user } = useAuth();
-  
-  const [state, formAction] = useActionState(updateUserProfile, { success: false, message: '' });
+  const [isPending, startTransition] = useTransition();
 
-  useEffect(() => {
-    if (state.message) {
-         toast({
-            title: state.success ? 'Success' : 'Error',
-            description: state.message,
-            variant: state.success ? 'default' : 'destructive',
-        });
-    }
-  }, [state]);
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    
+    startTransition(async () => {
+      const result = await updateUserProfile(formData);
+      toast({
+        title: result.success ? 'Success' : 'Error',
+        description: result.message,
+        variant: result.success ? 'default' : 'destructive',
+      });
+    });
+  };
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
        <div className="flex items-center gap-4">
             <Image
                 src={user?.photoURL || 'https://placehold.co/100x100.png'}
@@ -66,7 +59,9 @@ export function ProfileForm() {
       </div>
       
       <div className="flex justify-end">
-        <SubmitButton />
+        <Button type="submit" disabled={isPending}>
+          {isPending ? 'Saving...' : 'Save Changes'}
+        </Button>
       </div>
     </form>
   );
