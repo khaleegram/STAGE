@@ -1,10 +1,11 @@
 
 'use server';
 
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { z } from 'zod';
-import { updateUserPassword as firebaseUpdateUserPassword } from '@/lib/firebase/auth';
+import { updateUserPassword as firebaseUpdateUserPassword, updateProfile } from '@/lib/firebase/auth';
+import { revalidatePath } from 'next/cache';
 
 const accessCodeSchema = z.object({
   currentCode: z.string().min(1, 'Current code is required.'),
@@ -67,11 +68,42 @@ export async function updateUserPassword(prevState: any, formData: FormData): Pr
     };
   }
 
-  const { error } = await firebaseUpdateUserPassword(validatedFields.data.newPassword);
+  const { success, message } = await firebaseUpdateUserPassword(validatedFields.data.newPassword);
 
-  if (error) {
-    return { success: false, message: `Failed to update password: ${error.message}` };
+  if (!success) {
+    return { success: false, message };
   }
 
   return { success: true, message: 'Password updated successfully. You will be logged out.' };
+}
+
+const profileSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters.'),
+});
+
+export async function updateUserProfile(formData: FormData): Promise<{ success: boolean; message: string }> {
+  const user = auth.currentUser;
+  if (!user) {
+    return { success: false, message: 'No user is currently signed in.' };
+  }
+  
+  const validatedFields = profileSchema.safeParse({
+    name: formData.get('name')
+  });
+
+  if (!validatedFields.success) {
+    return {
+      success: false,
+      message: validatedFields.error.flatten().fieldErrors.name?.[0] || 'Invalid input.',
+    };
+  }
+
+  try {
+    await updateProfile(user, { displayName: validatedFields.data.name });
+    revalidatePath('/settings'); // Revalidate to show updated info
+    return { success: true, message: 'Profile updated successfully.' };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    return { success: false, message: `Failed to update profile: ${errorMessage}` };
+  }
 }

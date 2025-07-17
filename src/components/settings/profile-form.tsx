@@ -1,36 +1,44 @@
 
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useActionState, useEffect, useRef } from 'react';
+import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { updateUserProfile } from '@/lib/firebase/auth';
+import { updateUserProfile } from '@/app/settings/actions';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/use-auth';
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" disabled={pending}>
+      {pending ? 'Saving...' : 'Save Changes'}
+    </Button>
+  );
+}
 
 export function ProfileForm() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [isPending, startTransition] = useTransition();
+  const formRef = useRef<HTMLFormElement>(null);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    
-    startTransition(async () => {
-      const result = await updateUserProfile(formData);
+  const [state, formAction] = useActionState(updateUserProfile, { success: false, message: '' });
+
+  useEffect(() => {
+    if (state.message) {
       toast({
-        title: result.success ? 'Success' : 'Error',
-        description: result.message,
-        variant: result.success ? 'default' : 'destructive',
+        title: state.success ? 'Success' : 'Error',
+        description: state.message,
+        variant: state.success ? 'default' : 'destructive',
       });
-    });
-  };
+    }
+  }, [state, toast]);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form ref={formRef} action={formAction} className="space-y-6">
        <div className="flex items-center gap-4">
             <Image
                 src={user?.photoURL || 'https://placehold.co/100x100.png'}
@@ -59,9 +67,7 @@ export function ProfileForm() {
       </div>
       
       <div className="flex justify-end">
-        <Button type="submit" disabled={isPending}>
-          {isPending ? 'Saving...' : 'Save Changes'}
-        </Button>
+        <SubmitButton />
       </div>
     </form>
   );
