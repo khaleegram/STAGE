@@ -7,15 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { updateProfile } from '@/app/settings/actions';
+import { updateUserProfile } from '@/lib/firebase/auth';
 import Image from 'next/image';
-
-// Mock user data. In a real app, this would come from an auth context.
-const user = {
-    name: 'Admin User',
-    email: 'admin@example.com',
-    profilePicture: 'https://placehold.co/100x100.png',
-};
+import { useAuth } from '@/hooks/use-auth';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -28,25 +22,39 @@ function SubmitButton() {
 
 export function ProfileForm() {
   const { toast } = useToast();
-  const [state, formAction] = useActionState(updateProfile, { success: false, message: '' });
-
-  const [name, setName] = useState(user.name);
+  const { user } = useAuth();
+  
+  const [name, setName] = useState('');
 
   useEffect(() => {
-    if (state.message) {
-      toast({
-        title: state.success ? 'Success' : 'Error',
-        description: state.message,
-        variant: state.success ? 'default' : 'destructive',
-      });
+      if (user?.displayName) {
+          setName(user.displayName);
+      }
+  }, [user]);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const { error } = await updateUserProfile(name);
+    if (error) {
+         toast({
+            title: 'Error',
+            description: error.message,
+            variant: 'destructive',
+        });
+    } else {
+        toast({
+            title: 'Success',
+            description: 'Profile updated successfully.',
+        });
     }
-  }, [state, toast]);
+  };
+
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
        <div className="flex items-center gap-4">
             <Image
-                src={user.profilePicture}
+                src={user?.photoURL || 'https://placehold.co/100x100.png'}
                 alt="Profile picture"
                 width={80}
                 height={80}
@@ -55,8 +63,8 @@ export function ProfileForm() {
             />
             <div>
                 <Label htmlFor="picture">Profile Picture</Label>
-                <Input id="picture" type="file" className="mt-1"/>
-                <p className="text-xs text-muted-foreground mt-1">PNG, JPG, GIF up to 10MB.</p>
+                <Input id="picture" type="file" className="mt-1" disabled/>
+                <p className="text-xs text-muted-foreground mt-1">Feature coming soon.</p>
             </div>
        </div>
 
@@ -67,7 +75,7 @@ export function ProfileForm() {
 
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
-        <Input id="email" name="email" type="email" value={user.email} readOnly disabled />
+        <Input id="email" name="email" type="email" value={user?.email || ''} readOnly disabled />
         <p className="text-xs text-muted-foreground">Your email address is verified and cannot be changed.</p>
       </div>
       

@@ -1,28 +1,82 @@
+
 'use client';
 
 import React from 'react';
-import { Moon, Sun, Menu } from 'lucide-react';
+import { Moon, Sun, Menu, LogOut, Settings } from 'lucide-react';
 import { useTheme } from './theme-provider';
 import Image from 'next/image';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '../ui/sidebar';
-
-const user = {
-  firstName: 'Admin',
-  profilePicture: 'https://placehold.co/100x100.png',
-};
+import { useAuth } from '@/hooks/use-auth';
+import { signOut } from '@/lib/firebase/auth';
+import { useRouter } from 'next/navigation';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import Link from 'next/link';
 
 export default function Navbar() {
   const { theme, setTheme } = useTheme();
   const { isMobile, onToggleSidebar } = useSidebar();
+  const { user } = useAuth();
+  const router = useRouter();
 
+  const handleSignOut = async () => {
+    await signOut();
+    router.push('/login');
+  };
 
   const toggleTheme = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');
   };
 
   const baseClasses = "bg-cream/80 dark:bg-black/20 text-black dark:text-white rounded-2xl shadow-lg border-b border-gray-300/50 dark:border-gray-700/50 h-12 px-4 flex items-center space-x-4 backdrop-blur-md";
+
+  const UserMenu = () => (
+     <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+            <Image
+                src={user?.photoURL || 'https://placehold.co/100x100.png'}
+                alt="User"
+                width={32}
+                height={32}
+                className="rounded-full object-cover"
+                data-ai-hint="person avatar"
+            />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56" align="end" forceMount>
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">{user?.displayName || 'User'}</p>
+            <p className="text-xs leading-none text-muted-foreground">
+              {user?.email}
+            </p>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/settings">
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Settings</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleSignOut}>
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Log out</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
 
   if (isMobile) {
     return (
@@ -32,21 +86,13 @@ export default function Navbar() {
                     <Menu />
                     <span className="sr-only">Toggle Sidebar</span>
                 </Button>
-                 <div className="flex items-center gap-4">
-                    <span className="text-sm font-medium hidden sm:inline">{user.firstName}</span>
-                    <Image
-                        src={user.profilePicture}
-                        alt="User"
-                        width={32}
-                        height={32}
-                        className="rounded-full object-cover"
-                        data-ai-hint="person avatar"
-                    />
+                 <div className="flex items-center gap-2">
                     <Button onClick={toggleTheme} variant="ghost" size="icon" className="rounded-full">
                         <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                         <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
                         <span className="sr-only">Toggle theme</span>
                     </Button>
+                    <UserMenu />
                 </div>
             </div>
       </header>
@@ -57,20 +103,12 @@ export default function Navbar() {
   return (
     <div className={cn("fixed top-4 right-4 z-50", baseClasses)}>
         <div className="flex items-center gap-2 p-1">
-          <span className="text-sm font-medium pl-2">{user.firstName}</span>
-          <Image
-            src={user.profilePicture}
-            alt="User"
-            width={32}
-            height={32}
-            className="rounded-full object-cover"
-            data-ai-hint="person avatar"
-          />
           <Button onClick={toggleTheme} variant="ghost" size="icon" className="rounded-full">
             <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             <span className="sr-only">Toggle theme</span>
           </Button>
+          <UserMenu />
         </div>
     </div>
   );
