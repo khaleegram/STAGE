@@ -10,10 +10,11 @@ import { AppSidebar } from '@/components/layout/sidebar';
 import MainContent from '@/components/layout/main-content';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useScrollDirection } from '@/hooks/use-scroll-direction';
-import { cn } from '@/lib/utils';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { type User, onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const publicPaths = ['/login', '/signup'];

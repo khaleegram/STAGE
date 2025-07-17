@@ -8,7 +8,7 @@ import {
   updatePassword as firebaseUpdatePassword,
   type User,
 } from 'firebase/auth';
-import { auth } from './firebase';
+import { auth } from '@/lib/firebase';
 
 export async function signUpWithEmail(name: string, email: string, password: string): Promise<{ result?: any; error?: Error }> {
   try {
