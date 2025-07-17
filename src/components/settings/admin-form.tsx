@@ -31,7 +31,7 @@ export function AdminForm() {
         variant: state.success ? 'default' : 'destructive',
       });
     }
-  }, [state, toast]);
+  }, [state]);
 
   return (
     <form action={formAction} className="space-y-6">
