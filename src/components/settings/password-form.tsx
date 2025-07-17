@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { updateUserPassword, signOut } from '@/lib/firebase/auth';
+import { signOut } from '@/lib/firebase/auth';
 import { useRouter } from 'next/navigation';
+import { updateUserPassword } from '@/app/settings/actions';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -23,36 +24,29 @@ export function PasswordForm() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const handlePasswordUpdate = async (formData: FormData) => {
-    const newPassword = formData.get('newPassword') as string;
-    if (!newPassword || newPassword.length < 6) {
-        toast({ title: 'Error', description: 'Password must be at least 6 characters.', variant: 'destructive' });
-        return;
-    }
+  const [state, formAction] = useActionState(updateUserPassword, { success: false, message: '' });
 
-    // In a real app, you'd verify the currentPassword here by re-authenticating the user.
-    // For simplicity, we are skipping that step.
-    const { error } = await updateUserPassword(newPassword);
-
-    if (error) {
-        toast({
-            title: 'Error',
-            description: `Failed to update password: ${error.message}`,
-            variant: 'destructive',
-        });
-    } else {
-        toast({
-            title: 'Success!',
-            description: 'Password updated successfully. You will be logged out now.',
-        });
-        await signOut();
-        router.push('/login');
+  useEffect(() => {
+    if (state.message) {
+      toast({
+        title: state.success ? 'Success' : 'Error',
+        description: state.message,
+        variant: state.success ? 'default' : 'destructive',
+      });
+      if (state.success) {
+        // Sign out and redirect after successful password change
+        const handleSignOut = async () => {
+          await signOut();
+          router.push('/login');
+        };
+        handleSignOut();
+      }
     }
-  };
+  }, [state, toast, router]);
 
 
   return (
-    <form action={handlePasswordUpdate} className="space-y-6">
+    <form action={formAction} className="space-y-6">
       <div className="space-y-2">
         <Label htmlFor="currentPassword">Current Password</Label>
         <Input id="currentPassword" name="currentPassword" type="password" required disabled />

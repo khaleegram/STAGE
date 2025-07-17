@@ -4,6 +4,7 @@
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { z } from 'zod';
+import { updateUserPassword as firebaseUpdateUserPassword } from '@/lib/firebase/auth';
 
 const accessCodeSchema = z.object({
   currentCode: z.string().min(1, 'Current code is required.'),
@@ -47,4 +48,30 @@ export async function updateAccessCode(prevState: any, formData: FormData): Prom
         }
         return { success: false, message: 'An unexpected error occurred.' };
     }
+}
+
+
+const passwordSchema = z.object({
+  newPassword: z.string().min(6, 'Password must be at least 6 characters.'),
+});
+
+export async function updateUserPassword(prevState: any, formData: FormData): Promise<{ success: boolean; message: string }> {
+  const validatedFields = passwordSchema.safeParse({
+    newPassword: formData.get('newPassword'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      success: false,
+      message: validatedFields.error.flatten().fieldErrors.newPassword?.[0] || 'Invalid input.',
+    };
+  }
+
+  const { error } = await firebaseUpdateUserPassword(validatedFields.data.newPassword);
+
+  if (error) {
+    return { success: false, message: `Failed to update password: ${error.message}` };
+  }
+
+  return { success: true, message: 'Password updated successfully. You will be logged out.' };
 }
