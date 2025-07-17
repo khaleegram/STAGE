@@ -1,12 +1,12 @@
 'use client'
 
-import { useSidebarState } from "@/hooks/use-sidebar-state";
+import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import React from "react";
 import { useScrollDirection } from "@/hooks/use-scroll-direction";
 
 export default function MainContent({ children }: { children: React.ReactNode }) {
-    const { isSidebarOpen } = useSidebarState();
+    const { open: isSidebarOpen } = useSidebar();
     const scrollDirection = useScrollDirection();
 
     return (

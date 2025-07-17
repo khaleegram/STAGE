@@ -18,6 +18,7 @@ import {
   Settings,
   Sparkles,
   ChevronDown,
+  Menu,
 } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useState, useEffect } from 'react';
@@ -28,6 +29,8 @@ import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Skeleton } from '../ui/skeleton';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import { Logo } from '../icons/logo';
+
 
 const SidebarContent = () => {
   const { open: isOpen, toggleSidebar, setOpen } = useSidebar();
@@ -36,8 +39,10 @@ const SidebarContent = () => {
   const [isDataCreationOpen, setIsDataCreationOpen] = useState(pathname.startsWith('/data-creation'));
 
   useEffect(() => {
-    setIsDataCreationOpen(pathname.startsWith('/data-creation'));
-  }, [pathname]);
+    if (isOpen) {
+        setIsDataCreationOpen(pathname.startsWith('/data-creation'));
+    }
+  }, [pathname, isOpen]);
 
   const handleLinkClick = (e: React.MouseEvent) => {
     if (isMobile) {
@@ -99,34 +104,22 @@ const SidebarContent = () => {
         "bg-black/30 dark:bg-black/50 backdrop-blur-xl border-r border-white/10 shadow-xl"
       )}
     >
-      <div className="p-4 h-16 shrink-0">
+      <div className="p-4 h-16 shrink-0 flex items-center justify-between">
          <Link
             href="/"
             className={cn("flex items-center gap-2 w-full", !isOpen && "justify-center")}
-            aria-label="Toggle Sidebar"
+            aria-label="Home"
           >
-            <div className="flex items-center gap-2 text-sidebar-foreground">
-                <svg
-                    width="28"
-                    height="28"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="flex-shrink-0 text-sidebar-foreground"
-                    stroke="currentColor"
-                >
-                    <path
-                    d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    />
-                </svg>
-              <span className={cn("font-bold text-lg", !isOpen && "sm:hidden")}>
-                Al-Qalam
-              </span>
-            </div>
+            <Logo className={cn(!isOpen && 'group-data-[state=collapsed]:flex group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:w-full')}/>
         </Link>
+        <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleSidebar} 
+            className="text-white hover:bg-white/10 hover:text-white hidden sm:flex"
+        >
+            <Menu/>
+        </Button>
       </div>
 
       <nav className="flex-1 overflow-y-auto overflow-x-hidden p-2">
@@ -135,23 +128,36 @@ const SidebarContent = () => {
             <NavLink key={item.label} {...item} exact={item.href !== '/data-creation'} />
           ))}
 
-          <Collapsible open={isDataCreationOpen} onOpenChange={setIsDataCreationOpen}>
-              <CollapsibleTrigger
-                className={cn(linkClass('/data-creation', false), 'w-full justify-between')}
-                disabled={!isOpen}
-                onClick={(e) => {
-                    if (!isOpen) {
-                        e.preventDefault();
-                        setOpen(true);
-                    }
-                }}
-              >
-                  <div className="flex items-center gap-3">
-                    <Database size={20} />
-                    <span className={cn("truncate", !isOpen && "sm:hidden")}>Data Creation</span>
-                  </div>
-                  {isOpen && <ChevronDown className={cn("h-4 w-4 transition-transform", isDataCreationOpen && "rotate-180")} />}
-              </CollapsibleTrigger>
+          <Collapsible open={isOpen && isDataCreationOpen} onOpenChange={setIsDataCreationOpen}>
+              <Tooltip>
+                  <TooltipTrigger asChild>
+                    <CollapsibleTrigger
+                        asChild
+                        disabled={!isOpen}
+                    >
+                    <Link href="/data-creation" onClick={(e) => {
+                        if (!isOpen) { 
+                            e.preventDefault();
+                            toggleSidebar();
+                            setIsDataCreationOpen(true);
+                        } else {
+                            setIsDataCreationOpen((prev) => !prev)
+                        }
+                    }} className={cn(linkClass('/data-creation', false), 'w-full justify-between')}>
+                      <div className="flex items-center gap-3">
+                        <Database size={20} />
+                        <span className={cn("truncate", !isOpen && "sm:hidden")}>Data Creation</span>
+                      </div>
+                      <ChevronDown className={cn("h-4 w-4 transition-transform", !isOpen && "sm:hidden", isDataCreationOpen && "rotate-180")} />
+                    </Link>
+                    </CollapsibleTrigger>
+                </TooltipTrigger>
+                 {!isOpen && (
+                    <TooltipContent side="right" className="bg-background text-foreground">
+                        Data Creation
+                    </TooltipContent>
+                 )}
+              </Tooltip>
              <CollapsibleContent className="py-1 pl-7 pr-2 space-y-1.5 data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
                 {dataCreationLinks.map(link => (
                     <Link key={link.href} href={link.href} onClick={handleLinkClick} className={linkClass(link.href)}>
