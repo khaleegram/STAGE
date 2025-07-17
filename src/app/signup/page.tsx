@@ -19,6 +19,7 @@ const signupSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Invalid email address.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+  accessCode: z.string().min(1, { message: 'Access code is required.' }),
 });
 
 type SignupValues = z.infer<typeof signupSchema>;
@@ -38,7 +39,7 @@ export default function SignupPage() {
 
   const onSubmit = async (data: SignupValues) => {
     setIsLoading(true);
-    const { error } = await signUpWithEmail(data.name, data.email, data.password);
+    const { error } = await signUpWithEmail(data.name, data.email, data.password, data.accessCode);
     setIsLoading(false);
 
     if (error) {
@@ -82,6 +83,11 @@ export default function SignupPage() {
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" {...register('password')} />
               {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
+            </div>
+             <div className="space-y-2">
+              <Label htmlFor="accessCode">Admin Access Code</Label>
+              <Input id="accessCode" type="password" {...register('accessCode')} />
+              {errors.accessCode && <p className="text-sm text-destructive">{errors.accessCode.message}</p>}
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Creating Account...' : 'Create Account'}

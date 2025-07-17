@@ -4,6 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { AppearanceForm } from "@/components/settings/appearance-form";
 import { PasswordForm } from "@/components/settings/password-form";
+import { AdminForm } from "@/components/settings/admin-form";
+import { ShieldCheck } from "lucide-react";
 
 export default function SettingsPage() {
   return (
@@ -20,6 +22,9 @@ export default function SettingsPage() {
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsTrigger value="admin">
+            <ShieldCheck className="w-4 h-4 mr-2" /> Admin
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -62,6 +67,20 @@ export default function SettingsPage() {
                     <PasswordForm />
                 </CardContent>
             </Card>
+        </TabsContent>
+
+        <TabsContent value="admin">
+          <Card>
+            <CardHeader>
+              <CardTitle>Admin Settings</CardTitle>
+              <CardDescription>
+                Manage system-wide administrative settings.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AdminForm />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

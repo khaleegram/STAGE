@@ -8,10 +8,19 @@ import {
   updatePassword as firebaseUpdatePassword,
   type User,
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
-export async function signUpWithEmail(name: string, email: string, password: string): Promise<{ result?: any; error?: Error }> {
+export async function signUpWithEmail(name: string, email: string, password: string, accessCode: string): Promise<{ result?: any; error?: Error }> {
   try {
+    // Check access code first
+    const settingsRef = doc(db, 'system_settings', 'access_code');
+    const settingsSnap = await getDoc(settingsRef);
+
+    if (!settingsSnap.exists() || settingsSnap.data().code !== accessCode) {
+        return { error: new Error('Invalid access code.') };
+    }
+
     const result = await createUserWithEmailAndPassword(auth, email, password);
     if (result.user) {
       await updateProfile(result.user, { displayName: name });
