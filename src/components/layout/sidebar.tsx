@@ -35,16 +35,17 @@ import { Logo } from '../icons/logo';
 const SidebarContent = () => {
   const { open: isOpen, toggleSidebar, setOpen } = useSidebar();
   const pathname = usePathname();
-  const isMobile = useIsMobile();
   const [isDataCreationOpen, setIsDataCreationOpen] = useState(pathname.startsWith('/data-creation'));
 
   useEffect(() => {
-    if (isOpen) {
-        setIsDataCreationOpen(pathname.startsWith('/data-creation'));
+    // Automatically open the data creation section if the current path is within it
+    if (isOpen && pathname.startsWith('/data-creation')) {
+        setIsDataCreationOpen(true);
     }
   }, [pathname, isOpen]);
 
   const handleLinkClick = () => {
+    // Always collapse the sidebar on link click if it's open
     if (isOpen) {
       setOpen(false);
     }
@@ -124,8 +125,7 @@ const SidebarContent = () => {
             <Collapsible open={isOpen && isDataCreationOpen} onOpenChange={setIsDataCreationOpen}>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                      <CollapsibleTrigger
-                          disabled={!isOpen}
+                      <button
                           className={cn(linkClass('/data-creation', false), 'w-full justify-between')}
                           onClick={() => {
                               if (!isOpen) { 
@@ -141,7 +141,7 @@ const SidebarContent = () => {
                           <span className={cn("truncate", !isOpen && "sm:hidden")}>Data Creation</span>
                         </div>
                         <ChevronDown className={cn("h-4 w-4 transition-transform", !isOpen && "sm:hidden", isDataCreationOpen && "rotate-180")} />
-                      </CollapsibleTrigger>
+                      </button>
                   </TooltipTrigger>
                    {!isOpen && (
                       <TooltipContent side="right" className="bg-background text-foreground">
