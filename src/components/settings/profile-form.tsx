@@ -35,7 +35,7 @@ export function ProfileForm() {
         variant: state.success ? 'default' : 'destructive',
       });
     }
-  }, [state, toast]);
+  }, [state]);
 
   return (
     <form ref={formRef} action={formAction} className="space-y-6">
