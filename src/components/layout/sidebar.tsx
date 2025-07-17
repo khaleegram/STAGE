@@ -105,21 +105,13 @@ const SidebarContent = () => {
       )}
     >
       <div className="p-4 h-16 shrink-0 flex items-center justify-between">
-         <Link
-            href="/"
-            className={cn("flex items-center gap-2 w-full", !isOpen && "justify-center")}
-            aria-label="Home"
+         <button
+            onClick={toggleSidebar}
+            className={cn("flex items-center gap-2 w-full text-left", !isOpen && "justify-center")}
+            aria-label="Toggle Sidebar"
           >
             <Logo className={cn(!isOpen && 'group-data-[state=collapsed]:flex group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:w-full')}/>
-        </Link>
-        <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={toggleSidebar} 
-            className="text-white hover:bg-white/10 hover:text-white hidden sm:flex"
-        >
-            <Menu/>
-        </Button>
+        </button>
       </div>
 
       <nav className="flex-1 overflow-y-auto overflow-x-hidden p-2">
