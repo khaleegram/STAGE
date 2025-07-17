@@ -28,16 +28,16 @@ interface StudentPopulationData {
 
 function StatCard({ title, value, icon: Icon, isLoading }: { title: string, value: string | number, icon: React.ElementType, isLoading: boolean }) {
     return (
-        <Card className="bg-maroon text-white">
+        <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{title}</CardTitle>
-                <Icon className="h-4 w-4 text-white/80" />
+                <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+                <Icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
                 {isLoading ? (
-                    <Skeleton className="h-8 w-1/2 bg-white/20" />
+                    <Skeleton className="h-8 w-1/2" />
                 ) : (
-                    <div className="text-2xl font-bold">{value}</div>
+                    <div className="text-2xl font-bold text-primary">{value}</div>
                 )}
             </CardContent>
         </Card>
@@ -83,7 +83,7 @@ function StatsOverview() {
 
     return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard title="Total Students" value={stats.students} icon={Users} isLoading={isLoading} />
+            <StatCard title="Total Students" value={stats.students.toLocaleString()} icon={Users} isLoading={isLoading} />
             <StatCard title="Programs" value={stats.programs} icon={GraduationCap} isLoading={isLoading} />
             <StatCard title="Courses" value={stats.courses} icon={BookOpen} isLoading={isLoading} />
             <StatCard title="Venues" value={stats.venues} icon={MapPin} isLoading={isLoading} />
@@ -109,43 +109,48 @@ function RecentTimetables() {
     }, []);
 
     return (
-        <Card className="bg-maroon text-white">
-            <CardHeader>
-                <CardTitle>Recent Timetables</CardTitle>
-                <CardDescription className="text-white/80">A list of the most recently generated timetables.</CardDescription>
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Recent Timetables</CardTitle>
+                    <CardDescription>The last 5 generated timetables.</CardDescription>
+                </div>
+                 <Button asChild variant="outline" size="sm">
+                    <Link href="/timetables">View All</Link>
+                </Button>
             </CardHeader>
             <CardContent>
                 {isLoading ? (
                     <div className="space-y-2">
-                        <Skeleton className="h-8 w-full bg-white/20" />
-                        <Skeleton className="h-8 w-full bg-white/20" />
-                        <Skeleton className="h-8 w-full bg-white/20" />
+                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-8 w-full" />
                     </div>
                 ) : (
                     <Table>
                         <TableHeader>
-                            <TableRow className="border-white/20">
-                                <TableHead className="text-white">Name</TableHead>
-                                <TableHead className="text-white">Date</TableHead>
-                                <TableHead className="text-right text-white">Conflicts</TableHead>
+                            <TableRow>
+                                <TableHead>Name</TableHead>
+                                <TableHead className="hidden sm:table-cell">Date</TableHead>
+                                <TableHead className="text-right">Conflicts</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {timetables.length > 0 ? timetables.map(t => (
-                                <TableRow key={t.id} className="border-white/20">
+                                <TableRow key={t.id}>
                                     <TableCell className="font-medium">{t.name}</TableCell>
-                                    <TableCell>{t.createdAt ? format(t.createdAt.seconds * 1000, 'PPP') : 'N/A'}</TableCell>
+                                    <TableCell className="hidden sm:table-cell">{t.createdAt ? format(t.createdAt.seconds * 1000, 'PPP') : 'N/A'}</TableCell>
                                     <TableCell className="text-right">
                                         {t.conflicts ? (
-                                            <span className="text-destructive font-bold">Yes</span>
+                                            <span className="font-bold text-destructive">Yes</span>
                                         ) : (
-                                            <span className="text-green-400">No</span>
+                                            <span className="text-green-600">No</span>
                                         )}
                                     </TableCell>
                                 </TableRow>
                             )) : (
                                 <TableRow>
-                                    <TableCell colSpan={3} className="text-center text-white/70">No timetables generated yet.</TableCell>
+                                    <TableCell colSpan={3} className="text-center h-24 text-muted-foreground">No timetables generated yet.</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
@@ -167,7 +172,7 @@ function StudentPopulationChart() {
             const data: StudentPopulationData[] = [];
 
             for (const program of programs) {
-                const programData: StudentPopulationData = { name: program.name };
+                const programData: StudentPopulationData = { name: program.name.replace(' Of ', ' of ').replace(' And ', ' and ') };
                 const levelsQuery = query(collection(db, 'levels'), where('programId', '==', program.id));
                 const levelsSnapshot = await getDocs(levelsQuery);
                 levelsSnapshot.forEach(doc => {
@@ -184,30 +189,52 @@ function StudentPopulationChart() {
     }, []);
 
     if (isLoading) {
-        return <Skeleton className="h-[350px] w-full bg-white/20" />;
+        return (
+             <Card>
+                <CardHeader>
+                    <Skeleton className="h-6 w-1/2" />
+                    <Skeleton className="h-4 w-3/4" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-[350px] w-full" />
+                </CardContent>
+            </Card>
+        );
     }
 
     return (
-        <Card className="bg-maroon text-white">
+        <Card>
             <CardHeader>
-                <CardTitle>Student Population Overview</CardTitle>
-                <CardDescription className="text-white/80">Number of students across different levels for each program.</CardDescription>
+                <CardTitle>Student Population</CardTitle>
+                <CardDescription>Student counts across all levels for each program.</CardDescription>
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={350}>
-                    <BarChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.2)" />
-                        <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} interval={0} stroke="rgba(255, 255, 255, 0.7)" />
-                        <YAxis stroke="rgba(255, 255, 255, 0.7)"/>
+                    <BarChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis 
+                            dataKey="name" 
+                            stroke="hsl(var(--muted-foreground))"
+                            fontSize={12}
+                            tickLine={false}
+                            axisLine={false}
+                            interval={0}
+                        />
+                        <YAxis 
+                            stroke="hsl(var(--muted-foreground))"
+                            fontSize={12}
+                            tickLine={false}
+                            axisLine={false}
+                        />
                         <Tooltip 
+                            cursor={{ fill: 'hsl(var(--muted))' }}
                             contentStyle={{ 
-                                backgroundColor: 'hsl(var(--primary))', 
-                                border: '1px solid rgba(255, 255, 255, 0.2)',
-                                color: '#fff' 
+                                backgroundColor: 'hsl(var(--background))',
+                                border: '1px solid hsl(var(--border))',
                             }} 
                         />
-                        <Legend wrapperStyle={{ color: '#fff' }} />
-                        <Bar dataKey="100L" stackId="a" fill="hsl(var(--chart-1))" />
+                        <Legend iconSize={10} wrapperStyle={{fontSize: "12px"}}/>
+                        <Bar dataKey="100L" stackId="a" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
                         <Bar dataKey="200L" stackId="a" fill="hsl(var(--chart-2))" />
                         <Bar dataKey="300L" stackId="a" fill="hsl(var(--chart-3))" />
                         <Bar dataKey="400L" stackId="a" fill="hsl(var(--chart-4))" />
@@ -222,12 +249,18 @@ function StudentPopulationChart() {
 
 export default function Home() {
   return (
-     <section className="bg-card p-4 sm:p-6 lg:p-8 rounded-lg">
-        <div className="space-y-8">
+     <section>
+        <div className="space-y-6">
             <UnresolvedPromotions />
             <StatsOverview />
-            <RecentTimetables />
-            <StudentPopulationChart />
+             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+                <div className="lg:col-span-4">
+                     <RecentTimetables />
+                </div>
+                 <div className="lg:col-span-3">
+                    <StudentPopulationChart />
+                </div>
+            </div>
 
             <div className="fixed bottom-6 right-6 z-50">
                 <Button asChild size="lg" className="rounded-full shadow-lg">
