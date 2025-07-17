@@ -44,7 +44,7 @@ const SidebarContent = () => {
     }
   }, [pathname, isOpen]);
 
-  const handleLinkClick = (e: React.MouseEvent) => {
+  const handleLinkClick = () => {
     if (isOpen) {
       setOpen(false);
     }
@@ -120,44 +120,45 @@ const SidebarContent = () => {
             <NavLink key={item.label} {...item} exact={item.href !== '/data-creation'} />
           ))}
 
-          <Collapsible open={isOpen && isDataCreationOpen} onOpenChange={setIsDataCreationOpen}>
-              <Tooltip>
-                  <TooltipTrigger asChild>
-                    <CollapsibleTrigger
-                        asChild
-                        disabled={!isOpen}
-                    >
-                    <button onClick={() => {
-                        if (!isOpen) { 
-                            toggleSidebar();
-                            setIsDataCreationOpen(true);
-                        } else {
-                            setIsDataCreationOpen((prev) => !prev)
-                        }
-                    }} className={cn(linkClass('/data-creation', false), 'w-full justify-between')}>
-                      <div className="flex items-center gap-3">
-                        <Database size={20} />
-                        <span className={cn("truncate", !isOpen && "sm:hidden")}>Data Creation</span>
-                      </div>
-                      <ChevronDown className={cn("h-4 w-4 transition-transform", !isOpen && "sm:hidden", isDataCreationOpen && "rotate-180")} />
-                    </button>
-                    </CollapsibleTrigger>
-                </TooltipTrigger>
-                 {!isOpen && (
-                    <TooltipContent side="right" className="bg-background text-foreground">
-                        Data Creation
-                    </TooltipContent>
-                 )}
-              </Tooltip>
-             <CollapsibleContent className="py-1 pl-7 pr-2 space-y-1.5 data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
-                {dataCreationLinks.map(link => (
-                    <Link key={link.href} href={link.href} onClick={handleLinkClick} className={linkClass(link.href)}>
-                        {link.icon}
-                        <span className="truncate">{link.title}</span>
-                    </Link>
-                ))}
-             </CollapsibleContent>
-          </Collapsible>
+          <li>
+            <Collapsible open={isOpen && isDataCreationOpen} onOpenChange={setIsDataCreationOpen}>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                      <CollapsibleTrigger
+                          disabled={!isOpen}
+                          className={cn(linkClass('/data-creation', false), 'w-full justify-between')}
+                          onClick={() => {
+                              if (!isOpen) { 
+                                  toggleSidebar();
+                                  setIsDataCreationOpen(true);
+                              } else {
+                                  setIsDataCreationOpen((prev) => !prev)
+                              }
+                          }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Database size={20} />
+                          <span className={cn("truncate", !isOpen && "sm:hidden")}>Data Creation</span>
+                        </div>
+                        <ChevronDown className={cn("h-4 w-4 transition-transform", !isOpen && "sm:hidden", isDataCreationOpen && "rotate-180")} />
+                      </CollapsibleTrigger>
+                  </TooltipTrigger>
+                   {!isOpen && (
+                      <TooltipContent side="right" className="bg-background text-foreground">
+                          Data Creation
+                      </TooltipContent>
+                   )}
+                </Tooltip>
+               <CollapsibleContent className="py-1 pl-7 pr-2 space-y-1.5 data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+                  {dataCreationLinks.map(link => (
+                      <Link key={link.href} href={link.href} onClick={handleLinkClick} className={linkClass(link.href)}>
+                          {link.icon}
+                          <span className="truncate">{link.title}</span>
+                      </Link>
+                  ))}
+               </CollapsibleContent>
+            </Collapsible>
+           </li>
            
            <div className="px-3 pt-4">
               <div className="border-t border-sidebar-border/50" />
