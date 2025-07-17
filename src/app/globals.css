@@ -4,9 +4,9 @@
 
 @layer base {
   :root {
-    --background: 30 56% 90%; /* Sandy Brown / Cream */
+    --background: 30 56% 85%; /* #ead9c6 Cream */
     --foreground: 224 71.4% 4.1%;
-    --card: 30 56% 90%; /* Sandy Brown / Cream */
+    --card: 30 56% 85%; /* #ead9c6 Cream */
     --card-foreground: 224 71.4% 4.1%;
     --popover: 0 0% 100%;
     --popover-foreground: 224 71.4% 4.1%;
