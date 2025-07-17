@@ -33,12 +33,14 @@ export function PasswordForm() {
         description: state.message,
         variant: state.success ? 'default' : 'destructive',
       });
+      // After showing the toast for a successful password change,
+      // we can redirect the user or let them log out manually.
+      // Automatically logging them out here can cause issues.
       if (state.success) {
-        // After showing the toast, sign out and redirect.
         setTimeout(async () => {
           await signOut();
           router.push('/login');
-        }, 2000); // Delay to allow user to see the toast message
+        }, 3000); // Give user time to read the toast.
       }
     }
   }, [state, router, toast]);

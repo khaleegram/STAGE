@@ -81,7 +81,7 @@ const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
 });
 
-export async function updateUserProfile(formData: FormData): Promise<{ success: boolean; message: string }> {
+export async function updateUserProfile(prevState: any, formData: FormData): Promise<{ success: boolean; message: string }> {
   const user = auth.currentUser;
   if (!user) {
     return { success: false, message: 'No user is currently signed in.' };
