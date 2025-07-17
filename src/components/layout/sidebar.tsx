@@ -45,7 +45,7 @@ const SidebarContent = () => {
   }, [pathname, isOpen]);
 
   const handleLinkClick = (e: React.MouseEvent) => {
-    if (isMobile) {
+    if (isOpen) {
       setOpen(false);
     }
   };
@@ -127,9 +127,8 @@ const SidebarContent = () => {
                         asChild
                         disabled={!isOpen}
                     >
-                    <Link href="/data-creation" onClick={(e) => {
+                    <button onClick={() => {
                         if (!isOpen) { 
-                            e.preventDefault();
                             toggleSidebar();
                             setIsDataCreationOpen(true);
                         } else {
@@ -141,7 +140,7 @@ const SidebarContent = () => {
                         <span className={cn("truncate", !isOpen && "sm:hidden")}>Data Creation</span>
                       </div>
                       <ChevronDown className={cn("h-4 w-4 transition-transform", !isOpen && "sm:hidden", isDataCreationOpen && "rotate-180")} />
-                    </Link>
+                    </button>
                     </CollapsibleTrigger>
                 </TooltipTrigger>
                  {!isOpen && (
