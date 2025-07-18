@@ -29,20 +29,22 @@ export default function LoginPage() {
   const [state, formAction] = useActionState(login, { success: false, message: '' });
 
   useEffect(() => {
-    if (state.message) {
-      if (state.success) {
-        toast({
-          title: 'Success',
-          description: 'You have been logged in.',
-        });
-        router.push('/');
-      } else {
-        toast({
-          title: 'Login Failed',
-          description: state.message,
-          variant: 'destructive',
-        });
-      }
+    if (!state.message) return;
+
+    if (state.success) {
+      toast({
+        title: 'Success',
+        description: 'You have been logged in.',
+      });
+      // The ProtectedLayout in layout.tsx will handle the redirect.
+      // We push a "refresh" to ensure the layout re-evaluates auth state.
+      router.refresh();
+    } else {
+      toast({
+        title: 'Login Failed',
+        description: state.message,
+        variant: 'destructive',
+      });
     }
   }, [state, router, toast]);
 

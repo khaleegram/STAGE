@@ -16,6 +16,7 @@ import { useState, useEffect, createContext, useContext, ReactNode } from 'react
 import { type User, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 const publicPaths = ['/login', '/signup'];
 
@@ -26,11 +27,22 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const scrollDirection = useScrollDirection();
 
   useEffect(() => {
-    if (!loading && !user && !publicPaths.includes(pathname)) {
+    if (loading) return; // Wait until the auth state is determined
+
+    const isPublic = publicPaths.includes(pathname);
+
+    // If user is logged in and on a public page, redirect to dashboard
+    if (user && isPublic) {
+      router.push('/');
+    }
+
+    // If user is not logged in and on a protected page, redirect to login
+    if (!user && !isPublic) {
       router.push('/login');
     }
   }, [user, loading, pathname, router]);
 
+  // Show a loading skeleton for protected routes while auth state is loading
   if (loading && !publicPaths.includes(pathname)) {
     return (
         <div className="flex min-h-screen bg-light dark:bg-dark bg-cover bg-center bg-no-repeat overflow-x-hidden">
@@ -42,29 +54,33 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
         </div>
     )
   }
-
+  
+  // If on a public path, just render the children (Login or Signup page)
   if (publicPaths.includes(pathname)) {
     return <>{children}</>;
   }
   
-  if (!user) {
-    return null; // or a loading spinner
+  // If on a protected path and we have a user, render the main layout
+  if (user) {
+    return (
+      <div className="flex min-h-screen bg-light dark:bg-dark bg-cover bg-center bg-no-repeat overflow-x-hidden">
+        <AppSidebar />
+        <div className={cn(
+          'fixed top-0 z-50 w-full transition-transform duration-300',
+          scrollDirection === 'down' ? '-translate-y-24' : 'translate-y-0'
+        )}>
+          <Navbar />
+        </div>
+        <div className="flex-1 flex flex-col">
+          <MainContent>{children}</MainContent>
+        </div>
+      </div>
+    );
   }
 
-  return (
-    <div className="flex min-h-screen bg-light dark:bg-dark bg-cover bg-center bg-no-repeat overflow-x-hidden">
-      <AppSidebar />
-      <div className={cn(
-        'fixed top-0 z-50 w-full transition-transform duration-300',
-        scrollDirection === 'down' ? '-translate-y-24' : 'translate-y-0'
-      )}>
-        <Navbar />
-      </div>
-      <div className="flex-1 flex flex-col">
-        <MainContent>{children}</MainContent>
-      </div>
-    </div>
-  );
+  // If on a protected path and loading is done but there's no user, return null
+  // The useEffect above will have already initiated the redirect.
+  return null;
 }
 
 export default function RootLayout({
