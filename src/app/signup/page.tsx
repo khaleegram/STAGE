@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useEffect } from 'react';
-import { useActionState, useFormStatus } from 'react-dom';
+import { useEffect, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -35,7 +35,7 @@ export default function SignupPage() {
         title: 'Success!',
         description: state.message,
       });
-      router.push('/');
+      router.push('/login');
     } else {
       toast({
         title: 'Signup Failed',
