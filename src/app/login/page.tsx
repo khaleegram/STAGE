@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useActionState } from 'react';
+import { useActionState } from 'react-dom';
 import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -38,8 +38,7 @@ export default function LoginPage() {
           title: 'Success',
           description: 'You have been logged in.',
         });
-        // On success, redirect to the dashboard.
-        router.push('/');
+        // The main layout's ProtectedLayout will now handle the redirect.
       } else {
         toast({
           title: 'Login Failed',
@@ -49,15 +48,6 @@ export default function LoginPage() {
       }
     }
   }, [state, router, toast]);
-  
-  useEffect(() => {
-    // This effect handles the case where the user is already logged in
-    // and visits the login page.
-    if (user) {
-        router.push('/');
-    }
-  }, [user, router]);
-
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-light dark:bg-dark bg-cover bg-center bg-no-repeat p-4">
