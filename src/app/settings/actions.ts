@@ -4,7 +4,7 @@
 import { db, auth } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { z } from 'zod';
-import { updateUserPassword as firebaseUpdateUserPassword, updateProfile } from '@/lib/firebase/auth';
+import { updatePassword, updateProfile } from 'firebase/auth';
 import { revalidatePath } from 'next/cache';
 
 const accessCodeSchema = z.object({
@@ -57,6 +57,11 @@ const passwordSchema = z.object({
 });
 
 export async function updateUserPassword(prevState: any, formData: FormData): Promise<{ success: boolean; message: string }> {
+  const user = auth.currentUser;
+  if (!user) {
+    return { success: false, message: 'No user is currently signed in.' };
+  }
+
   const validatedFields = passwordSchema.safeParse({
     newPassword: formData.get('newPassword'),
   });
@@ -68,13 +73,13 @@ export async function updateUserPassword(prevState: any, formData: FormData): Pr
     };
   }
 
-  const { success, message } = await firebaseUpdateUserPassword(validatedFields.data.newPassword);
-
-  if (!success) {
-    return { success: false, message };
+  try {
+    await updatePassword(user, validatedFields.data.newPassword);
+    return { success: true, message: 'Password updated successfully. You will be logged out shortly.' };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    return { success: false, message: `Failed to update password: ${errorMessage}` };
   }
-
-  return { success: true, message: 'Password updated successfully. You will be logged out shortly.' };
 }
 
 const profileSchema = z.object({

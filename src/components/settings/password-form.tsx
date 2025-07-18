@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { updateUserPassword } from '@/app/settings/actions';
-import { signOut } from '@/lib/firebase/auth';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -33,12 +34,9 @@ export function PasswordForm() {
         description: state.message,
         variant: state.success ? 'default' : 'destructive',
       });
-      // After showing the toast for a successful password change,
-      // we can redirect the user or let them log out manually.
-      // Automatically logging them out here can cause issues.
       if (state.success) {
         setTimeout(async () => {
-          await signOut();
+          await signOut(auth);
           router.push('/login');
         }, 3000); // Give user time to read the toast.
       }

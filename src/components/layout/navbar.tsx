@@ -9,7 +9,8 @@ import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '../ui/sidebar';
 import { useAuth } from '@/hooks/use-auth';
-import { signOut } from '@/lib/firebase/auth';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import {
   DropdownMenu,
@@ -28,7 +29,7 @@ export default function Navbar() {
   const router = useRouter();
 
   const handleSignOut = async () => {
-    await signOut();
+    await signOut(auth);
     router.push('/login');
   };
 

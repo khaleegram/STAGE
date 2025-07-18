@@ -37,8 +37,6 @@ export default function LoginPage() {
         description: 'You have been logged in.',
       });
       // The ProtectedLayout in layout.tsx will handle the redirect.
-      // We push a "refresh" to ensure the layout re-evaluates auth state.
-      router.refresh();
     } else {
       toast({
         title: 'Login Failed',
