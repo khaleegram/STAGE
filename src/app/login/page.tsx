@@ -1,8 +1,7 @@
 
 'use client';
 
-import { useEffect } from 'react';
-import { useActionState } from 'react-dom';
+import { useEffect, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -27,7 +26,6 @@ function SubmitButton() {
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user } = useAuth();
   const [state, formAction] = useActionState(login, { success: false, message: '' });
 
   useEffect(() => {
