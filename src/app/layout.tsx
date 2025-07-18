@@ -27,17 +27,7 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const scrollDirection = useScrollDirection();
 
   useEffect(() => {
-    if (loading) return; // Wait until the auth state is determined
-
-    const isPublic = publicPaths.includes(pathname);
-
-    // If user is logged in and on a public page, redirect to dashboard
-    if (user && isPublic) {
-      router.push('/');
-    }
-
-    // If user is not logged in and on a protected page, redirect to login
-    if (!user && !isPublic) {
+    if (!loading && !user && !publicPaths.includes(pathname)) {
       router.push('/login');
     }
   }, [user, loading, pathname, router]);
@@ -55,13 +45,12 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
     )
   }
   
-  // If on a public path, just render the children (Login or Signup page)
-  if (publicPaths.includes(pathname)) {
-    return <>{children}</>;
-  }
-  
-  // If on a protected path and we have a user, render the main layout
-  if (user) {
+  // If on a public path, or we have a user, render the appropriate layout
+  if (publicPaths.includes(pathname) || user) {
+     if (publicPaths.includes(pathname)) {
+        return <>{children}</>;
+     }
+
     return (
       <div className="flex min-h-screen bg-light dark:bg-dark bg-cover bg-center bg-no-repeat overflow-x-hidden">
         <AppSidebar />

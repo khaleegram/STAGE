@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Link from 'next/link';
 import { Logo } from '@/components/icons/logo';
 import { login } from './actions';
+import { useAuth } from '@/hooks/use-auth';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -26,9 +27,14 @@ function SubmitButton() {
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [state, formAction] = useActionState(login, { success: false, message: '' });
 
   useEffect(() => {
+    if (user) {
+        router.push('/');
+    }
+
     if (!state.message) return;
 
     if (state.success) {
@@ -36,7 +42,7 @@ export default function LoginPage() {
         title: 'Success',
         description: 'You have been logged in.',
       });
-      // The ProtectedLayout in layout.tsx will handle the redirect.
+      // The redirect will be handled by the user state change
     } else {
       toast({
         title: 'Login Failed',
@@ -44,7 +50,7 @@ export default function LoginPage() {
         variant: 'destructive',
       });
     }
-  }, [state, router, toast]);
+  }, [state, user, router, toast]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-light dark:bg-dark bg-cover bg-center bg-no-repeat p-4">
