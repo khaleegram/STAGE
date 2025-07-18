@@ -33,14 +33,6 @@ export async function signUpWithEmail(name: string, email: string, password: str
   }
 }
 
-export async function signInWithEmail(email: string, password: string): Promise<{ result?: any; error?: Error }> {
-  try {
-    const result = await signInWithEmailAndPassword(auth, email, password);
-    return { result };
-  } catch (error) {
-    return { error: error as Error };
-  }
-}
 
 export async function signOut(): Promise<{ error?: Error }> {
   try {
@@ -48,24 +40,5 @@ export async function signOut(): Promise<{ error?: Error }> {
     return {};
   } catch (error) {
     return { error: error as Error };
-  }
-}
-
-export async function updateUserPassword(password: string): Promise<{ success: boolean; message: string }> {
-  const user = auth.currentUser;
-  if (!user) {
-    return { success: false, message: 'No user is currently signed in.' };
-  }
-
-  try {
-    await firebaseUpdatePassword(user, password);
-    return { success: true, message: 'Password updated successfully.' };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
-    // Provide more specific error messages
-    if (errorMessage.includes('auth/requires-recent-login')) {
-      return { success: false, message: 'This is a sensitive operation. Please sign out and sign back in before changing your password.' };
-    }
-    return { success: false, message: `Failed to update password: ${errorMessage}` };
   }
 }
