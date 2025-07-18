@@ -31,26 +31,33 @@ export default function LoginPage() {
   const [state, formAction] = useActionState(login, { success: false, message: '' });
 
   useEffect(() => {
+    // This effect handles the outcome of the form submission.
+    if (state.message) {
+      if (state.success) {
+        toast({
+          title: 'Success',
+          description: 'You have been logged in.',
+        });
+        // On success, redirect to the dashboard.
+        router.push('/');
+      } else {
+        toast({
+          title: 'Login Failed',
+          description: state.message,
+          variant: 'destructive',
+        });
+      }
+    }
+  }, [state, router, toast]);
+  
+  useEffect(() => {
+    // This effect handles the case where the user is already logged in
+    // and visits the login page.
     if (user) {
         router.push('/');
     }
+  }, [user, router]);
 
-    if (!state.message) return;
-
-    if (state.success) {
-      toast({
-        title: 'Success',
-        description: 'You have been logged in.',
-      });
-      // The redirect will be handled by the user state change
-    } else {
-      toast({
-        title: 'Login Failed',
-        description: state.message,
-        variant: 'destructive',
-      });
-    }
-  }, [state, user, router, toast]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-light dark:bg-dark bg-cover bg-center bg-no-repeat p-4">

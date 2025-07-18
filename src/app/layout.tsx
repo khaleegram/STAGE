@@ -11,10 +11,7 @@ import MainContent from '@/components/layout/main-content';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useScrollDirection } from '@/hooks/use-scroll-direction';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
-import { usePathname, useRouter } from 'next/navigation';
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import { type User, onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { usePathname } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -23,35 +20,36 @@ const publicPaths = ['/login', '/signup'];
 function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const pathname = usePathname();
-  const router = useRouter();
   const scrollDirection = useScrollDirection();
+  
+  const isPublicPath = publicPaths.includes(pathname);
 
-  useEffect(() => {
-    if (!loading && !user && !publicPaths.includes(pathname)) {
-      router.push('/login');
-    }
-  }, [user, loading, pathname, router]);
-
-  // Show a loading skeleton for protected routes while auth state is loading
-  if (loading && !publicPaths.includes(pathname)) {
+  // If we are on a public path (like login) and there's a user, 
+  // it means the login page's redirect hasn't happened yet. 
+  // We can show a loader or nothing while we wait for the redirect.
+  // Or, if loading auth state on a protected path, show a loader.
+  if ((isPublicPath && user) || (loading && !isPublicPath)) {
     return (
-        <div className="flex min-h-screen bg-light dark:bg-dark bg-cover bg-center bg-no-repeat overflow-x-hidden">
-            <div className="w-20 sm:w-64 h-screen"><Skeleton className="h-full w-full bg-muted" /></div>
-            <div className="flex-1 p-6">
-                <Skeleton className="h-12 w-full mb-4" />
-                <Skeleton className="h-48 w-full" />
+        <div className="flex min-h-screen items-center justify-center bg-background">
+            <div className="flex flex-col items-center gap-4">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <div className="space-y-2">
+                    <Skeleton className="h-4 w-[250px]" />
+                    <Skeleton className="h-4 w-[200px]" />
+                </div>
             </div>
         </div>
     )
   }
   
-  // If on a public path, or we have a user, render the appropriate layout
-  if (publicPaths.includes(pathname) || user) {
-     if (publicPaths.includes(pathname)) {
-        return <>{children}</>;
-     }
-
-    return (
+  // If it's a public path and we're not logged in, render the public page (login/signup)
+  if (isPublicPath && !user) {
+    return <>{children}</>;
+  }
+  
+  // If it's a protected path and we have a user, render the main app layout
+  if (!isPublicPath && user) {
+     return (
       <div className="flex min-h-screen bg-light dark:bg-dark bg-cover bg-center bg-no-repeat overflow-x-hidden">
         <AppSidebar />
         <div className={cn(
@@ -67,8 +65,10 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If on a protected path and loading is done but there's no user, return null
-  // The useEffect above will have already initiated the redirect.
+  // Fallback case: Should not happen often.
+  // This can occur if you land on a protected page, are not logged in, and loading is finished.
+  // The login page's redirect effect will handle pushing you to the correct page.
+  // Returning null here prevents a flash of incorrect content.
   return null;
 }
 
