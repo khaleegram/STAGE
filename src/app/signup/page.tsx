@@ -33,8 +33,9 @@ export default function SignupPage() {
     if (state.success) {
       toast({
         title: 'Success!',
-        description: state.message,
+        description: state.message + " You will be redirected to login.",
       });
+      // Redirect to login page after successful signup
       router.push('/login');
     } else {
       toast({

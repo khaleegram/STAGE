@@ -55,13 +55,13 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (!user && isPublicPath) {
-    // User is not logged in and on a public path, show the public page (login/signup)
+  // If we are on a public path, and we are not logged in, show the children (Login/Signup page)
+  if (isPublicPath && !user) {
     return <>{children}</>;
   }
 
-  if (user && !isPublicPath) {
-     // User is logged in and on a protected path, show the main app layout
+  // If we are on a protected path and we are logged in, show the app layout
+  if (!isPublicPath && user) {
      return (
       <div className="flex min-h-screen bg-light dark:bg-dark bg-cover bg-center bg-no-repeat overflow-x-hidden">
         <AppSidebar />
@@ -78,9 +78,7 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // This will cover the case where the user is logged in and on a public path,
-  // showing a loader while the useEffect redirects them. Also covers the case
-  // where the user is logged out and on a protected path.
+  // Fallback for edge cases (e.g., user is logged in but on public path before redirect)
   return (
         <div className="flex min-h-screen items-center justify-center bg-background">
             <div className="flex flex-col items-center gap-4">

@@ -24,13 +24,12 @@ function SubmitButton() {
 }
 
 export default function LoginPage() {
-  const router = useRouter();
   const { toast } = useToast();
-  const { user } = useAuth();
   const [state, formAction] = useActionState(login, { success: false, message: '' });
 
   useEffect(() => {
-    // This effect handles the outcome of the form submission.
+    // This effect handles displaying the outcome of the form submission.
+    // It does NOT handle redirection.
     if (state.message && !state.success) {
       toast({
         title: 'Login Failed',
@@ -39,18 +38,6 @@ export default function LoginPage() {
       });
     }
   }, [state, toast]);
-
-  useEffect(() => {
-    // This effect handles the redirect after a successful login.
-    // It waits for both the form action to be successful and the user object to be available in the auth context.
-    if (state.success && user) {
-      toast({
-        title: 'Success',
-        description: 'You have been logged in.',
-      });
-      router.push('/');
-    }
-  }, [state.success, user, router, toast]);
 
 
   return (
