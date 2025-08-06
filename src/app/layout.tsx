@@ -57,14 +57,9 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // If user is not authenticated, only render children if it's a public path.
-  // This prevents the protected dashboard from flashing before the redirect.
-  if (!user && !isPublicPath) {
-    return null; 
-  }
-
-  // If user is authenticated, render the full app layout
-  if (user && !isPublicPath) {
+  // If user is logged in, render the full app layout.
+  // The useEffect handles redirecting away from public paths.
+  if (user) {
     return (
       <div className="flex min-h-screen bg-light dark:bg-dark bg-cover bg-center bg-no-repeat overflow-x-hidden">
         <AppSidebar />
@@ -81,8 +76,9 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Render public pages (login/signup) without the main layout
-  return <>{children}</>;
+  // If no user is logged in, only render public pages.
+  // The useEffect handles redirecting from protected paths.
+  return isPublicPath ? <>{children}</> : null;
 }
 
 export default function RootLayout({
