@@ -1,6 +1,6 @@
 'use server';
 
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { z } from 'zod';
 
@@ -23,7 +23,6 @@ export async function login(prevState: any, formData: FormData) {
     return { success: true, message: 'Login successful.' };
   } catch (e) {
     const error = e as Error;
-    // Provide a more user-friendly error message
     if ((error as any).code === 'auth/invalid-credential') {
         return { success: false, message: 'Incorrect email or password. Please try again.' };
     }
