@@ -19,7 +19,6 @@ export async function login(prevState: any, formData: FormData) {
   const { email, password } = validatedFields.data;
 
   try {
-    // Re-enabling Firebase authentication
     await signInWithEmailAndPassword(auth, email, password);
     return { success: true, message: 'Login successful.' };
   } catch (e) {

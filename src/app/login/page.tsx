@@ -3,7 +3,6 @@
 
 import { useEffect, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,21 +22,19 @@ function SubmitButton() {
 }
 
 export default function LoginPage() {
-  const router = useRouter();
   const { toast } = useToast();
   const [state, formAction] = useActionState(login, { success: false, message: '' });
 
   useEffect(() => {
+    // This effect only handles displaying the toast message from the server action.
+    // It does NOT handle redirection.
     if (!state.message) return;
 
     if (state.success) {
       toast({
         title: 'Login Successful',
-        description: state.message,
+        description: 'Redirecting to your dashboard...',
       });
-      // The redirect is now handled by the main layout, but we ensure
-      // we push the user to the root to trigger the layout's auth check reliably.
-      router.push('/');
     } else {
       toast({
         title: 'Login Failed',
@@ -45,7 +42,7 @@ export default function LoginPage() {
         variant: 'destructive',
       });
     }
-  }, [state, toast, router]);
+  }, [state, toast]);
 
 
   return (

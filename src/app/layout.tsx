@@ -57,26 +57,32 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // If user is not authenticated, only render children if it's a public path
-  if (!user) {
-    return isPublicPath ? <>{children}</> : null; // Render nothing if trying to access protected route before redirect
+  // If user is not authenticated, only render children if it's a public path.
+  // This prevents the protected dashboard from flashing before the redirect.
+  if (!user && !isPublicPath) {
+    return null; 
   }
 
-  // If user is authenticated, render the main app layout
-  return (
-    <div className="flex min-h-screen bg-light dark:bg-dark bg-cover bg-center bg-no-repeat overflow-x-hidden">
-      <AppSidebar />
-      <div className={cn(
-        'fixed top-0 z-50 w-full transition-transform duration-300',
-        scrollDirection === 'down' ? '-translate-y-24' : 'translate-y-0'
-      )}>
-        <Navbar />
+  // If user is authenticated, render the full app layout
+  if (user && !isPublicPath) {
+    return (
+      <div className="flex min-h-screen bg-light dark:bg-dark bg-cover bg-center bg-no-repeat overflow-x-hidden">
+        <AppSidebar />
+        <div className={cn(
+          'fixed top-0 z-50 w-full transition-transform duration-300',
+          scrollDirection === 'down' ? '-translate-y-24' : 'translate-y-0'
+        )}>
+          <Navbar />
+        </div>
+        <div className="flex-1 flex flex-col">
+          <MainContent>{children}</MainContent>
+        </div>
       </div>
-      <div className="flex-1 flex flex-col">
-        <MainContent>{children}</MainContent>
-      </div>
-    </div>
-  );
+    );
+  }
+
+  // Render public pages (login/signup) without the main layout
+  return <>{children}</>;
 }
 
 export default function RootLayout({
