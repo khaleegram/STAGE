@@ -19,10 +19,15 @@ export async function login(prevState: any, formData: FormData) {
   const { email, password } = validatedFields.data;
 
   try {
+    // Re-enabling Firebase authentication
     await signInWithEmailAndPassword(auth, email, password);
     return { success: true, message: 'Login successful.' };
   } catch (e) {
     const error = e as Error;
+    // Provide a more user-friendly error message
+    if ((error as any).code === 'auth/invalid-credential') {
+        return { success: false, message: 'Incorrect email or password. Please try again.' };
+    }
     return { success: false, message: error.message || 'An unknown error occurred.' };
   }
 }

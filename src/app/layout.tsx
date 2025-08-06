@@ -27,15 +27,17 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const isPublicPath = publicPaths.includes(pathname);
 
   useEffect(() => {
-    if (loading) return; // Wait until loading is finished
+    if (loading) {
+      return; // Do nothing while loading to prevent premature redirects
+    }
 
+    // If not authenticated and trying to access a protected page, redirect to login
     if (!user && !isPublicPath) {
-      // If not logged in and on a protected page, redirect to login
       router.push('/login');
     }
 
+    // If authenticated and trying to access a public page (e.g., login), redirect to dashboard
     if (user && isPublicPath) {
-      // If logged in and on a public page (like login), redirect to dashboard
       router.push('/');
     }
   }, [user, loading, isPublicPath, pathname, router]);
@@ -55,41 +57,26 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // If we are on a public path, and we are not logged in, show the children (Login/Signup page)
-  if (isPublicPath && !user) {
-    return <>{children}</>;
+  // If user is not authenticated, only render children if it's a public path
+  if (!user) {
+    return isPublicPath ? <>{children}</> : null; // Render nothing if trying to access protected route before redirect
   }
 
-  // If we are on a protected path and we are logged in, show the app layout
-  if (!isPublicPath && user) {
-     return (
-      <div className="flex min-h-screen bg-light dark:bg-dark bg-cover bg-center bg-no-repeat overflow-x-hidden">
-        <AppSidebar />
-        <div className={cn(
-          'fixed top-0 z-50 w-full transition-transform duration-300',
-          scrollDirection === 'down' ? '-translate-y-24' : 'translate-y-0'
-        )}>
-          <Navbar />
-        </div>
-        <div className="flex-1 flex flex-col">
-          <MainContent>{children}</MainContent>
-        </div>
-      </div>
-    );
-  }
-
-  // Fallback for edge cases (e.g., user is logged in but on public path before redirect)
+  // If user is authenticated, render the main app layout
   return (
-        <div className="flex min-h-screen items-center justify-center bg-background">
-            <div className="flex flex-col items-center gap-4">
-                <Skeleton className="h-12 w-12 rounded-full" />
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-[250px]" />
-                    <Skeleton className="h-4 w-[200px]" />
-                </div>
-            </div>
-        </div>
-    );
+    <div className="flex min-h-screen bg-light dark:bg-dark bg-cover bg-center bg-no-repeat overflow-x-hidden">
+      <AppSidebar />
+      <div className={cn(
+        'fixed top-0 z-50 w-full transition-transform duration-300',
+        scrollDirection === 'down' ? '-translate-y-24' : 'translate-y-0'
+      )}>
+        <Navbar />
+      </div>
+      <div className="flex-1 flex flex-col">
+        <MainContent>{children}</MainContent>
+      </div>
+    </div>
+  );
 }
 
 export default function RootLayout({

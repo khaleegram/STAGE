@@ -12,7 +12,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Link from 'next/link';
 import { Logo } from '@/components/icons/logo';
 import { login } from './actions';
-import { useAuth } from '@/hooks/use-auth';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -24,20 +23,29 @@ function SubmitButton() {
 }
 
 export default function LoginPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const [state, formAction] = useActionState(login, { success: false, message: '' });
 
   useEffect(() => {
-    // This effect handles displaying the outcome of the form submission.
-    // It does NOT handle redirection.
-    if (state.message && !state.success) {
+    if (!state.message) return;
+
+    if (state.success) {
+      toast({
+        title: 'Login Successful',
+        description: state.message,
+      });
+      // The redirect is now handled by the main layout, but we ensure
+      // we push the user to the root to trigger the layout's auth check reliably.
+      router.push('/');
+    } else {
       toast({
         title: 'Login Failed',
         description: state.message,
         variant: 'destructive',
       });
     }
-  }, [state, toast]);
+  }, [state, toast, router]);
 
 
   return (
