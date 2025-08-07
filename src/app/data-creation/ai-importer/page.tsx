@@ -8,8 +8,9 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { UploadCloud, File as FileIcon, X, Wand2, Loader2, ArrowRight } from 'lucide-react';
 import { analyzeAcademicData } from '@/ai/flows/analyze-academic-data';
-import { AnalyzeAcademicDataOutput } from '@/lib/types/ai-importer';
+import { AnalyzeAcademicDataOutput, AnalyzedEntity } from '@/lib/types/ai-importer';
 import { EntityTree } from '@/components/data-importer/entity-tree';
+import { EditEntityModal } from '@/components/data-importer/edit-entity-modal';
 import { saveAnalyzedData } from './actions';
 
 function toBase64(file: File): Promise<string> {
@@ -25,13 +26,14 @@ export default function AiImporterPage() {
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [result, setResult] = useState<AnalyzeAcademicDataOutput | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalyzeAcademicDataOutput | null>(null);
+  const [entities, setEntities] = useState<AnalyzedEntity[]>([]);
+  const [entityToEdit, setEntityToEdit] = useState<AnalyzedEntity | null>(null);
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      // Limit file size to 10MB
       if (selectedFile.size > 10 * 1024 * 1024) {
           toast({
               title: "File Too Large",
@@ -41,7 +43,8 @@ export default function AiImporterPage() {
           return;
       }
       setFile(selectedFile);
-      setResult(null);
+      setAnalysisResult(null);
+      setEntities([]);
     }
   };
 
@@ -52,12 +55,14 @@ export default function AiImporterPage() {
     }
 
     setIsLoading(true);
-    setResult(null);
+    setAnalysisResult(null);
+    setEntities([]);
 
     try {
       const documentDataUri = await toBase64(file);
       const aiResult = await analyzeAcademicData({ documentDataUri });
-      setResult(aiResult);
+      setAnalysisResult(aiResult);
+      setEntities(aiResult.entities);
       toast({ title: 'Analysis Complete', description: 'The AI has processed your document.' });
     } catch (error: any) {
       console.error('Error processing file:', error);
@@ -72,10 +77,10 @@ export default function AiImporterPage() {
   };
 
   const handleSaveData = async () => {
-    if (!result) return;
+    if (entities.length === 0) return;
     setIsSaving(true);
     try {
-      const saveResult = await saveAnalyzedData(result.entities);
+      const saveResult = await saveAnalyzedData(entities);
       toast({
         title: saveResult.success ? 'Success!' : 'Error',
         description: saveResult.message,
@@ -83,7 +88,8 @@ export default function AiImporterPage() {
         duration: 9000
       });
       if (saveResult.success) {
-        setResult(null);
+        setAnalysisResult(null);
+        setEntities([]);
         setFile(null);
       }
     } catch (error: any) {
@@ -96,6 +102,33 @@ export default function AiImporterPage() {
       setIsSaving(false);
     }
   };
+
+  const handleDeleteEntity = (entityId: string) => {
+    setEntities(currentEntities => {
+        const entityMap = new Map(currentEntities.map(e => [e.id, e]));
+        const childrenIdsToDelete = new Set<string>();
+
+        function findChildren(id: string) {
+            childrenIdsToDelete.add(id);
+            currentEntities.forEach(e => {
+                if(e.parentId === id) {
+                    findChildren(e.id);
+                }
+            })
+        }
+        findChildren(entityId);
+        
+        return currentEntities.filter(e => !childrenIdsToDelete.has(e.id));
+    });
+  };
+
+  const handleUpdateEntity = (updatedEntity: AnalyzedEntity) => {
+      setEntities(currentEntities => 
+          currentEntities.map(e => e.id === updatedEntity.id ? updatedEntity : e)
+      );
+      setEntityToEdit(null);
+  };
+
 
   return (
     <div className="space-y-6">
@@ -130,7 +163,7 @@ export default function AiImporterPage() {
                     {(file.size / 1024).toFixed(2)} KB
                   </p>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => { setFile(null); setResult(null); }}>
+                <Button variant="ghost" size="icon" onClick={() => { setFile(null); setAnalysisResult(null); setEntities([]); }}>
                   <X className="w-5 h-5 text-destructive" />
                 </Button>
               </div>
@@ -154,27 +187,31 @@ export default function AiImporterPage() {
         </CardContent>
       </Card>
       
-      {result && (
+      {analysisResult && (
         <Card>
             <CardHeader>
                 <CardTitle>Analysis Result</CardTitle>
-                <CardDescription>The AI has returned the following analysis. Review the data and proceed to save it to the database.</CardDescription>
+                <CardDescription>Review, edit, or delete items as needed, then save the final structure to the database.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div>
                     <h3 className="font-semibold mb-2">AI Summary</h3>
-                    <p className="text-sm bg-muted p-4 rounded-md">{result.summary}</p>
+                    <p className="text-sm bg-muted p-4 rounded-md">{analysisResult.summary}</p>
                 </div>
 
                 <div>
-                    <h3 className="font-semibold mb-2">Detected Hierarchy ({result.entities.length} entities)</h3>
+                    <h3 className="font-semibold mb-2">Detected Hierarchy ({entities.length} entities)</h3>
                     <div className="border rounded-md p-4 max-h-[60vh] overflow-y-auto">
-                      <EntityTree entities={result.entities} />
+                      <EntityTree 
+                        entities={entities} 
+                        onEdit={setEntityToEdit} 
+                        onDelete={handleDeleteEntity}
+                      />
                     </div>
                 </div>
 
                  <div className="flex justify-end border-t pt-4">
-                    <Button onClick={handleSaveData} disabled={isSaving}>
+                    <Button onClick={handleSaveData} disabled={isSaving || entities.length === 0}>
                         {isSaving ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -189,6 +226,14 @@ export default function AiImporterPage() {
                 </div>
             </CardContent>
         </Card>
+      )}
+
+      {entityToEdit && (
+        <EditEntityModal 
+            entity={entityToEdit}
+            onClose={() => setEntityToEdit(null)}
+            onSave={handleUpdateEntity}
+        />
       )}
 
     </div>

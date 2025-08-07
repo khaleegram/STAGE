@@ -11,9 +11,11 @@ interface TreeNode extends AnalyzedEntity {
 
 interface EntityTreeProps {
     entities: AnalyzedEntity[];
+    onEdit: (entity: AnalyzedEntity) => void;
+    onDelete: (entityId: string) => void;
 }
 
-export const EntityTree = ({ entities }: EntityTreeProps) => {
+export const EntityTree = ({ entities, onEdit, onDelete }: EntityTreeProps) => {
 
     const entityTree = useMemo(() => {
         const entityMap = new Map<string, TreeNode>();
@@ -43,7 +45,7 @@ export const EntityTree = ({ entities }: EntityTreeProps) => {
             <div className="space-y-2">
                 {nodes.map(node => (
                     <div key={node.id}>
-                        <EntityCard entity={node} />
+                        <EntityCard entity={node} onEdit={onEdit} onDelete={onDelete} />
                         {node.children && node.children.length > 0 && (
                             <div className="pl-6 border-l-2 border-dashed ml-4 mt-2">
                                 {renderTree(node.children)}
@@ -56,7 +58,7 @@ export const EntityTree = ({ entities }: EntityTreeProps) => {
     }
     
     if (entityTree.length === 0) {
-        return <p className="text-muted-foreground text-center p-4">No hierarchical data could be parsed.</p>
+        return <p className="text-muted-foreground text-center p-4">No hierarchical data could be parsed or all items have been deleted.</p>
     }
 
     return renderTree(entityTree);
