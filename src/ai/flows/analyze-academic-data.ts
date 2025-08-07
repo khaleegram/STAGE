@@ -11,11 +11,13 @@
  */
 
 import { ai } from '@/ai/genkit';
+import { z } from 'zod';
 import { 
     AnalyzeAcademicDataInput,
     AnalyzeAcademicDataOutput,
     AnalyzeAcademicDataInputSchema,
-    AnalyzeAcademicDataOutputSchema
+    AnalyzeAcademicDataOutputSchema,
+    AnalyzedEntitySchema
 } from '@/lib/types/ai-importer';
 
 
@@ -30,11 +32,15 @@ export async function analyzeAcademicData(
   return analyzeAcademicDataFlow(input);
 }
 
+// Define a schema specifically for the entity extraction part of the task
+const EntityExtractionOutputSchema = z.object({
+    entities: z.array(AnalyzedEntitySchema).describe('A flat list of all academic entities found in the document.'),
+});
 
-const prompt = ai.definePrompt({
-  name: 'analyzeAcademicDataPrompt',
+const entityExtractionPrompt = ai.definePrompt({
+  name: 'analyzeAcademicDataEntitiesPrompt',
   input: { schema: AnalyzeAcademicDataInputSchema },
-  output: { schema: AnalyzeAcademicDataOutputSchema },
+  output: { schema: EntityExtractionOutputSchema },
   prompt: `You are an expert AI data analyst specializing in academic records for a university. Your task is to analyze the provided document (image, PDF, or text data) and extract all academic entities, structure them, and infer their hierarchical relationships.
 
 **DOCUMENT FOR ANALYSIS:**
@@ -78,10 +84,8 @@ Pay close attention to these instructions and prioritize them in your analysis:
 
 7.  **Set Initial Status:** For this initial analysis, set the \`status\` of all entities to \`new\`. The UI will handle matching later.
 
-8.  **Provide a Summary:** Write a brief, high-level summary of what you found in the document.
-
 **VERY IMPORTANT - OUTPUT FORMAT:**
-Your final output MUST be a single JSON object. It must have two top-level keys: "entities" (an array) and "summary" (a string). Follow this template EXACTLY:
+Your final output MUST be a single JSON object containing only the "entities" array. Follow this template EXACTLY:
 \`\`\`json
 {
   "entities": [
@@ -95,12 +99,25 @@ Your final output MUST be a single JSON object. It must have two top-level keys:
       "reasoning": "...",
       "status": "new"
     }
-  ],
-  "summary": "A brief summary of the analysis results."
+  ]
 }
 \`\`\`
 `,
 });
+
+const summaryPrompt = ai.definePrompt({
+    name: 'summarizeAcademicDataPrompt',
+    prompt: `Based on this extracted JSON data of academic entities, write a brief, one or two-sentence high-level summary of what was found. Mention the primary types of entities discovered (e.g., Colleges, Programs, Courses) and the total count.
+
+    **Extracted Data:**
+    {{{json data}}}
+    
+    **Example Summary:**
+    "The document analysis extracted 5 colleges, 22 departments, and 150 courses, outlining a comprehensive academic structure."
+
+    **Your Summary:**
+    `
+})
 
 const analyzeAcademicDataFlow = ai.defineFlow(
   {
@@ -109,10 +126,20 @@ const analyzeAcademicDataFlow = ai.defineFlow(
     outputSchema: AnalyzeAcademicDataOutputSchema,
   },
   async (input) => {
-    // In a future step, we could fetch existing data from Firestore here
-    // and pass it to the prompt to enable smart matching against the DB.
+    // STEP 1: Extract the structured entity data from the document.
+    const { output: entityOutput } = await entityExtractionPrompt(input);
+
+    if (!entityOutput || !entityOutput.entities) {
+        throw new Error("AI failed to extract any entities from the document.");
+    }
     
-    const { output } = await prompt(input);
-    return output!;
+    // STEP 2: Generate a summary based on the extracted entities.
+    const { text: summaryText } = await summaryPrompt({ data: entityOutput.entities });
+
+    // STEP 3: Combine the results and return.
+    return {
+        entities: entityOutput.entities,
+        summary: summaryText,
+    };
   }
 );
