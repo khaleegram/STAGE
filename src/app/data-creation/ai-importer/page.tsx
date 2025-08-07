@@ -9,6 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 import { UploadCloud, File as FileIcon, X, Wand2, Loader2, ArrowRight } from 'lucide-react';
 import { analyzeAcademicData, AnalyzeAcademicDataOutput } from '@/ai/flows/analyze-academic-data';
 import { EntityTree } from '@/components/data-importer/entity-tree';
+import { saveAnalyzedData } from './actions';
+import { revalidatePath } from 'next/cache';
 
 function toBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -22,6 +24,7 @@ function toBase64(file: File): Promise<string> {
 export default function AiImporterPage() {
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [result, setResult] = useState<AnalyzeAcademicDataOutput | null>(null);
   const { toast } = useToast();
 
@@ -68,6 +71,32 @@ export default function AiImporterPage() {
     }
   };
 
+  const handleSaveData = async () => {
+    if (!result) return;
+    setIsSaving(true);
+    try {
+      const saveResult = await saveAnalyzedData(result.entities);
+      toast({
+        title: saveResult.success ? 'Success!' : 'Error',
+        description: saveResult.message,
+        variant: saveResult.success ? 'default' : 'destructive',
+        duration: 9000
+      });
+      if (saveResult.success) {
+        setResult(null);
+        setFile(null);
+      }
+    } catch (error: any) {
+       toast({
+        title: 'An Unexpected Error Occurred',
+        description: error.message || 'Failed to save the data.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -101,7 +130,7 @@ export default function AiImporterPage() {
                     {(file.size / 1024).toFixed(2)} KB
                   </p>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => setFile(null)}>
+                <Button variant="ghost" size="icon" onClick={() => { setFile(null); setResult(null); }}>
                   <X className="w-5 h-5 text-destructive" />
                 </Button>
               </div>
@@ -129,7 +158,7 @@ export default function AiImporterPage() {
         <Card>
             <CardHeader>
                 <CardTitle>Analysis Result</CardTitle>
-                <CardDescription>The AI has returned the following analysis. Review the data and proceed to the next step.</CardDescription>
+                <CardDescription>The AI has returned the following analysis. Review the data and proceed to save it to the database.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div>
@@ -139,14 +168,23 @@ export default function AiImporterPage() {
 
                 <div>
                     <h3 className="font-semibold mb-2">Detected Hierarchy ({result.entities.length} entities)</h3>
-                    <div className="border rounded-md p-4">
+                    <div className="border rounded-md p-4 max-h-[60vh] overflow-y-auto">
                       <EntityTree entities={result.entities} />
                     </div>
                 </div>
 
                  <div className="flex justify-end border-t pt-4">
-                    <Button disabled>
-                        Next: Review & Confirm <ArrowRight className="ml-2 h-4 w-4" />
+                    <Button onClick={handleSaveData} disabled={isSaving}>
+                        {isSaving ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Saving to Database...
+                            </>
+                        ) : (
+                            <>
+                                Save to Database <ArrowRight className="ml-2 h-4 w-4" />
+                            </>
+                        )}
                     </Button>
                 </div>
             </CardContent>
