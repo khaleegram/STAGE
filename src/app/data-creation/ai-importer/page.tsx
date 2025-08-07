@@ -12,6 +12,7 @@ import { AnalyzeAcademicDataOutput, AnalyzedEntity } from '@/lib/types/ai-import
 import { EntityTree } from '@/components/data-importer/entity-tree';
 import { EditEntityModal } from '@/components/data-importer/edit-entity-modal';
 import { saveAnalyzedData } from './actions';
+import { Textarea } from '@/components/ui/textarea';
 
 function toBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -29,6 +30,7 @@ export default function AiImporterPage() {
   const [analysisResult, setAnalysisResult] = useState<AnalyzeAcademicDataOutput | null>(null);
   const [entities, setEntities] = useState<AnalyzedEntity[]>([]);
   const [entityToEdit, setEntityToEdit] = useState<AnalyzedEntity | null>(null);
+  const [instructions, setInstructions] = useState('');
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,7 +62,7 @@ export default function AiImporterPage() {
 
     try {
       const documentDataUri = await toBase64(file);
-      const aiResult = await analyzeAcademicData({ documentDataUri });
+      const aiResult = await analyzeAcademicData({ documentDataUri, instructions });
       setAnalysisResult(aiResult);
       setEntities(aiResult.entities);
       toast({ title: 'Analysis Complete', description: 'The AI has processed your document.' });
@@ -168,6 +170,17 @@ export default function AiImporterPage() {
                 </Button>
               </div>
             )}
+          </div>
+          <div>
+            <label htmlFor="instructions" className="text-sm font-medium">Optional Instructions</label>
+            <Textarea 
+              id="instructions"
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+              placeholder="e.g., 'Only extract courses from the Computer Science department.' or 'Ignore any data from the first page.'"
+              className="mt-1"
+            />
+            <p className="text-xs text-muted-foreground mt-1">Provide specific instructions to help guide the AI's analysis.</p>
           </div>
           <div className="flex justify-end">
             <Button onClick={handleProcessFile} disabled={!file || isLoading}>

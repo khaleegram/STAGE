@@ -8,6 +8,10 @@ export const AnalyzeAcademicDataInputSchema = z.object({
     .describe(
       "The document to analyze, provided as a data URI. This can be an image (e.g., JPEG, PNG) or a PDF. Format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
+  instructions: z
+    .string()
+    .optional()
+    .describe('Optional user-provided instructions to guide the analysis process, like "only extract courses" or "ignore the first page".')
 });
 export type AnalyzeAcademicDataInput = z.infer<typeof AnalyzeAcademicDataInputSchema>;
 
@@ -21,7 +25,7 @@ export const AnalyzedEntitySchema = z.object({
   // Detected Properties
   name: z.string().describe('The primary name of the entity (e.g., "College of Science", "B.Sc. Computer Science", "CSC 101").'),
   properties: z.object({
-      code: z.string().optional().describe('A short code for the entity, e.g., "COLNAS" for a college.'),
+      code: z.string().optional().describe('A short code for the entity, e.g., "NAS" for a college.'),
       course_code: z.string().optional().describe('The course code, e.g., "CSC 101".'),
       credit_unit: z.number().optional().describe('The number of credit units for a course.'),
       students_count: z.number().optional().describe('The number of students in a level.'),

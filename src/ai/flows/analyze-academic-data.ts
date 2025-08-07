@@ -40,6 +40,12 @@ const prompt = ai.definePrompt({
 **DOCUMENT FOR ANALYSIS:**
 {{media url=documentDataUri}}
 
+{{#if instructions}}
+**USER-PROVIDED INSTRUCTIONS:**
+Pay close attention to these instructions and prioritize them in your analysis:
+"{{{instructions}}}"
+{{/if}}
+
 **YOUR TASK:**
 
 1.  **Analyze the Document:** Carefully examine the entire document. It could be a table, a list, or a structured text. Use OCR if it's an image or PDF.
