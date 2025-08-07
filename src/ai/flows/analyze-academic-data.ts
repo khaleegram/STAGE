@@ -80,8 +80,25 @@ Pay close attention to these instructions and prioritize them in your analysis:
 
 8.  **Provide a Summary:** Write a brief, high-level summary of what you found in the document.
 
-**OUTPUT FORMAT:**
-Return a single JSON object that strictly adheres to the 'AnalyzeAcademicDataOutput' schema. The final object MUST contain BOTH the 'entities' array and the 'summary' string.
+**VERY IMPORTANT - OUTPUT FORMAT:**
+Your final output MUST be a single JSON object. It must have two top-level keys: "entities" (an array) and "summary" (a string). Follow this template EXACTLY:
+\`\`\`json
+{
+  "entities": [
+    {
+      "id": "...",
+      "type": "...",
+      "name": "...",
+      "properties": { ... },
+      "parentId": "...",
+      "confidence": 0.9,
+      "reasoning": "...",
+      "status": "new"
+    }
+  ],
+  "summary": "A brief summary of the analysis results."
+}
+\`\`\`
 `,
 });
 
