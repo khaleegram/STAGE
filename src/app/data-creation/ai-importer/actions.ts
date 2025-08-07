@@ -3,7 +3,7 @@
 
 import { AnalyzedEntity } from '@/lib/types/ai-importer';
 import { db } from '@/lib/firebase';
-import { collection, doc, writeBatch, query, where, getDocs, serverTimestamp, addDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, writeBatch, query, where, getDocs, serverTimestamp, addDoc, updateDoc, getDoc } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -18,9 +18,10 @@ const createFallbackCode = (name: string) => {
         .replace("COLLEGE OF", "")
         .trim()
         .split(' ')
+        .filter(word => word.length > 0)
         .map(word => word[0])
         .join('')
-        .slice(0, 5);
+        .slice(0, 5) || 'N/A';
 }
 
 // Helper function to Title Case strings
@@ -53,10 +54,15 @@ export async function saveAnalyzedData(
 
     try {
         const existingCollegesSnap = await getDocs(query(collection(db, 'colleges')));
-        const existingColleges = existingCollegesSnap.docs.map(d => ({ id: d.id, ...d.data(), normalizedName: normalize(d.data().name) }));
-
+        const existingColleges = new Map(existingCollegesSnap.docs.map(d => [normalize(d.data().name), { id: d.id, ...d.data() }]));
+        
         const existingDepartmentsSnap = await getDocs(query(collection(db, 'departments')));
-        const existingDepartments = existingDepartmentsSnap.docs.map(d => ({ id: d.id, ...d.data(), normalizedName: normalize(d.data().name) }));
+        const existingDepartments = new Map<string, { id: string, collegeId: string }>();
+        existingDepartmentsSnap.docs.forEach(d => {
+            const data = d.data();
+            const key = `${normalize(data.name)}-${data.collegeId}`;
+            existingDepartments.set(key, { id: d.id, ...data } as any);
+        });
         
         const entityTypes = ['College', 'Department', 'Program', 'Level', 'Course'];
 
@@ -66,11 +72,14 @@ export async function saveAnalyzedData(
             for (const item of itemsToProcess) {
                 try {
                     let parentDocId: string | null | undefined = item.parentId ? idMap.get(item.parentId) : null;
+                    const parentType = parentDocId ? typeMap.get(parentDocId) : null;
                     let docRef;
 
                     if (item.type === 'College') {
                         const formattedName = item.name.toUpperCase();
-                        const existing = existingColleges.find(c => c.normalizedName === normalize(formattedName));
+                        const normalizedName = normalize(formattedName);
+                        const existing = existingColleges.get(normalizedName);
+                        
                         if (existing) {
                             idMap.set(item.id, existing.id);
                             typeMap.set(existing.id, 'College');
@@ -80,73 +89,79 @@ export async function saveAnalyzedData(
                             batch.set(docRef, { name: formattedName, code, createdAt: serverTimestamp() });
                             idMap.set(item.id, docRef.id);
                             typeMap.set(docRef.id, 'College');
-                            existingColleges.push({ id: docRef.id, name: formattedName, code, normalizedName: normalize(formattedName) });
+                            existingColleges.set(normalizedName, { id: docRef.id, name: formattedName, code });
                             createdCount++;
                         }
                     } else if (item.type === 'Department') {
-                         const formattedName = toTitleCase(item.name);
-                         let parentIsCollege = parentDocId ? typeMap.get(parentDocId) === 'College' : false;
-
-                         if (!parentDocId || !parentIsCollege) {
-                            const collegeName = `COLLEGE OF ${formattedName}`;
-                            let collegeId = existingColleges.find(c => c.normalizedName === normalize(collegeName))?.id;
-                            if (!collegeId) {
-                                const collegeRef = doc(collection(db, 'colleges'));
-                                const code = createFallbackCode(collegeName);
-                                batch.set(collegeRef, { name: collegeName, code, createdAt: serverTimestamp() });
-                                collegeId = collegeRef.id;
-                                existingColleges.push({ id: collegeId, name: collegeName, code, normalizedName: normalize(collegeName) });
-                                createdCount++;
-                            }
-                            parentDocId = collegeId;
-                         }
-
-                         const existing = existingDepartments.find(d => d.normalizedName === normalize(formattedName) && d.collegeId === parentDocId);
-                         if (existing) {
-                             idMap.set(item.id, existing.id);
-                             typeMap.set(existing.id, 'Department');
-                         } else {
-                            docRef = doc(collection(db, 'departments'));
-                            batch.set(docRef, { name: formattedName, collegeId: parentDocId, createdAt: serverTimestamp() });
-                            idMap.set(item.id, docRef.id);
-                            typeMap.set(docRef.id, 'Department');
-                            existingDepartments.push({ id: docRef.id, name: formattedName, collegeId: parentDocId, normalizedName: normalize(formattedName) });
-                            createdCount++;
-                         }
+                        if (!parentDocId || parentType !== 'College') {
+                             errors.push(`Department "${item.name}" is missing a valid College parent.`);
+                             errorCount++;
+                             continue;
+                        }
+                        const formattedName = toTitleCase(item.name);
+                        const normalizedName = normalize(formattedName);
+                        const mapKey = `${normalizedName}-${parentDocId}`;
+                        const existing = existingDepartments.get(mapKey);
+                        
+                        if (existing) {
+                            idMap.set(item.id, existing.id);
+                            typeMap.set(existing.id, 'Department');
+                        } else {
+                           docRef = doc(collection(db, 'departments'));
+                           batch.set(docRef, { name: formattedName, collegeId: parentDocId, createdAt: serverTimestamp() });
+                           idMap.set(item.id, docRef.id);
+                           typeMap.set(docRef.id, 'Department');
+                           existingDepartments.set(mapKey, { id: docRef.id, collegeId: parentDocId });
+                           createdCount++;
+                        }
                     } else if (item.type === 'Program') {
-                        let parentIsDepartment = parentDocId ? typeMap.get(parentDocId) === 'Department' : false;
+                         let departmentId: string | null = parentDocId;
 
-                        if (!parentDocId || !parentIsDepartment) {
+                        // Case 1: The parent is not a department, we need to create a default one.
+                        if (!parentDocId || parentType !== 'Department') {
                             const deptName = `Department of ${toTitleCase(item.name)}`;
-                            let departmentInfo = existingDepartments.find(d => d.normalizedName === normalize(deptName));
+                            let collegeId: string | null = null;
+                            
+                            // If the orphan program's parent was a college, use that.
+                            if (parentType === 'College') {
+                                collegeId = parentDocId;
+                            } else {
+                                // Create a default College as well.
+                                const collegeName = `COLLEGE OF ${toTitleCase(item.name)}`;
+                                const normalizedCollegeName = normalize(collegeName);
+                                let collegeInfo = existingColleges.get(normalizedCollegeName);
+                                if (!collegeInfo) {
+                                    const collegeRef = doc(collection(db, 'colleges'));
+                                    const code = createFallbackCode(collegeName);
+                                    batch.set(collegeRef, { name: collegeName, code, createdAt: serverTimestamp() });
+                                    collegeId = collegeRef.id;
+                                    existingColleges.set(normalizedCollegeName, { id: collegeId, name: collegeName, code });
+                                    createdCount++;
+                                } else {
+                                    collegeId = collegeInfo.id;
+                                }
+                            }
+
+                            // Now, create or find the default department within its college.
+                            const normalizedDeptName = normalize(deptName);
+                            const mapKey = `${normalizedDeptName}-${collegeId}`;
+                            let departmentInfo = existingDepartments.get(mapKey);
 
                             if (!departmentInfo) {
-                                // Create a default college for this new department
-                                const collegeName = `COLLEGE OF ${toTitleCase(item.name)}`;
-                                let collegeId = existingColleges.find(c => c.normalizedName === normalize(collegeName))?.id;
-                                if (!collegeId) {
-                                    const collegeRef = doc(collection(db, 'colleges'));
-                                    batch.set(collegeRef, { name: collegeName, code: createFallbackCode(collegeName), createdAt: serverTimestamp() });
-                                    collegeId = collegeRef.id;
-                                    existingColleges.push({ id: collegeId, name: collegeName, code: createFallbackCode(collegeName), normalizedName: normalize(collegeName) });
-                                    createdCount++;
-                                }
-
                                 const deptRef = doc(collection(db, 'departments'));
                                 batch.set(deptRef, { name: deptName, collegeId: collegeId, createdAt: serverTimestamp() });
-                                const newDeptId = deptRef.id;
-                                existingDepartments.push({ id: newDeptId, name: deptName, collegeId: collegeId, normalizedName: normalize(deptName) });
+                                departmentId = deptRef.id;
+                                existingDepartments.set(mapKey, { id: departmentId, collegeId: collegeId! });
                                 createdCount++;
-                                parentDocId = newDeptId;
                             } else {
-                                parentDocId = departmentInfo.id;
+                                departmentId = departmentInfo.id;
                             }
                         }
-                        
+
                         docRef = doc(collection(db, 'programs'));
                         batch.set(docRef, { 
                             name: toTitleCase(item.name), 
-                            departmentId: parentDocId, 
+                            departmentId: departmentId, 
                             max_level: item.properties.max_level || 4,
                             createdAt: serverTimestamp() 
                         });
@@ -168,8 +183,17 @@ export async function saveAnalyzedData(
                     } else if (item.type === 'Course') {
                          if (!parentDocId || typeMap.get(parentDocId) !== 'Level') throw new Error(`Course "${item.name}" is missing a Level parent.`);
                         docRef = doc(collection(db, 'courses'));
+
+                        const levelRef = doc(db, 'levels', parentDocId);
+                        const levelSnap = await getDoc(levelRef);
+                        let programId = null;
+                        if(levelSnap.exists()) {
+                            programId = levelSnap.data().programId;
+                        }
+
                         batch.set(docRef, { 
                             levelId: parentDocId, 
+                            programId: programId,
                             course_code: (item.properties.course_code || 'N/A').toUpperCase(),
                             course_name: toTitleCase(item.name),
                             credit_unit: item.properties.credit_unit || 3,
