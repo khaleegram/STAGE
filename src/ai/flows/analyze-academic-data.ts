@@ -52,7 +52,8 @@ const prompt = ai.definePrompt({
     *   **Course**: A specific course within a Level (e.g., "CSC 101 - Introduction to Programming").
 
 3.  **Extract Properties:** For each entity, extract all available properties.
-    *   The \`name\` is the primary identifier.
+    *   The \`name\` is the primary identifier. For Colleges, ensure the name is in ALL CAPS (e.g., "COLLEGE OF NATURAL AND APPLIED SCIENCES").
+    *   For Colleges, generate a short, intuitive code (e.g., "COLLEGE OF NATURAL AND APPLIED SCIENCES" -> "CNAS"). Put this in the \`properties.code\` field.
     *   Put all other data into the \`properties\` object. For example, a Course might have \`{ course_code: "CSC101", credit_unit: 3 }\`. A Level might have \`{ students_count: 250 }\`.
 
 4.  **Infer Hierarchy:** This is the most critical step. Based on the document's layout, indentation, and context, determine the parent-child relationships.

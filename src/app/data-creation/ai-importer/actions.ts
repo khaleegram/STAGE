@@ -9,6 +9,27 @@ import { revalidatePath } from 'next/cache';
 // Helper function to normalize names for comparison
 const normalize = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, '');
 
+// Helper to create a fallback code from a name
+const createFallbackCode = (name: string) => {
+    return name
+        .split(' ')
+        .map(word => word[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 5);
+}
+
+// Helper function to Title Case strings
+function toTitleCase(str: string): string {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+
 export async function saveAnalyzedData(
     entities: AnalyzedEntity[]
 ): Promise<{ success: boolean; message: string }> {
@@ -45,25 +66,28 @@ export async function saveAnalyzedData(
                     let docRef;
 
                     if (item.type === 'College') {
-                        const existing = existingColleges.find(c => c.normalizedName === normalize(item.name));
+                        const formattedName = item.name.toUpperCase();
+                        const existing = existingColleges.find(c => c.normalizedName === normalize(formattedName));
                         if (existing) {
                             idMap.set(item.id, existing.id);
                             docRef = doc(db, 'colleges', existing.id); // Reference for potential update
                             // Note: We are not updating existing records in this simple save action
                         } else {
                             docRef = doc(collection(db, 'colleges'));
-                            batch.set(docRef, { name: item.name, code: item.properties.code || item.name.slice(0,5).toUpperCase(), createdAt: serverTimestamp() });
+                            const code = item.properties.code || createFallbackCode(formattedName);
+                            batch.set(docRef, { name: formattedName, code, createdAt: serverTimestamp() });
                             idMap.set(item.id, docRef.id);
                             createdCount++;
                         }
                     } else if (item.type === 'Department') {
                          if (!parentDocId) throw new Error(`Department "${item.name}" is missing a College parent.`);
-                         const existing = existingDepartments.find(d => d.normalizedName === normalize(item.name) && d.collegeId === parentDocId);
+                         const formattedName = toTitleCase(item.name);
+                         const existing = existingDepartments.find(d => d.normalizedName === normalize(formattedName) && d.collegeId === parentDocId);
                          if (existing) {
                              idMap.set(item.id, existing.id);
                          } else {
                             docRef = doc(collection(db, 'departments'));
-                            batch.set(docRef, { name: item.name, collegeId: parentDocId, createdAt: serverTimestamp() });
+                            batch.set(docRef, { name: formattedName, collegeId: parentDocId, createdAt: serverTimestamp() });
                             idMap.set(item.id, docRef.id);
                             createdCount++;
                          }
@@ -71,7 +95,7 @@ export async function saveAnalyzedData(
                         if (!parentDocId) throw new Error(`Program "${item.name}" is missing a Department parent.`);
                         docRef = doc(collection(db, 'programs'));
                         batch.set(docRef, { 
-                            name: item.name, 
+                            name: toTitleCase(item.name), 
                             departmentId: parentDocId, 
                             max_level: item.properties.max_level || 4,
                             createdAt: serverTimestamp() 
@@ -94,8 +118,8 @@ export async function saveAnalyzedData(
                         docRef = doc(collection(db, 'courses'));
                         batch.set(docRef, { 
                             levelId: parentDocId, 
-                            course_code: item.properties.course_code || 'N/A',
-                            course_name: item.name,
+                            course_code: (item.properties.course_code || 'N/A').toUpperCase(),
+                            course_name: toTitleCase(item.name),
                             credit_unit: item.properties.credit_unit || 3,
                             exam_type: item.properties.exam_type || 'Written',
                             createdAt: serverTimestamp() 
