@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -6,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { UploadCloud, File as FileIcon, X, Wand2, Loader2, ArrowRight } from 'lucide-react';
-import { analyzeAcademicData, AnalyzeAcademicDataOutput, AnalyzedEntity } from '@/ai/flows/analyze-academic-data';
+import { analyzeAcademicData, AnalyzeAcademicDataOutput } from '@/ai/flows/analyze-academic-data';
+import { EntityTree } from '@/components/data-importer/entity-tree';
 
 function toBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -136,9 +138,9 @@ export default function AiImporterPage() {
                 </div>
 
                 <div>
-                    <h3 className="font-semibold mb-2">Detected Entities ({result.entities.length})</h3>
-                    <div className="border rounded-md max-h-[500px] overflow-y-auto">
-                        <pre className="p-4 text-xs">{JSON.stringify(result.entities, null, 2)}</pre>
+                    <h3 className="font-semibold mb-2">Detected Hierarchy ({result.entities.length} entities)</h3>
+                    <div className="border rounded-md p-4">
+                      <EntityTree entities={result.entities} />
                     </div>
                 </div>
 
