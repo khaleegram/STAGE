@@ -14,16 +14,16 @@ export type AnalyzeAcademicDataInput = z.infer<typeof AnalyzeAcademicDataInputSc
 
 // Output Schema for a single entity
 export const AnalyzedEntitySchema = z.object({
-  id: z.string().uuid().describe('A unique client-side generated UUID for this entity.'),
+  id: z.string().describe('A unique client-side generated UUID for this entity.'),
   type: z.enum(['College', 'Department', 'Program', 'Level', 'Course'])
     .describe('The type of academic entity detected.'),
   
   // Detected Properties
   name: z.string().describe('The primary name of the entity (e.g., "College of Science", "B.Sc. Computer Science", "CSC 101").'),
-  properties: z.record(z.any()).describe('A flexible object to hold other detected properties (e.g., { course_code: "CSC 101", credit_unit: 3, level: 100, students_count: 150 }).'),
+  properties: z.object({}).catchall(z.any()).describe('A flexible object to hold other detected properties (e.g., { course_code: "CSC 101", credit_unit: 3, level: 100, students_count: 150 }).'),
   
   // Hierarchy and Relationships
-  parentId: z.string().uuid().nullable().describe('The UUID of the parent entity in this same analysis request, if a relationship is inferred.'),
+  parentId: z.string().nullable().describe('The UUID of the parent entity in this same analysis request, if a relationship is inferred.'),
   
   // AI Confidence and Explanation
   confidence: z.number().min(0).max(1).describe('The AI\'s confidence in the accuracy of the detected information and relationship (0.0 to 1.0).'),
