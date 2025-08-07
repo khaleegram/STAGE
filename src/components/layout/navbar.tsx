@@ -42,12 +42,12 @@ export default function Navbar() {
   const UserMenu = () => (
      <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+        <Button variant="ghost" className="relative h-12 w-12 rounded-full">
             <Image
                 src={user?.photoURL || 'https://placehold.co/100x100.png'}
                 alt="User"
-                width={40}
-                height={40}
+                width={48}
+                height={48}
                 className="rounded-full object-cover"
                 data-ai-hint="person avatar"
             />
