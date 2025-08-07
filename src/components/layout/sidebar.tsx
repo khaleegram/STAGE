@@ -19,6 +19,7 @@ import {
   Sparkles,
   ChevronDown,
   Menu,
+  Wand2,
 } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useState, useEffect } from 'react';
@@ -69,6 +70,7 @@ const SidebarContent = () => {
   ];
   
   const dataCreationLinks = [
+    { href: '/data-creation/ai-importer', title: 'AI Smart Importer', icon: <Wand2 size={18} /> },
     { href: '/data-creation/colleges', title: 'Colleges', icon: <Building2 size={18} /> },
     { href: '/data-creation/departments', title: 'Departments', icon: <Library size={18} /> },
     { href: '/data-creation/programs', title: 'Programs', icon: <GraduationCap size={18} /> },
@@ -151,7 +153,7 @@ const SidebarContent = () => {
                 </Tooltip>
                <CollapsibleContent className="py-1 pl-7 pr-2 space-y-1.5 data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
                   {dataCreationLinks.map(link => (
-                      <Link key={link.href} href={link.href} onClick={handleLinkClick} className={linkClass(link.href)}>
+                      <Link key={link.href} href={link.href} onClick={handleLinkClick} className={cn(linkClass(link.href), pathname.startsWith(link.href) && 'bg-sidebar-accent/50')}>
                           {link.icon}
                           <span className="truncate">{link.title}</span>
                       </Link>
