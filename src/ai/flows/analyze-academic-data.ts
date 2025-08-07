@@ -53,7 +53,7 @@ const prompt = ai.definePrompt({
 
 3.  **Extract Properties:** For each entity, extract all available properties.
     *   The \`name\` is the primary identifier. For Colleges, ensure the name is in ALL CAPS (e.g., "COLLEGE OF NATURAL AND APPLIED SCIENCES").
-    *   For Colleges, generate a short, intuitive code (e.g., "COLLEGE OF NATURAL AND APPLIED SCIENCES" -> "CNAS"). Put this in the \`properties.code\` field.
+    *   For Colleges, generate a short, intuitive code by creating an acronym from the meaningful words in the name, EXCLUDING the words "COLLEGE OF". For example, "COLLEGE OF NATURAL AND APPLIED SCIENCES" should produce the code "NAS". Put this in the \`properties.code\` field.
     *   For Courses, ensure the \`course_code\` property is in ALL CAPS (e.g., "CSC101").
     *   Put all other data into the \`properties\` object. For example, a Course might have \`{ course_code: "CSC101", credit_unit: 3 }\`. A Level might have \`{ students_count: 250 }\`.
 
