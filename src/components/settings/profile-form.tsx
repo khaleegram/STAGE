@@ -43,8 +43,8 @@ export function ProfileForm() {
             <Image
                 src={user?.photoURL || 'https://placehold.co/100x100.png'}
                 alt="Profile picture"
-                width={80}
-                height={80}
+                width={96}
+                height={96}
                 className="rounded-full object-cover"
                 data-ai-hint="person avatar"
             />

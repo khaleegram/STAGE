@@ -1,6 +1,6 @@
 'use server';
 
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { z } from 'zod';
 
@@ -9,7 +9,7 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
-export async function login(prevState: any, formData: FormData) {
+export async function login(prevState: any, formData: FormData): Promise<{ success: boolean; message: string }> {
   const validatedFields = loginSchema.safeParse(Object.fromEntries(formData.entries()));
 
   if (!validatedFields.success) {
@@ -20,12 +20,13 @@ export async function login(prevState: any, formData: FormData) {
 
   try {
     await signInWithEmailAndPassword(auth, email, password);
-    return { success: true, message: 'Login successful.' };
+    return { success: true, message: 'Login successful!' };
   } catch (e) {
-    const error = e as Error;
-    if ((error as any).code === 'auth/invalid-credential') {
+    const error = e as any; // Cast to any to access error.code
+    if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
         return { success: false, message: 'Incorrect email or password. Please try again.' };
     }
-    return { success: false, message: error.message || 'An unknown error occurred.' };
+    // Return a generic error for other cases
+    return { success: false, message: 'An unknown authentication error occurred. Please try again later.' };
   }
 }

@@ -46,8 +46,8 @@ export default function Navbar() {
             <Image
                 src={user?.photoURL || 'https://placehold.co/100x100.png'}
                 alt="User"
-                width={32}
-                height={32}
+                width={40}
+                height={40}
                 className="rounded-full object-cover"
                 data-ai-hint="person avatar"
             />
