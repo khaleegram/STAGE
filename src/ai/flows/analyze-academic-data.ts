@@ -75,7 +75,7 @@ const prompt = ai.definePrompt({
 8.  **Provide a Summary:** Write a brief, high-level summary of what you found in the document.
 
 **OUTPUT FORMAT:**
-Return a single JSON object that strictly adheres to the 'AnalyzeAcademicDataOutput' schema. Ensure the output is a flat list of all detected entities.
+Return a single JSON object that strictly adheres to the 'AnalyzeAcademicDataOutput' schema. The final object MUST contain BOTH the 'entities' array and the 'summary' string.
 `,
 });
 
