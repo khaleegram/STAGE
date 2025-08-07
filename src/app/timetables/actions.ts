@@ -50,7 +50,20 @@ export async function getTimetableById(id: string): Promise<{ data: Timetable | 
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-            return { data: { id: docSnap.id, ...docSnap.data() } as Timetable, error: null };
+            const data = docSnap.data();
+            const timetableData: Timetable = {
+                id: docSnap.id,
+                name: data.name,
+                scheduled_exams: data.scheduled_exams,
+                unscheduled_exams: data.unscheduled_exams,
+                conflicts: data.conflicts,
+                summary_report: data.summary_report,
+                createdAt: { // Manually convert Timestamp to a plain object
+                    seconds: data.createdAt.seconds,
+                    nanoseconds: data.createdAt.nanoseconds,
+                }
+            };
+            return { data: timetableData, error: null };
         } else {
             return { data: null, error: 'Timetable not found.' };
         }
