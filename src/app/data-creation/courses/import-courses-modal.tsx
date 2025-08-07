@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef } from 'react';
@@ -12,6 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Upload, FileText, AlertTriangle, Download, X } from 'lucide-react';
 import Papa from 'papaparse';
 import { importCourses } from './actions';
+import { Card } from '@/components/ui/card';
 
 interface ImportCoursesModalProps {
   isOpen: boolean;
