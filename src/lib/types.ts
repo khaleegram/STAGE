@@ -1,4 +1,5 @@
 
+
 export interface User {
   id: string;
   name?: string | null;
@@ -24,8 +25,10 @@ export interface Timetable {
     seconds: number;
     nanoseconds: number;
   };
-  timetable: string;
+  scheduled_exams: any[];
+  unscheduled_exams: any[];
   conflicts?: string;
+  summary_report: string;
 }
 
 export interface College {

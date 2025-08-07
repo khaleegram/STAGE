@@ -40,28 +40,30 @@ export default function Navbar() {
   const baseClasses = "bg-cream/80 dark:bg-black/20 text-black dark:text-white rounded-2xl shadow-lg border-b border-gray-300/50 dark:border-gray-700/50 h-12 px-4 flex items-center space-x-4 backdrop-blur-md";
 
   const UserMenu = () => (
-     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-12 w-12 rounded-full">
-            <Image
-                src={user?.photoURL || 'https://placehold.co/100x100.png'}
-                alt="User"
-                width={48}
-                height={48}
-                className="rounded-full object-cover"
-                data-ai-hint="person avatar"
-            />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user?.displayName || 'User'}</p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {user?.email}
-            </p>
-          </div>
-        </DropdownMenuLabel>
+    <DropdownMenu>
+  <DropdownMenuTrigger asChild>
+  <Button variant="ghost" className="relative h-12 w-12 rounded-full overflow-hidden p-0">
+  <Image
+    src={user?.photoURL || 'https://placehold.co/100x100.png'}
+    alt="User"
+    fill
+    className="object-cover rounded-full"
+    data-ai-hint="person avatar"
+  />
+</Button>
+
+  </DropdownMenuTrigger>
+  <DropdownMenuContent className="w-56" align="end" forceMount>
+    <DropdownMenuLabel className="font-normal">
+      <div className="flex flex-col space-y-1">
+        <p className="text-sm font-medium leading-none">
+          {user?.displayName?.split(' ')[0] || 'User'}
+        </p>
+        <p className="text-xs leading-none text-muted-foreground">
+          {user?.email}
+        </p>
+      </div>
+    </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/settings">

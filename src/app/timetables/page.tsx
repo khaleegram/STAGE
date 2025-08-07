@@ -90,10 +90,11 @@ export default function TimetablesPage() {
                         )}
                     </TableCell>
                     <TableCell className="text-right">
-                        {/* This could link to a detailed view page in the future */}
-                        <Button variant="outline" size="sm">
-                        <Eye className="mr-2 h-4 w-4" />
-                        View
+                        <Button asChild variant="outline" size="sm">
+                          <Link href={`/timetables/${timetable.id}`}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View
+                          </Link>
                         </Button>
                     </TableCell>
                     </TableRow>
