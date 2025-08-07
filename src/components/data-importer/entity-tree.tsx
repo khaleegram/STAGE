@@ -1,7 +1,7 @@
 
 'use client';
 
-import { AnalyzedEntity } from "@/ai/flows/analyze-academic-data";
+import { AnalyzedEntity } from "@/lib/types/ai-importer";
 import { useMemo } from "react";
 import { EntityCard } from "./entity-card";
 

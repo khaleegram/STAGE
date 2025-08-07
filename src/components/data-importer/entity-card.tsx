@@ -1,7 +1,7 @@
 
 'use client';
 
-import { AnalyzedEntity } from "@/ai/flows/analyze-academic-data";
+import { AnalyzedEntity } from "@/lib/types/ai-importer";
 import { Badge } from "@/components/ui/badge";
 import { Building2, Library, GraduationCap, Layers, BookOpen, AlertTriangle, CheckCircle, HelpCircle, CircleDot } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";

@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { UploadCloud, File as FileIcon, X, Wand2, Loader2, ArrowRight } from 'lucide-react';
-import { analyzeAcademicData, AnalyzeAcademicDataOutput } from '@/ai/flows/analyze-academic-data';
+import { analyzeAcademicData } from '@/ai/flows/analyze-academic-data';
+import { AnalyzeAcademicDataOutput } from '@/lib/types/ai-importer';
 import { EntityTree } from '@/components/data-importer/entity-tree';
 import { saveAnalyzedData } from './actions';
 

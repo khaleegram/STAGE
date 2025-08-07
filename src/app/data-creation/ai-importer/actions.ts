@@ -1,7 +1,7 @@
 
 'use server';
 
-import { AnalyzedEntity } from '@/ai/flows/analyze-academic-data';
+import { AnalyzedEntity } from '@/lib/types/ai-importer';
 import { db } from '@/lib/firebase';
 import { collection, doc, writeBatch, query, where, getDocs, serverTimestamp, addDoc, updateDoc } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
