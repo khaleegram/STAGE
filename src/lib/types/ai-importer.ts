@@ -20,7 +20,14 @@ export const AnalyzedEntitySchema = z.object({
   
   // Detected Properties
   name: z.string().describe('The primary name of the entity (e.g., "College of Science", "B.Sc. Computer Science", "CSC 101").'),
-  properties: z.object({}).catchall(z.any()).describe('A flexible object to hold other detected properties (e.g., { course_code: "CSC 101", credit_unit: 3, level: 100, students_count: 150 }).'),
+  properties: z.object({
+      code: z.string().optional().describe('A short code for the entity, e.g., "COLNAS" for a college.'),
+      course_code: z.string().optional().describe('The course code, e.g., "CSC 101".'),
+      credit_unit: z.number().optional().describe('The number of credit units for a course.'),
+      students_count: z.number().optional().describe('The number of students in a level.'),
+      max_level: z.number().optional().describe('The maximum level for a program.'),
+      exam_type: z.enum(['CBT', 'Written']).optional().describe('The type of exam for a course.'),
+  }).describe('A flexible object to hold other detected properties.'),
   
   // Hierarchy and Relationships
   parentId: z.string().nullable().describe('The UUID of the parent entity in this same analysis request, if a relationship is inferred.'),
