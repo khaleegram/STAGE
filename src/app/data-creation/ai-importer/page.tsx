@@ -10,7 +10,6 @@ import { UploadCloud, File as FileIcon, X, Wand2, Loader2, ArrowRight } from 'lu
 import { analyzeAcademicData, AnalyzeAcademicDataOutput } from '@/ai/flows/analyze-academic-data';
 import { EntityTree } from '@/components/data-importer/entity-tree';
 import { saveAnalyzedData } from './actions';
-import { revalidatePath } from 'next/cache';
 
 function toBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
