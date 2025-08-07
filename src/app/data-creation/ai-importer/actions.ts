@@ -45,7 +45,11 @@ export async function saveAnalyzedData(
     let createdCount = 0;
     let errorCount = 0;
     const errors: string[] = [];
+    
+    // Map from client-side AI-generated ID to the new Firestore document ID
     const idMap = new Map<string, string>(); 
+    // Store the type of each new Firestore document
+    const typeMap = new Map<string, AnalyzedEntity['type']>();
 
     try {
         const existingCollegesSnap = await getDocs(query(collection(db, 'colleges')));
@@ -61,7 +65,7 @@ export async function saveAnalyzedData(
 
             for (const item of itemsToProcess) {
                 try {
-                    let parentDocId = item.parentId ? idMap.get(item.parentId) : null;
+                    let parentDocId: string | null | undefined = item.parentId ? idMap.get(item.parentId) : null;
                     let docRef;
 
                     if (item.type === 'College') {
@@ -69,65 +73,74 @@ export async function saveAnalyzedData(
                         const existing = existingColleges.find(c => c.normalizedName === normalize(formattedName));
                         if (existing) {
                             idMap.set(item.id, existing.id);
+                            typeMap.set(existing.id, 'College');
                         } else {
                             docRef = doc(collection(db, 'colleges'));
                             const code = item.properties.code || createFallbackCode(formattedName);
                             batch.set(docRef, { name: formattedName, code, createdAt: serverTimestamp() });
                             idMap.set(item.id, docRef.id);
-                            existingColleges.push({ id: docRef.id, name: formattedName, normalizedName: normalize(formattedName) });
+                            typeMap.set(docRef.id, 'College');
+                            existingColleges.push({ id: docRef.id, name: formattedName, code, normalizedName: normalize(formattedName) });
                             createdCount++;
                         }
                     } else if (item.type === 'Department') {
-                         if (!parentDocId) {
-                            // Create a default College for this orphan department
-                            const collegeName = `COLLEGE OF ${toTitleCase(item.name)}`;
-                            let collegeId = existingColleges.find(c => c.normalizedName === normalize(collegeName))?.id;
+                         const formattedName = toTitleCase(item.name);
+                         let parentIsCollege = parentDocId ? typeMap.get(parentDocId) === 'College' : false;
 
+                         if (!parentDocId || !parentIsCollege) {
+                            const collegeName = `COLLEGE OF ${formattedName}`;
+                            let collegeId = existingColleges.find(c => c.normalizedName === normalize(collegeName))?.id;
                             if (!collegeId) {
                                 const collegeRef = doc(collection(db, 'colleges'));
                                 const code = createFallbackCode(collegeName);
                                 batch.set(collegeRef, { name: collegeName, code, createdAt: serverTimestamp() });
                                 collegeId = collegeRef.id;
-                                existingColleges.push({ id: collegeId, name: collegeName, normalizedName: normalize(collegeName) });
+                                existingColleges.push({ id: collegeId, name: collegeName, code, normalizedName: normalize(collegeName) });
                                 createdCount++;
                             }
                             parentDocId = collegeId;
                          }
 
-                         const formattedName = toTitleCase(item.name);
                          const existing = existingDepartments.find(d => d.normalizedName === normalize(formattedName) && d.collegeId === parentDocId);
                          if (existing) {
                              idMap.set(item.id, existing.id);
+                             typeMap.set(existing.id, 'Department');
                          } else {
                             docRef = doc(collection(db, 'departments'));
                             batch.set(docRef, { name: formattedName, collegeId: parentDocId, createdAt: serverTimestamp() });
                             idMap.set(item.id, docRef.id);
+                            typeMap.set(docRef.id, 'Department');
                             existingDepartments.push({ id: docRef.id, name: formattedName, collegeId: parentDocId, normalizedName: normalize(formattedName) });
                             createdCount++;
                          }
                     } else if (item.type === 'Program') {
-                        if (!parentDocId) {
-                            // Create default College and Department for this orphan program
-                            const collegeName = `COLLEGE OF ${toTitleCase(item.name)}`;
-                            let collegeId = existingColleges.find(c => c.normalizedName === normalize(collegeName))?.id;
-                            if (!collegeId) {
-                                const collegeRef = doc(collection(db, 'colleges'));
-                                batch.set(collegeRef, { name: collegeName, code: createFallbackCode(collegeName), createdAt: serverTimestamp() });
-                                collegeId = collegeRef.id;
-                                existingColleges.push({ id: collegeId, name: collegeName, normalizedName: normalize(collegeName) });
-                                createdCount++;
-                            }
-                            
+                        let parentIsDepartment = parentDocId ? typeMap.get(parentDocId) === 'Department' : false;
+
+                        if (!parentDocId || !parentIsDepartment) {
                             const deptName = `Department of ${toTitleCase(item.name)}`;
-                            let departmentId = existingDepartments.find(d => d.normalizedName === normalize(deptName) && d.collegeId === collegeId)?.id;
-                            if (!departmentId) {
+                            let departmentInfo = existingDepartments.find(d => d.normalizedName === normalize(deptName));
+
+                            if (!departmentInfo) {
+                                // Create a default college for this new department
+                                const collegeName = `COLLEGE OF ${toTitleCase(item.name)}`;
+                                let collegeId = existingColleges.find(c => c.normalizedName === normalize(collegeName))?.id;
+                                if (!collegeId) {
+                                    const collegeRef = doc(collection(db, 'colleges'));
+                                    batch.set(collegeRef, { name: collegeName, code: createFallbackCode(collegeName), createdAt: serverTimestamp() });
+                                    collegeId = collegeRef.id;
+                                    existingColleges.push({ id: collegeId, name: collegeName, code: createFallbackCode(collegeName), normalizedName: normalize(collegeName) });
+                                    createdCount++;
+                                }
+
                                 const deptRef = doc(collection(db, 'departments'));
-                                batch.set(deptRef, { name: deptName, collegeId, createdAt: serverTimestamp() });
-                                departmentId = deptRef.id;
-                                existingDepartments.push({ id: departmentId, name: deptName, collegeId, normalizedName: normalize(deptName) });
+                                batch.set(deptRef, { name: deptName, collegeId: collegeId, createdAt: serverTimestamp() });
+                                const newDeptId = deptRef.id;
+                                existingDepartments.push({ id: newDeptId, name: deptName, collegeId: collegeId, normalizedName: normalize(deptName) });
                                 createdCount++;
+                                parentDocId = newDeptId;
+                            } else {
+                                parentDocId = departmentInfo.id;
                             }
-                            parentDocId = departmentId;
                         }
                         
                         docRef = doc(collection(db, 'programs'));
@@ -138,9 +151,10 @@ export async function saveAnalyzedData(
                             createdAt: serverTimestamp() 
                         });
                         idMap.set(item.id, docRef.id);
+                        typeMap.set(docRef.id, 'Program');
                         createdCount++;
                     } else if (item.type === 'Level') {
-                         if (!parentDocId) throw new Error(`Level "${item.name}" is missing a Program parent.`);
+                         if (!parentDocId || typeMap.get(parentDocId) !== 'Program') throw new Error(`Level "${item.name}" is missing a Program parent.`);
                         docRef = doc(collection(db, 'levels'));
                         batch.set(docRef, { 
                             programId: parentDocId, 
@@ -149,9 +163,10 @@ export async function saveAnalyzedData(
                             createdAt: serverTimestamp()
                         });
                         idMap.set(item.id, docRef.id);
+                        typeMap.set(docRef.id, 'Level');
                         createdCount++;
                     } else if (item.type === 'Course') {
-                         if (!parentDocId) throw new Error(`Course "${item.name}" is missing a Level parent.`);
+                         if (!parentDocId || typeMap.get(parentDocId) !== 'Level') throw new Error(`Course "${item.name}" is missing a Level parent.`);
                         docRef = doc(collection(db, 'courses'));
                         batch.set(docRef, { 
                             levelId: parentDocId, 
@@ -162,6 +177,7 @@ export async function saveAnalyzedData(
                             createdAt: serverTimestamp() 
                         });
                         idMap.set(item.id, docRef.id);
+                        typeMap.set(docRef.id, 'Course');
                         createdCount++;
                     }
 
@@ -173,6 +189,7 @@ export async function saveAnalyzedData(
         }
 
         if (errorCount > 0) {
+            // Do not commit if there were errors.
             return { success: false, message: `Save failed. ${errorCount} errors occurred. First error: ${errors[0]}` };
         }
         
