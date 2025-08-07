@@ -17,16 +17,17 @@ import { db } from '@/lib/firebase';
 const positions = [
     "Vice Chancellor", "Pro Vice Chancellor", "Deputy Vice Chancellor", "Registrar",
     "Bursar", "Director of Academic Planning", "Head of Department", "Principal Lecturer",
-    "Senior Lecturer", "Lecturer",
+    "Senior Lecturer", "Lecturer", "Technologist", "Admin Officer"
 ];
 
 interface StaffFormProps {
   staff: Staff | null;
   colleges: College[];
+  departments: Department[];
   onClose: () => void;
 }
 
-export function StaffForm({ staff, colleges, onClose }: StaffFormProps) {
+export function StaffForm({ staff, colleges, departments, onClose }: StaffFormProps) {
   const { toast } = useToast();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -39,7 +40,6 @@ export function StaffForm({ staff, colleges, onClose }: StaffFormProps) {
   const [departmentId, setDepartmentId] = useState(staff?.departmentId || '');
   
   const [departmentsForCollege, setDepartmentsForCollege] = useState<Department[]>([]);
-  const [isLoadingDepartments, setIsLoadingDepartments] = useState(false);
 
   useEffect(() => {
     if (staff) {
@@ -49,37 +49,30 @@ export function StaffForm({ staff, colleges, onClose }: StaffFormProps) {
         setPosition(staff.position);
         setCollegeId(staff.collegeId);
         setDepartmentId(staff.departmentId);
+    } else {
+        setName('');
+        setEmail('');
+        setPhone('');
+        setPosition('');
+        setCollegeId('');
+        setDepartmentId('');
     }
   }, [staff]);
 
-  // Fetch departments when collegeId changes
+  // Filter departments when collegeId changes
   useEffect(() => {
     if (!collegeId) {
       setDepartmentsForCollege([]);
       setDepartmentId(''); // Reset department
       return;
     }
-
-    setIsLoadingDepartments(true);
-    const deptsQuery = query(collection(db, 'departments'), where('collegeId', '==', collegeId), orderBy('name'));
-    const unsubscribe = onSnapshot(deptsQuery, (snapshot) => {
-      const fetchedDepts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Department));
-      setDepartmentsForCollege(fetchedDepts);
-      setIsLoadingDepartments(false);
-
-      // If we are editing, don't reset unless the department is no longer valid for the new college
-      if (staff && !fetchedDepts.some(d => d.id === staff.departmentId)) {
+    setDepartmentsForCollege(departments.filter(d => d.collegeId === collegeId));
+    // If we are editing, don't reset unless the department is no longer valid for the new college
+    if (staff && !departments.some(d => d.id === staff.departmentId && d.collegeId === collegeId)) {
         setDepartmentId('');
-      }
+    }
 
-    }, (error) => {
-      console.error("Error fetching departments: ", error);
-      setIsLoadingDepartments(false);
-      toast({ title: 'Error', description: 'Could not fetch departments.', variant: 'destructive' });
-    });
-
-    return () => unsubscribe();
-  }, [collegeId, staff, toast]);
+  }, [collegeId, staff, departments]);
 
   // Server action setup
   const action = staff ? updateStaff.bind(null, staff.id) : addStaff;
@@ -145,8 +138,8 @@ export function StaffForm({ staff, colleges, onClose }: StaffFormProps) {
                     {colleges.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
             </Select>
-             <Select onValueChange={setDepartmentId} value={departmentId} disabled={!collegeId || isLoadingDepartments}>
-                <SelectTrigger><SelectValue placeholder={isLoadingDepartments ? 'Loading...' : 'Select Department'} /></SelectTrigger>
+             <Select onValueChange={setDepartmentId} value={departmentId} disabled={!collegeId}>
+                <SelectTrigger><SelectValue placeholder={'Select Department'} /></SelectTrigger>
                 <SelectContent>
                     {departmentsForCollege.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
                 </SelectContent>

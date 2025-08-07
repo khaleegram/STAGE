@@ -11,22 +11,32 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Skeleton } from '@/components/ui/skeleton';
 import { StaffForm } from './staff-form';
 import { Card } from '@/components/ui/card';
+import { ImportStaffModal } from './import-staff-modal';
+import { Upload } from 'lucide-react';
 
 const StaffPage: React.FC = () => {
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [colleges, setColleges] = useState<College[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Fetch Colleges for the form
+    // Fetch Colleges & Departments for the form/import modal
     const collegesQuery = query(collection(db, 'colleges'), orderBy('name'));
     const unsubscribeColleges = onSnapshot(collegesQuery, (snapshot) => {
       setColleges(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as College)));
     });
+    
+    const deptsQuery = query(collection(db, 'departments'), orderBy('name'));
+    const unsubscribeDepts = onSnapshot(deptsQuery, (snapshot) => {
+      setDepartments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Department)));
+    });
+
 
     // Fetch Staff and denormalize college/department names
     const staffQuery = query(collection(db, 'staffs'), orderBy('name'));
@@ -70,6 +80,7 @@ const StaffPage: React.FC = () => {
     return () => {
       unsubscribeColleges();
       unsubscribeStaff();
+      unsubscribeDepts();
     };
   }, [toast]);
   
@@ -98,20 +109,25 @@ const StaffPage: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <h3 className="text-2xl font-bold mb-6 text-primary">Manage Staff</h3>
 
-        <div className="mb-4 flex flex-col sm:flex-row justify-between items-center">
+        <div className="mb-4 flex flex-col sm:flex-row justify-between items-center gap-2">
           <Input
             type="text"
             placeholder="Search staff..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full sm:max-w-sm mb-2 sm:mb-0"
+            className="w-full sm:max-w-sm"
           />
-          <Button
-            onClick={handleAddNew}
-            className="w-full sm:w-auto"
-          >
-            + Add Staff
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+             <Button onClick={() => setShowImportModal(true)} variant="outline" className="w-full">
+                  <Upload className="mr-2 h-4 w-4" /> Import Staff
+              </Button>
+            <Button
+              onClick={handleAddNew}
+              className="w-full"
+            >
+              + Add Staff
+            </Button>
+          </div>
         </div>
         
         {isLoading ? (
@@ -193,10 +209,18 @@ const StaffPage: React.FC = () => {
           <StaffForm
             staff={editingStaff}
             colleges={colleges}
+            departments={departments}
             onClose={() => setShowModal(false)}
           />
         </DialogContent>
       </Dialog>
+      
+      <ImportStaffModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        colleges={colleges}
+        departments={departments}
+      />
     </Card>
   );
 };
