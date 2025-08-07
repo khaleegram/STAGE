@@ -12,10 +12,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Skeleton } from '@/components/ui/skeleton';
 import { LevelForm } from './level-form';
 import { Card } from '@/components/ui/card';
-import { importLevels } from './actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Upload } from 'lucide-react';
-import Papa from 'papaparse';
+import { ImportLevelsModal } from './import-levels-modal';
 
 
 const LevelsPage: React.FC = () => {
@@ -25,9 +24,8 @@ const LevelsPage: React.FC = () => {
   const [programSearch, setProgramSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingLevel, setEditingLevel] = useState<Level | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
   const { toast } = useToast();
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [importProgramId, setImportProgramId] = useState('');
 
   useEffect(() => {
     // Fetch Programs
@@ -110,36 +108,6 @@ const LevelsPage: React.FC = () => {
     progName.toLowerCase().includes(programSearch.toLowerCase())
   );
   
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!importProgramId) {
-      toast({ title: "Error", description: "Please select a program first.", variant: "destructive"});
-      return;
-    }
-    const file = event.target.files?.[0];
-    if (file) {
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: async (results) => {
-          const result = await importLevels(importProgramId, results.data as any);
-          toast({
-            title: result.success ? 'Import Complete' : 'Import Failed',
-            description: result.message,
-            variant: result.success ? 'default' : 'destructive',
-            duration: 8000
-          });
-        },
-        error: (error) => {
-            toast({ title: "Error", description: `CSV Parsing Error: ${error.message}`, variant: "destructive" });
-        }
-      });
-    }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
-
   return (
     <Card className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
@@ -154,29 +122,9 @@ const LevelsPage: React.FC = () => {
             className="w-full sm:max-w-sm"
           />
           <div className="flex gap-2 w-full sm:w-auto">
-            <div className="flex items-center gap-2 border rounded-md p-1 pr-2 bg-muted/50">
-                <Select onValueChange={setImportProgramId}>
-                    <SelectTrigger className="w-[180px] bg-background border-none h-8">
-                        <SelectValue placeholder="Select Program..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {programs.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-                 <Button asChild size="sm" variant="ghost" className="h-8">
-                    <label>
-                        <Upload className="mr-2 h-4 w-4" /> Import
-                        <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".csv"
-                        className="hidden"
-                        onChange={handleFileChange}
-                        disabled={!importProgramId}
-                        />
-                    </label>
-                </Button>
-            </div>
+             <Button onClick={() => setShowImportModal(true)} variant="outline" className="w-full">
+                <Upload className="mr-2 h-4 w-4" /> Import Levels
+             </Button>
 
             <Button
               onClick={handleAddNew}
@@ -245,6 +193,12 @@ const LevelsPage: React.FC = () => {
           />
         </DialogContent>
       </Dialog>
+
+      <ImportLevelsModal 
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        programs={programs}
+      />
     </Card>
   );
 };

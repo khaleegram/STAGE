@@ -13,10 +13,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ProgramForm } from './program-form';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { deleteSelectedPrograms, importPrograms } from './actions';
+import { deleteSelectedPrograms } from './actions';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Trash, Upload } from 'lucide-react';
-import Papa from 'papaparse';
+import { ImportProgramsModal } from './import-programs-modal';
 
 const ProgramsPage: React.FC = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -26,8 +26,8 @@ const ProgramsPage: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showImportModal, setShowImportModal] = useState(false);
   const { toast } = useToast();
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const deptsQuery = query(collection(db, 'departments'), orderBy('name'));
@@ -122,32 +122,6 @@ const ProgramsPage: React.FC = () => {
     if (result.success) setSelectedIds([]);
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: async (results) => {
-          const plainDepartments = departments.map(d => ({ id: d.id, name: d.name, collegeId: d.collegeId }));
-          const result = await importPrograms(results.data as any, plainDepartments);
-          toast({
-            title: result.success ? 'Import Complete' : 'Import Failed',
-            description: result.message,
-            variant: result.success ? 'default' : 'destructive',
-            duration: 8000
-          });
-        },
-        error: (error) => {
-            toast({ title: "Error", description: `CSV Parsing Error: ${error.message}`, variant: "destructive" });
-        }
-      });
-    }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
   return (
     <Card className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
@@ -184,18 +158,9 @@ const ProgramsPage: React.FC = () => {
                     </AlertDialogContent>
                 </AlertDialog>
             )}
-             <Button asChild variant="outline" className="w-full">
-              <label>
+             <Button onClick={() => setShowImportModal(true)} variant="outline" className="w-full">
                 <Upload className="mr-2 h-4 w-4" /> Import CSV
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".csv"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-              </label>
-            </Button>
+             </Button>
             <Button onClick={handleAddNew} className="w-full">
               + Add Program
             </Button>
@@ -264,6 +229,12 @@ const ProgramsPage: React.FC = () => {
           />
         </DialogContent>
       </Dialog>
+
+      <ImportProgramsModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        departments={departments}
+       />
     </Card>
   );
 };
