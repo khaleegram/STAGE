@@ -12,10 +12,12 @@ const normalize = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, '')
 // Helper to create a fallback code from a name
 const createFallbackCode = (name: string) => {
     return name
+        .toUpperCase()
+        .replace("COLLEGE OF", "")
+        .trim()
         .split(' ')
         .map(word => word[0])
         .join('')
-        .toUpperCase()
         .slice(0, 5);
 }
 
