@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview AI agent for analyzing academic documents to extract and structure data.
@@ -91,8 +92,8 @@ const prompt = ai.definePrompt({
     *   **Course**: A specific course within a Level (e.g., "CSC 101 - Introduction to Programming").
 
 3.  **Extract Properties:** For each entity, extract all available properties.
-    *   The `name` is the primary identifier.
-    *   Put all other data into the `properties` object. For example, a Course might have \`{ course_code: "CSC101", credit_unit: 3 }\`. A Level might have \`{ students_count: 250 }\`.
+    *   The \`name\` is the primary identifier.
+    *   Put all other data into the \`properties\` object. For example, a Course might have \`{ course_code: "CSC101", credit_unit: 3 }\`. A Level might have \`{ students_count: 250 }\`.
 
 4.  **Infer Hierarchy:** This is the most critical step. Based on the document's layout, indentation, and context, determine the parent-child relationships.
     *   A Course belongs to a Level.
@@ -101,13 +102,13 @@ const prompt = ai.definePrompt({
     *   A Department belongs to a College.
     *   For each entity, set its \`parentId\` to the unique \`id\` of its parent from the SAME analysis. If an entity has no parent (like a College), its \`parentId\` must be \`null\`.
 
-5.  **Generate UUIDs:** Assign a unique v4 UUID to the `id` field for EVERY entity you create. This is crucial for establishing the `parentId` links.
+5.  **Generate UUIDs:** Assign a unique v4 UUID to the \`id\` field for EVERY entity you create. This is crucial for establishing the \`parentId\` links.
 
 6.  **Assess Confidence and Reasoning:** For each entity, provide:
-    *   `confidence`: Your confidence score (0.0 to 1.0) for the extracted data and the inferred parent link.
-    *   `reasoning`: A short sentence explaining your logic. E.g., "Identified as a Course under '100 Level' due to its format and position in the table."
+    *   \`confidence\`: Your confidence score (0.0 to 1.0) for the extracted data and the inferred parent link.
+    *   \`reasoning\`: A short sentence explaining your logic. E.g., "Identified as a Course under '100 Level' due to its format and position in the table."
 
-7.  **Set Initial Status:** For this initial analysis, set the `status` of all entities to \`new\`. The UI will handle matching later.
+7.  **Set Initial Status:** For this initial analysis, set the \`status\` of all entities to \`new\`. The UI will handle matching later.
 
 8.  **Provide a Summary:** Write a brief, high-level summary of what you found in the document.
 
