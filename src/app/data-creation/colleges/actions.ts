@@ -120,3 +120,65 @@ export async function deleteSelectedColleges(collegeIds: string[]): Promise<{ su
     return { success: false, message: 'An unexpected error occurred during bulk deletion.' };
   }
 }
+
+export async function importColleges(colleges: z.infer<typeof collegeSchema>[]): Promise<{ success: boolean; message: string }> {
+  if (!colleges || colleges.length === 0) {
+    return { success: false, message: 'No college data provided.' };
+  }
+
+  const batch = writeBatch(db);
+  let processedCount = 0;
+  let errorCount = 0;
+  const errors: string[] = [];
+
+  try {
+    const existingCollegesSnapshot = await getDocs(query(collection(db, 'colleges')));
+    const existingCollegeCodes = new Set(existingCollegesSnapshot.docs.map(doc => doc.data().code));
+    
+    for (const college of colleges) {
+      const validatedFields = collegeSchema.safeParse(college);
+      
+      if (!validatedFields.success) {
+        errorCount++;
+        errors.push(`Row with code ${college.code || 'N/A'}: Invalid data format.`);
+        continue;
+      }
+      
+      const { code, name } = validatedFields.data;
+      
+      if (existingCollegeCodes.has(code)) {
+        errorCount++;
+        errors.push(`Row with code ${code}: College code already exists.`);
+        continue;
+      }
+
+      const newCollegeRef = doc(collection(db, 'colleges'));
+      batch.set(newCollegeRef, {
+        name,
+        code,
+        short_name: code,
+        createdAt: serverTimestamp(),
+      });
+      
+      processedCount++;
+      existingCollegeCodes.add(code);
+    }
+
+    if (processedCount > 0) {
+      await batch.commit();
+    }
+    
+    revalidatePath('/data-creation/colleges');
+
+    let message = `${processedCount} colleges imported successfully.`;
+    if (errorCount > 0) {
+      message += ` ${errorCount} rows failed. Errors: ${errors.slice(0, 3).join('; ')}${errors.length > 3 ? '...' : ''}`;
+    }
+
+    return { success: processedCount > 0, message };
+
+  } catch (error) {
+    console.error('Error importing colleges:', error);
+    return { success: false, message: 'An unexpected error occurred during the import process.' };
+  }
+}

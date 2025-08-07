@@ -5,6 +5,7 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, writeBatch, query, where, getDocs } from 'firebase/firestore';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
+import { Department } from '@/lib/types';
 
 const programSchema = z.object({
   name: z.string().min(1, { message: 'Program name is required.' }),
@@ -163,4 +164,81 @@ export async function deleteSelectedPrograms(programIds: string[]): Promise<{ su
       return { success: false, message: 'An unexpected error occurred during bulk deletion.' };
     }
 }
+
+const importProgramSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  department_name: z.string().min(1, "Department name is required"),
+  max_level: z.coerce.number().min(1).max(7),
+});
     
+export async function importPrograms(programs: any[], departments: Department[]): Promise<{ success: boolean; message: string }> {
+  if (!programs || programs.length === 0) {
+    return { success: false, message: 'No program data provided.' };
+  }
+
+  const batch = writeBatch(db);
+  let processedCount = 0;
+  let errorCount = 0;
+  const errors: string[] = [];
+
+  try {
+    const deptMap = new Map(departments.map(d => [d.name.toLowerCase(), d.id]));
+    const existingProgramsSnapshot = await getDocs(query(collection(db, 'programs')));
+    const existingProgramNames = new Set(existingProgramsSnapshot.docs.map(d => d.data().name.toLowerCase()));
+
+    for (const program of programs) {
+      const validatedFields = importProgramSchema.safeParse(program);
+      
+      if (!validatedFields.success) {
+        errorCount++;
+        errors.push(`Row with name ${program.name || 'N/A'}: Invalid data format.`);
+        continue;
+      }
+      
+      const { name, department_name, max_level } = validatedFields.data;
+      const formattedName = toTitleCase(name);
+      
+      if (existingProgramNames.has(formattedName.toLowerCase())) {
+        errorCount++;
+        errors.push(`Row with name ${name}: Program already exists.`);
+        continue;
+      }
+      
+      const departmentId = deptMap.get(department_name.toLowerCase());
+      if (!departmentId) {
+        errorCount++;
+        errors.push(`Row with name ${name}: Department "${department_name}" not found.`);
+        continue;
+      }
+
+      const newProgramRef = doc(collection(db, 'programs'));
+      batch.set(newProgramRef, {
+        name: formattedName,
+        departmentId,
+        max_level,
+        expected_intake: 0,
+        createdAt: serverTimestamp(),
+      });
+      
+      processedCount++;
+      existingProgramNames.add(formattedName.toLowerCase());
+    }
+
+    if (processedCount > 0) {
+      await batch.commit();
+    }
+    
+    revalidatePath('/data-creation/programs');
+
+    let message = `${processedCount} programs imported successfully.`;
+    if (errorCount > 0) {
+      message += ` ${errorCount} rows failed. Errors: ${errors.slice(0, 3).join('; ')}${errors.length > 3 ? '...' : ''}`;
+    }
+
+    return { success: processedCount > 0, message };
+
+  } catch (error) {
+    console.error('Error importing programs:', error);
+    return { success: false, message: 'An unexpected error occurred during the import process.' };
+  }
+}

@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -11,8 +12,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Skeleton } from '@/components/ui/skeleton';
 import { VenueForm } from './venue-form';
 import Link from 'next/link';
-import { MapPin } from 'lucide-react';
+import { MapPin, Upload } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { ImportVenuesModal } from './import-venues-modal';
 
 const VenuesPage: React.FC = () => {
   const [venues, setVenues] = useState<Venue[]>([]);
@@ -20,6 +22,7 @@ const VenuesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingVenue, setEditingVenue] = useState<Venue | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -62,20 +65,25 @@ const VenuesPage: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <h3 className="text-2xl font-bold mb-6 text-primary">Manage Venues</h3>
 
-        <div className="mb-4 flex flex-col sm:flex-row justify-between items-center">
+        <div className="mb-4 flex flex-col sm:flex-row justify-between items-center gap-2">
           <Input
             type="text"
             placeholder="Search venues by name or code..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full sm:max-w-sm mb-2 sm:mb-0"
+            className="w-full sm:max-w-sm"
           />
-          <Button
-            onClick={handleAddNew}
-            className="w-full sm:w-auto"
-          >
-            + Add Venue
-          </Button>
+           <div className="flex gap-2 w-full sm:w-auto">
+             <Button onClick={() => setShowImportModal(true)} variant="outline" className="w-full">
+                  <Upload className="mr-2 h-4 w-4" /> Import Venues
+              </Button>
+            <Button
+              onClick={handleAddNew}
+              className="w-full"
+            >
+              + Add Venue
+            </Button>
+          </div>
         </div>
 
         {isLoading ? (
@@ -179,6 +187,11 @@ const VenuesPage: React.FC = () => {
           />
         </DialogContent>
       </Dialog>
+      
+      <ImportVenuesModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+      />
     </Card>
   );
 };

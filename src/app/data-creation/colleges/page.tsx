@@ -13,9 +13,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CollegeForm } from './college-form';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { deleteSelectedColleges } from './actions';
+import { deleteSelectedColleges, importColleges } from './actions';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Trash } from 'lucide-react';
+import { Trash, Upload } from 'lucide-react';
+import Papa from 'papaparse';
 
 const CollegesPage: React.FC = () => {
   const [colleges, setColleges] = useState<College[]>([]);
@@ -25,6 +26,7 @@ const CollegesPage: React.FC = () => {
   const [editingCollege, setEditingCollege] = useState<College | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const { toast } = useToast();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const collegesQuery = query(collection(db, 'colleges'), orderBy('name'));
@@ -89,6 +91,32 @@ const CollegesPage: React.FC = () => {
       setSelectedIds([]);
     }
   };
+  
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: async (results) => {
+          const result = await importColleges(results.data as any);
+          toast({
+            title: result.success ? 'Import Complete' : 'Import Failed',
+            description: result.message,
+            variant: result.success ? 'default' : 'destructive',
+            duration: 8000
+          });
+        },
+        error: (error) => {
+            toast({ title: "Error", description: `CSV Parsing Error: ${error.message}`, variant: "destructive" });
+        }
+      });
+    }
+     if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
 
   return (
     <Card className="p-4 sm:p-6 lg:p-8">
@@ -126,6 +154,18 @@ const CollegesPage: React.FC = () => {
                     </AlertDialogContent>
                 </AlertDialog>
             )}
+             <Button asChild variant="outline" className="w-full">
+              <label>
+                <Upload className="mr-2 h-4 w-4" /> Import CSV
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+              </label>
+            </Button>
             <Button
               onClick={handleAddNew}
               className="w-full"

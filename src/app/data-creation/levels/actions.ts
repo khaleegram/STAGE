@@ -8,7 +8,7 @@ import { revalidatePath } from 'next/cache';
 
 const levelSchema = z.object({
   programId: z.string().min(1, { message: 'Please select a program.' }),
-  level: z.coerce.number().min(1, { message: 'Level must be at least 1.' }).max(5, { message: 'Level cannot be greater than 5.' }),
+  level: z.coerce.number().min(1, { message: 'Level must be at least 1.' }).max(7, { message: 'Level cannot be greater than 7.' }),
   students_count: z.coerce.number().min(0, { message: 'Student count cannot be negative.' }),
 });
 
@@ -124,4 +124,71 @@ export async function deleteLevel(levelId: string): Promise<{ success: boolean; 
         }
         return { success: false, message: 'An unexpected error occurred.' };
     }
+}
+
+const importLevelSchema = z.object({
+  level: z.coerce.number().min(1).max(7),
+  students_count: z.coerce.number().min(0),
+});
+
+export async function importLevels(programId: string, levels: any[]): Promise<{ success: boolean; message: string }> {
+  if (!programId || !levels || levels.length === 0) {
+    return { success: false, message: 'Program ID and a list of levels are required.' };
+  }
+
+  const batch = writeBatch(db);
+  let processedCount = 0;
+  let errorCount = 0;
+  const errors: string[] = [];
+
+  try {
+    const existingLevelsSnapshot = await getDocs(query(collection(db, 'levels'), where('programId', '==', programId)));
+    const existingLevels = new Set(existingLevelsSnapshot.docs.map(doc => doc.data().level));
+
+    for (const levelData of levels) {
+      const validatedFields = importLevelSchema.safeParse(levelData);
+      
+      if (!validatedFields.success) {
+        errorCount++;
+        errors.push(`Row with level ${levelData.level || 'N/A'}: Invalid data format.`);
+        continue;
+      }
+      
+      const { level, students_count } = validatedFields.data;
+      
+      if (existingLevels.has(level)) {
+        errorCount++;
+        errors.push(`Row with level ${level}: Level already exists for this program.`);
+        continue;
+      }
+
+      const newLevelRef = doc(collection(db, 'levels'));
+      batch.set(newLevelRef, {
+        programId,
+        level,
+        students_count,
+        createdAt: serverTimestamp(),
+      });
+      
+      processedCount++;
+      existingLevels.add(level);
+    }
+
+    if (processedCount > 0) {
+      await batch.commit();
+    }
+    
+    revalidatePath('/data-creation/levels');
+
+    let message = `${processedCount} levels imported successfully.`;
+    if (errorCount > 0) {
+      message += ` ${errorCount} rows failed. Errors: ${errors.slice(0, 3).join('; ')}${errors.length > 3 ? '...' : ''}`;
+    }
+
+    return { success: processedCount > 0, message };
+
+  } catch (error) {
+    console.error('Error importing levels:', error);
+    return { success: false, message: 'An unexpected error occurred during the import process.' };
+  }
 }

@@ -1,7 +1,8 @@
+
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 
@@ -92,3 +93,65 @@ export async function deleteVenue(venueId: string) {
     return { success: false, message: 'An unexpected error occurred.' };
   }
 }
+
+
+export async function importVenues(venues: z.infer<typeof venueSchema>[]): Promise<{ success: boolean; message: string }> {
+  if (!venues || venues.length === 0) {
+    return { success: false, message: 'No venue data provided.' };
+  }
+
+  const batch = writeBatch(db);
+  let processedCount = 0;
+  let errorCount = 0;
+  const errors: string[] = [];
+
+  try {
+    const existingVenuesSnapshot = await getDocs(query(collection(db, 'venues')));
+    const existingVenueCodes = new Set(existingVenuesSnapshot.docs.map(doc => doc.data().code));
+    
+    for (const venue of venues) {
+      const validatedFields = venueSchema.safeParse(venue);
+      
+      if (!validatedFields.success) {
+        errorCount++;
+        errors.push(`Row with code ${venue.code || 'N/A'}: Invalid data format.`);
+        continue;
+      }
+      
+      const { code } = validatedFields.data;
+      
+      if (existingVenueCodes.has(code)) {
+        errorCount++;
+        errors.push(`Row with code ${code}: Venue code already exists.`);
+        continue;
+      }
+
+      const newVenueRef = doc(collection(db, 'venues'));
+      batch.set(newVenueRef, {
+        ...validatedFields.data,
+        createdAt: serverTimestamp(),
+      });
+      
+      processedCount++;
+      existingVenueCodes.add(code);
+    }
+
+    if (processedCount > 0) {
+      await batch.commit();
+    }
+    
+    revalidatePath('/data-creation/venues');
+
+    let message = `${processedCount} venues imported successfully.`;
+    if (errorCount > 0) {
+      message += ` ${errorCount} rows failed. Errors: ${errors.slice(0, 3).join('; ')}${errors.length > 3 ? '...' : ''}`;
+    }
+
+    return { success: processedCount > 0, message };
+
+  } catch (error) {
+    console.error('Error importing venues:', error);
+    return { success: false, message: 'An unexpected error occurred during the import process.' };
+  }
+}
+
