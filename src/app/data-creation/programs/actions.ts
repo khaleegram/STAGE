@@ -134,4 +134,33 @@ export async function deleteProgram(programId: string): Promise<{ success: boole
     }
 }
 
+export async function deleteSelectedPrograms(programIds: string[]): Promise<{ success: boolean; message: string }> {
+    if (!programIds || programIds.length === 0) {
+      return { success: false, message: 'No program IDs provided.' };
+    }
+  
+    const batch = writeBatch(db);
+  
+    for (const id of programIds) {
+      const programRef = doc(db, 'programs', id);
+      batch.delete(programRef);
+      // Also delete associated levels
+      const levelsQuery = query(collection(db, 'levels'), where('programId', '==', id));
+      const levelsSnapshot = await getDocs(levelsQuery);
+      levelsSnapshot.forEach(levelDoc => batch.delete(levelDoc.ref));
+    }
+  
+    try {
+      await batch.commit();
+      revalidatePath('/data-creation/programs');
+      revalidatePath('/data-creation/levels');
+      return { success: true, message: `${programIds.length} program(s) and their levels deleted.` };
+    } catch (error) {
+      console.error('Error deleting selected programs:', error);
+      if (error instanceof Error) {
+        return { success: false, message: `An unexpected error occurred: ${error.message}` };
+      }
+      return { success: false, message: 'An unexpected error occurred during bulk deletion.' };
+    }
+}
     

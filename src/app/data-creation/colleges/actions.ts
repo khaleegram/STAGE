@@ -1,7 +1,8 @@
+
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, writeBatch, query, where, getDocs } from 'firebase/firestore';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 
@@ -89,4 +90,33 @@ export async function deleteCollege(collegeId: string): Promise<{ success: boole
         }
         return { success: false, message: 'An unexpected error occurred.' };
     }
+}
+
+
+export async function deleteSelectedColleges(collegeIds: string[]): Promise<{ success: boolean; message: string }> {
+  if (!collegeIds || collegeIds.length === 0) {
+    return { success: false, message: 'No college IDs provided.' };
+  }
+
+  const batch = writeBatch(db);
+
+  for (const collegeId of collegeIds) {
+    // Note: This is a simple deletion. A more robust implementation would
+    // also handle cascading deletes for departments, programs, etc. within this college.
+    // For now, we just delete the college document.
+    const collegeRef = doc(db, 'colleges', collegeId);
+    batch.delete(collegeRef);
+  }
+
+  try {
+    await batch.commit();
+    revalidatePath('/data-creation/colleges');
+    return { success: true, message: `${collegeIds.length} college(s) deleted successfully.` };
+  } catch (error) {
+    console.error('Error deleting selected colleges:', error);
+    if (error instanceof Error) {
+      return { success: false, message: `An unexpected error occurred: ${error.message}` };
+    }
+    return { success: false, message: 'An unexpected error occurred during bulk deletion.' };
+  }
 }

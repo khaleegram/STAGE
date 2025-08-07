@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -11,6 +12,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProgramForm } from './program-form';
 import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { deleteSelectedPrograms } from './actions';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Trash } from 'lucide-react';
 
 const ProgramsPage: React.FC = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -19,23 +24,18 @@ const ProgramsPage: React.FC = () => {
   const [departmentSearch, setDepartmentSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Fetch Departments
     const deptsQuery = query(collection(db, 'departments'), orderBy('name'));
     const unsubscribeDepts = onSnapshot(deptsQuery, (snapshot) => {
-      const deptsList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Department));
-      setDepartments(deptsList);
+      setDepartments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Department)));
     }, (error) => {
       console.error("Error fetching departments: ", error);
       toast({ title: 'Error', description: 'Could not fetch departments.', variant: 'destructive' });
     });
 
-    // Fetch Programs and denormalize department name
     const programsQuery = query(collection(db, 'programs'), orderBy('name'));
     const unsubscribePrograms = onSnapshot(programsQuery, async (snapshot) => {
       const programsListPromises = snapshot.docs.map(async (p) => {
@@ -44,8 +44,8 @@ const ProgramsPage: React.FC = () => {
           id: p.id,
           name: data.name || 'Unnamed Program',
           departmentId: data.departmentId || 'N/A',
-          max_level: data.max_level || 4, // Default value
-          expected_intake: data.expected_intake || 0, // Default value
+          max_level: data.max_level || 4,
+          expected_intake: data.expected_intake || 0,
         };
 
         if (program.departmentId !== 'N/A') {
@@ -56,7 +56,6 @@ const ProgramsPage: React.FC = () => {
               program.departmentName = deptSnap.data().name || 'Unknown Department';
             }
           } catch (e) {
-            console.error(`Failed to fetch department ${program.departmentId}`, e);
             program.departmentName = 'Unknown Department';
           }
         }
@@ -88,59 +87,99 @@ const ProgramsPage: React.FC = () => {
     setShowModal(true);
   };
 
-  const groupedPrograms = useMemo(() => {
-    return programs.reduce((acc, prog) => {
+  const groupedPrograms = useMemo(() => programs.reduce((acc, prog) => {
       const deptName = prog.departmentName || 'Uncategorized';
-      if (!acc[deptName]) {
-        acc[deptName] = [];
-      }
+      if (!acc[deptName]) acc[deptName] = [];
       acc[deptName].push(prog);
       return acc;
-    }, {} as Record<string, Program[]>);
-  }, [programs]);
+    }, {} as Record<string, Program[]>), [programs]);
 
-  const filteredGroups = Object.entries(groupedPrograms).filter(([deptName]) =>
-    deptName.toLowerCase().includes(departmentSearch.toLowerCase())
-  );
+  const filteredGroups = useMemo(() => Object.entries(groupedPrograms)
+    .filter(([deptName]) => deptName.toLowerCase().includes(departmentSearch.toLowerCase()))
+    .sort((a, b) => a[0].localeCompare(b[0])),
+  [groupedPrograms, departmentSearch]);
+
+  const allFilteredProgramIds = useMemo(() => filteredGroups.flatMap(([, progs]) => progs.map(p => p.id)), [filteredGroups]);
+  
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedIds(checked ? allFilteredProgramIds : []);
+  };
+  
+  const handleRowSelect = (id: string, checked: boolean) => {
+    setSelectedIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedIds.length === 0) return;
+    const result = await deleteSelectedPrograms(selectedIds);
+    toast({
+      title: result.success ? 'Success' : 'Error',
+      description: result.message,
+      variant: result.success ? 'default' : 'destructive',
+    });
+    if (result.success) setSelectedIds([]);
+  };
 
   return (
     <Card className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         <h3 className="text-2xl font-bold mb-6 text-primary">Manage Programs</h3>
 
-        <div className="mb-4 flex flex-col sm:flex-row justify-between items-center">
+        <div className="mb-4 flex flex-col sm:flex-row justify-between items-center gap-2">
           <Input
             type="text"
             placeholder="Search by department..."
             value={departmentSearch}
             onChange={(e) => setDepartmentSearch(e.target.value)}
-            className="w-full sm:max-w-sm mb-2 sm:mb-0"
+            className="w-full sm:max-w-sm"
           />
-          <Button
-            onClick={handleAddNew}
-            className="w-full sm:w-auto"
-          >
-            + Add Program
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            {selectedIds.length > 0 && (
+                 <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" className="w-full">
+                            <Trash className="mr-2 h-4 w-4" />
+                            Delete ({selectedIds.length})
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action will permanently delete {selectedIds.length} program(s) and all their associated levels.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteSelected}>Continue</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
+            <Button onClick={handleAddNew} className="w-full">
+              + Add Program
+            </Button>
+          </div>
         </div>
         
         {isLoading ? (
             <div className="space-y-8">
                 <Skeleton className="h-10 w-1/3" />
                 <Skeleton className="h-24 w-full" />
-                <Skeleton className="h-10 w-1/2" />
-                <Skeleton className="h-24 w-full" />
             </div>
         ) : (
             <div className="space-y-8">
                 {filteredGroups.length > 0 ? filteredGroups.map(([deptName, progArray]) => (
                     <div key={deptName}>
-                        <h2 className="text-xl font-semibold mb-2 text-primary">{deptName}</h2>
+                        <div className="flex items-center justify-between mb-2">
+                             <h2 className="text-xl font-semibold text-primary">{deptName}</h2>
+                        </div>
                          <div className="overflow-x-auto rounded-lg">
                             <table className="min-w-full table-auto">
                                 <thead className="bg-muted/50">
                                     <tr>
-                                        <th className="p-4 text-left font-semibold">#</th>
+                                        <th className="p-4 w-12"><Checkbox onCheckedChange={(checked) => handleSelectAll(!!checked)} checked={allFilteredProgramIds.length > 0 && selectedIds.length === allFilteredProgramIds.length} /></th>
+                                        <th className="p-4 w-16 text-left font-semibold">#</th>
                                         <th className="p-4 text-left font-semibold">Program Name</th>
                                         <th className="p-4 text-left font-semibold">Max Level</th>
                                         <th className="p-4 text-left font-semibold">Actions</th>
@@ -148,7 +187,8 @@ const ProgramsPage: React.FC = () => {
                                 </thead>
                                 <tbody className="divide-y divide-border/50">
                                     {progArray.sort((a, b) => a.name.localeCompare(b.name)).map((prog, index) => (
-                                        <tr key={prog.id} className="hover:bg-muted/30">
+                                        <tr key={prog.id} data-state={selectedIds.includes(prog.id) ? 'selected' : ''}>
+                                            <td className="p-4"><Checkbox onCheckedChange={(checked) => handleRowSelect(prog.id, !!checked)} checked={selectedIds.includes(prog.id)} /></td>
                                             <td className="p-4">{index + 1}</td>
                                             <td className="p-4 font-medium">{prog.name}</td>
                                             <td className="p-4">{prog.max_level} Years</td>

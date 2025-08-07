@@ -1,6 +1,7 @@
+
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { db } from '@/lib/firebase';
 import { Department, College } from '@/lib/types';
 import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
@@ -11,6 +12,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Skeleton } from '@/components/ui/skeleton';
 import { DepartmentForm } from './department-form';
 import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { deleteSelectedDepartments } from './actions';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Trash } from 'lucide-react';
 
 const DepartmentsPage: React.FC = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -19,10 +24,10 @@ const DepartmentsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Fetch Colleges
     const collegesQuery = query(collection(db, 'colleges'), orderBy('name'));
     const unsubscribeColleges = onSnapshot(collegesQuery, (snapshot) => {
       const collegesList = snapshot.docs.map(doc => ({
@@ -35,7 +40,6 @@ const DepartmentsPage: React.FC = () => {
       toast({ title: 'Error', description: 'Could not fetch colleges.', variant: 'destructive' });
     });
 
-    // Fetch Departments and denormalize college name
     const departmentsQuery = query(collection(db, 'departments'), orderBy('name'));
     const unsubscribeDepartments = onSnapshot(departmentsQuery, async (snapshot) => {
       const departmentsListPromises = snapshot.docs.map(async (d) => {
@@ -86,30 +90,75 @@ const DepartmentsPage: React.FC = () => {
     setShowModal(true);
   };
 
-  const filteredDepartments = departments.filter((department) =>
+  const filteredDepartments = useMemo(() => departments.filter((department) =>
     department.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     department.collegeName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ), [departments, searchTerm]);
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedIds(checked ? filteredDepartments.map(d => d.id) : []);
+  };
+
+  const handleRowSelect = (id: string, checked: boolean) => {
+    setSelectedIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id));
+  };
+  
+  const handleDeleteSelected = async () => {
+    if (selectedIds.length === 0) return;
+    const result = await deleteSelectedDepartments(selectedIds);
+    toast({
+      title: result.success ? 'Success' : 'Error',
+      description: result.message,
+      variant: result.success ? 'default' : 'destructive',
+    });
+    if (result.success) {
+      setSelectedIds([]);
+    }
+  };
 
   return (
     <Card className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         <h3 className="text-2xl font-bold mb-6 text-primary">Manage Departments</h3>
 
-        <div className="mb-4 flex flex-col sm:flex-row justify-between items-center">
+        <div className="mb-4 flex flex-col sm:flex-row justify-between items-center gap-2">
           <Input
             type="text"
             placeholder="Search departments or colleges..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full sm:max-w-sm mb-2 sm:mb-0"
+            className="w-full sm:max-w-sm"
           />
-          <Button
-            onClick={handleAddNew}
-            className="w-full sm:w-auto"
-          >
-            + Add Department
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            {selectedIds.length > 0 && (
+                 <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" className="w-full">
+                            <Trash className="mr-2 h-4 w-4" />
+                            Delete ({selectedIds.length})
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action will permanently delete {selectedIds.length} department(s).
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteSelected}>Continue</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
+            <Button
+              onClick={handleAddNew}
+              className="w-full"
+            >
+              + Add Department
+            </Button>
+          </div>
         </div>
         
         {isLoading ? (
@@ -125,7 +174,8 @@ const DepartmentsPage: React.FC = () => {
                   <table className="min-w-full table-auto">
                     <thead className="bg-muted/50">
                       <tr>
-                        <th className="p-4 text-left font-semibold">#</th>
+                        <th className="p-4 w-12"><Checkbox onCheckedChange={handleSelectAll} checked={selectedIds.length > 0 && selectedIds.length === filteredDepartments.length} /></th>
+                        <th className="p-4 w-16 text-left font-semibold">#</th>
                         <th className="p-4 text-left font-semibold">Department Name</th>
                         <th className="p-4 text-left font-semibold">College</th>
                         <th className="p-4 text-left font-semibold">Actions</th>
@@ -133,7 +183,8 @@ const DepartmentsPage: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-border/50">
                       {filteredDepartments.map((dept, index) => (
-                        <tr key={dept.id} className="hover:bg-muted/30">
+                        <tr key={dept.id} data-state={selectedIds.includes(dept.id) ? 'selected' : ''}>
+                          <td className="p-4"><Checkbox onCheckedChange={(checked) => handleRowSelect(dept.id, !!checked)} checked={selectedIds.includes(dept.id)} /></td>
                           <td className="p-4">{index + 1}</td>
                           <td className="p-4">{dept.name}</td>
                           <td className="p-4">{dept.collegeName || 'N/A'}</td>
@@ -146,7 +197,7 @@ const DepartmentsPage: React.FC = () => {
                       ))}
                       {filteredDepartments.length === 0 && (
                         <tr>
-                          <td colSpan={4} className="text-center p-4 text-muted-foreground">
+                          <td colSpan={5} className="text-center p-4 text-muted-foreground">
                             No departments found
                           </td>
                         </tr>
@@ -158,12 +209,15 @@ const DepartmentsPage: React.FC = () => {
                 {/* Mobile Card View */}
                 <div className="space-y-4 block sm:hidden">
                   {filteredDepartments.map((dept, index) => (
-                    <Card key={dept.id} className="p-4">
+                    <Card key={dept.id} className="p-4" data-state={selectedIds.includes(dept.id) ? 'selected' : ''}>
                       <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-bold text-primary">#{index + 1}</h4>
-                          <p><strong>Department:</strong> {dept.name}</p>
-                          <p><strong>College:</strong> {dept.collegeName || 'N/A'}</p>
+                        <div className="flex items-start gap-4">
+                            <Checkbox className="mt-1" onCheckedChange={(checked) => handleRowSelect(dept.id, !!checked)} checked={selectedIds.includes(dept.id)} />
+                            <div>
+                                <h4 className="font-bold text-primary">#{index + 1}</h4>
+                                <p><strong>Department:</strong> {dept.name}</p>
+                                <p><strong>College:</strong> {dept.collegeName || 'N/A'}</p>
+                            </div>
                         </div>
                         <div className="flex flex-col space-y-2">
                           <Button variant="outline" size="sm" onClick={() => handleEdit(dept)}>

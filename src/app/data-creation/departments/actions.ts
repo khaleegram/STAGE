@@ -1,7 +1,8 @@
+
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 
@@ -85,4 +86,30 @@ export async function deleteDepartment(departmentId: string): Promise<{ success:
         }
         return { success: false, message: 'An unexpected error occurred.' };
     }
+}
+
+
+export async function deleteSelectedDepartments(departmentIds: string[]): Promise<{ success: boolean; message: string }> {
+  if (!departmentIds || departmentIds.length === 0) {
+    return { success: false, message: 'No department IDs provided.' };
+  }
+
+  const batch = writeBatch(db);
+
+  departmentIds.forEach(id => {
+    const deptRef = doc(db, 'departments', id);
+    batch.delete(deptRef);
+  });
+
+  try {
+    await batch.commit();
+    revalidatePath('/data-creation/departments');
+    return { success: true, message: `${departmentIds.length} department(s) deleted successfully.` };
+  } catch (error) {
+    console.error('Error deleting selected departments:', error);
+    if (error instanceof Error) {
+      return { success: false, message: `An unexpected error occurred: ${error.message}` };
+    }
+    return { success: false, message: 'An unexpected error occurred during bulk deletion.' };
+  }
 }
