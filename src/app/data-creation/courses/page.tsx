@@ -12,6 +12,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CourseForm } from './course-form';
 import { Card } from '@/components/ui/card';
+import { ImportCoursesModal } from './import-courses-modal';
+import { Upload } from 'lucide-react';
 
 const CoursesPage: React.FC = () => {
   // Data state
@@ -23,6 +25,7 @@ const CoursesPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   // Filter state
   const [selectedProgram, setSelectedProgram] = useState('all');
@@ -170,9 +173,14 @@ const CoursesPage: React.FC = () => {
                     </SelectContent>
                 </Select>
             </div>
-            <Button onClick={handleAddNew} className="w-full sm:w-auto mt-2 sm:mt-0">
-                + Add Course
-            </Button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button onClick={() => setShowImportModal(true)} variant="outline" className="w-full sm:w-auto">
+                  <Upload className="mr-2 h-4 w-4" /> Import Courses
+              </Button>
+              <Button onClick={handleAddNew} className="w-full sm:w-auto">
+                  + Add Course
+              </Button>
+            </div>
         </div>
         
         {isLoading ? (
@@ -237,6 +245,12 @@ const CoursesPage: React.FC = () => {
           />
         </DialogContent>
       </Dialog>
+      
+      <ImportCoursesModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        programs={programs}
+      />
     </Card>
   );
 };
