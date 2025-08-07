@@ -1,6 +1,8 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import { TimetableDisplay } from '@/components/timetable/timetable-display';
 import { getTimetableById } from '../actions';
 import { GenerateExamTimetableOutput } from '@/ai/flows/generate-exam-timetable';
@@ -8,13 +10,11 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-type TimetablePageProps = {
-  params: {
-    id: string;
-  };
-};
 
-export default function TimetablePage({ params }: TimetablePageProps) {
+export default function TimetablePage() {
+  const params = useParams();
+  const id = params.id as string;
+  
   const [timetableResult, setTimetableResult] = useState<GenerateExamTimetableOutput | null>(null);
   const [timetableName, setTimetableName] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
@@ -22,10 +22,12 @@ export default function TimetablePage({ params }: TimetablePageProps) {
   const { toast } = useToast();
 
   useEffect(() => {
+    if (!id) return;
+
     const fetchTimetable = async () => {
       setIsLoading(true);
       setError(null);
-      const { data, error: fetchError } = await getTimetableById(params.id);
+      const { data, error: fetchError } = await getTimetableById(id);
 
       if (fetchError) {
         setError(fetchError);
@@ -43,7 +45,7 @@ export default function TimetablePage({ params }: TimetablePageProps) {
     };
 
     fetchTimetable();
-  }, [params.id, toast]);
+  }, [id, toast]);
   
   // The onSave prop is not needed here as we are just viewing
   const handleSave = () => {
